@@ -1,0 +1,57 @@
+# UI Design Archives (already extracted to frontend/)
+*.zip
+flash-ui-*.zip
+
+# Temporary Analysis Folders
+temp_ui_analysis/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+.next/
+out/
+.cache/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# Logs
+logs/
+*.log
+
+# Kubernetes Secrets
+*-secret.yaml
+secrets/
+
+# Build Artifacts
+*.tar.gz
+*.jar
+*.war
