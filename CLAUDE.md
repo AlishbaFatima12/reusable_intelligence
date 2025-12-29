@@ -208,3 +208,10 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Active Technologies
+- Python 3.11+ (for static analysis via AST parsing) (001-agents-md-gen)
+- N/A (skill generates markdown files, no persistent storage) (001-agents-md-gen)
+
+## Recent Changes
+- 001-agents-md-gen: Added Python 3.11+ (for static analysis via AST parsing)
