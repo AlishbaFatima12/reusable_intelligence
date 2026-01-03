@@ -1,0 +1,76 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+env/
+.env
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+.next/
+out/
+.cache/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Tests
+tests/
+test/
+**/*_test.py
+**/*test*.py
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Secrets
+*.key
+*.pem
+secrets/
+*-secret.yaml
+
+# Kubernetes
+k8s/
+kubernetes/
+*.yaml
+!docker-compose.yaml
+
+# Development files
+.env.local
+.env.*.local
+docker-compose.override.yml

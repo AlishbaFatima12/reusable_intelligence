@@ -1,0 +1,285 @@
+openapi: 3.0.3
+info:
+  title: Triage Agent API
+  description: Query routing and intent classification service for LearnFlow
+  version: 1.0.0
+  contact:
+    name: LearnFlow Team
+servers:
+  - url: http://localhost:8001
+    description: Local development
+  - url: http://triage-service:8001
+    description: Kubernetes cluster
+
+paths:
+  /analyze:
+    post:
+      summary: Analyze query intent and route to specialist agent
+      description: |
+        Receives a student query, uses Claude API to detect intent (concept, code_review,
+        debug, exercise, progress), and publishes routing decision to Kafka topic.
+      operationId: analyzeQuery
+      tags:
+        - Query Analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryAnalysisRequest'
+            examples:
+              concept_query:
+                summary: Student asking for concept explanation
+                value:
+                  query_id: "550e8400-e29b-41d4-a716-446655440000"
+                  student_id: "student_123"
+                  query_text: "Can you explain what recursion is with an example?"
+              debug_query:
+                summary: Student asking for debugging help
+                value:
+                  query_id: "660e8400-e29b-41d4-a716-446655440001"
+                  student_id: "student_456"
+                  query_text: "Why does this give IndexError?"
+                  code_snippet: "my_list = [1, 2, 3]\nprint(my_list[5])"
+      responses:
+        '200':
+          description: Query analyzed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryAnalysisResponse'
+              examples:
+                success:
+                  value:
+                    query_id: "550e8400-e29b-41d4-a716-446655440000"
+                    detected_intent: "concept"
+                    routed_to_agent: "concepts"
+                    confidence_score: 0.95
+                    routing_reason: "Query asks for explanation of programming concept (recursion)"
+                    estimated_complexity: "simple"
+        '400':
+          description: Invalid request (empty query, malformed JSON)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error (Claude API failure)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns service health status for Kubernetes liveness probe
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "healthy"
+                uptime_seconds: 3600
+                version: "1.0.0"
+
+  /ready:
+    get:
+      summary: Readiness check endpoint
+      description: Returns service readiness for Kubernetes readiness probe (checks Kafka and Dapr connectivity)
+      operationId: readinessCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is ready to accept traffic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+              example:
+                ready: true
+                kafka_connected: true
+                dapr_connected: true
+        '503':
+          description: Service not ready (Kafka or Dapr unavailable)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+              example:
+                ready: false
+                kafka_connected: false
+                dapr_connected: true
+
+  /metrics:
+    get:
+      summary: Prometheus metrics endpoint
+      description: Exposes metrics for monitoring (request count, latency, error rate)
+      operationId: getMetrics
+      tags:
+        - Observability
+      responses:
+        '200':
+          description: Metrics in Prometheus format
+          content:
+            text/plain:
+              example: |
+                # HELP triage_queries_total Total number of queries analyzed
+                # TYPE triage_queries_total counter
+                triage_queries_total 1234
+                # HELP triage_query_duration_seconds Query analysis duration
+                # TYPE triage_query_duration_seconds histogram
+                triage_query_duration_seconds_bucket{le="0.5"} 800
+                triage_query_duration_seconds_bucket{le="1.0"} 1000
+
+components:
+  schemas:
+    QueryAnalysisRequest:
+      type: object
+      required:
+        - query_id
+        - student_id
+        - query_text
+      properties:
+        query_id:
+          type: string
+          format: uuid
+          description: Unique identifier for this query
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        student_id:
+          type: string
+          description: Student identifier
+          example: "student_123"
+        query_text:
+          type: string
+          minLength: 1
+          maxLength: 5000
+          description: The student's question
+          example: "What is the difference between a list and a tuple in Python?"
+        code_snippet:
+          type: string
+          maxLength: 10000
+          description: Optional code submission
+          example: "def factorial(n):\n    return n * factorial(n-1)"
+        context:
+          type: object
+          description: Additional context (skill level, recent topics)
+          additionalProperties: true
+          example:
+            skill_level: "beginner"
+            recent_topics: ["variables", "loops"]
+
+    QueryAnalysisResponse:
+      type: object
+      required:
+        - query_id
+        - detected_intent
+        - routed_to_agent
+        - confidence_score
+      properties:
+        query_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        detected_intent:
+          type: string
+          enum: [concept, code_review, debug, exercise, progress, unclear]
+          description: Detected student intent
+          example: "concept"
+        routed_to_agent:
+          type: string
+          enum: [concepts, code-review, debug, exercise, progress]
+          description: Target specialist agent
+          example: "concepts"
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Confidence in routing decision (0.0-1.0)
+          example: 0.95
+        routing_reason:
+          type: string
+          description: Explanation of why this agent was chosen
+          example: "Query asks for explanation of programming concept (recursion)"
+        estimated_complexity:
+          type: string
+          enum: [simple, complex]
+          description: Estimated query complexity for SLA tracking
+          example: "simple"
+        processing_time_ms:
+          type: integer
+          description: Time taken to analyze query (milliseconds)
+          example: 450
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+          example: "healthy"
+        uptime_seconds:
+          type: integer
+          description: Service uptime in seconds
+          example: 3600
+        version:
+          type: string
+          description: Service version (Git SHA)
+          example: "1.0.0"
+
+    ReadinessResponse:
+      type: object
+      required:
+        - ready
+        - kafka_connected
+        - dapr_connected
+      properties:
+        ready:
+          type: boolean
+          description: Overall readiness status
+          example: true
+        kafka_connected:
+          type: boolean
+          description: Kafka broker connectivity
+          example: true
+        dapr_connected:
+          type: boolean
+          description: Dapr sidecar connectivity
+          example: true
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: "INVALID_REQUEST"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Query text cannot be empty"
+        details:
+          type: object
+          description: Additional error context
+          additionalProperties: true
+
+tags:
+  - name: Query Analysis
+    description: Intent classification and routing operations
+  - name: Health
+    description: Service health and readiness checks
+  - name: Observability
+    description: Metrics and monitoring endpoints

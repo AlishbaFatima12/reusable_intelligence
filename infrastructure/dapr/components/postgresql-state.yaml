@@ -1,0 +1,22 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: statestore
+spec:
+  type: state.postgresql
+  version: v1
+  metadata:
+    - name: connectionString
+      value: "host=localhost user=learnflow_user password=learnflow_password dbname=learnflow port=5432 sslmode=disable"
+    - name: tableName
+      value: "state"
+    - name: metadataTableName
+      value: "state_metadata"
+    - name: cleanupIntervalInSeconds
+      value: "3600"  # 1 hour
+    - name: maxIdleTimeInSeconds
+      value: "3600"
+scopes:
+  - concepts
+  - progress
+  - triage

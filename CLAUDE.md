@@ -212,6 +212,8 @@ See `.specify/memory/constitution.md` for code quality, testing, performance, se
 ## Active Technologies
 - Python 3.11+ (for static analysis via AST parsing) (001-agents-md-gen)
 - N/A (skill generates markdown files, no persistent storage) (001-agents-md-gen)
+- Python 3.11+ (backend agents), TypeScript 5.3+ (frontend) (002-learnflow-platform)
+- PostgreSQL 15+ via Dapr state store component (state.postgresql) (002-learnflow-platform)
 
 ## Recent Changes
 - 001-agents-md-gen: Added Python 3.11+ (for static analysis via AST parsing)

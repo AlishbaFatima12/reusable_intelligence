@@ -1,0 +1,120 @@
+openapi: 3.0.3
+info:
+  title: Debug Agent API
+  description: Error diagnosis and debugging assistance using Claude API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8004
+    description: Local development
+  - url: http://debug-service:8004
+    description: Kubernetes cluster
+
+paths:
+  /diagnose:
+    post:
+      summary: Diagnose code errors
+      description: Analyzes code and error messages to identify root cause and suggest fixes
+      operationId: diagnoseError
+      tags:
+        - Debugging
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiagnosisRequest'
+            examples:
+              index_error:
+                summary: IndexError diagnosis
+                value:
+                  query_id: "880e8400-e29b-41d4-a716-446655440003"
+                  student_id: "student_101"
+                  code: "my_list = [1, 2, 3]\nprint(my_list[5])"
+                  error_message: "IndexError: list index out of range"
+                  language: "python"
+      responses:
+        '200':
+          description: Diagnosis completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagnosisResponse'
+
+  /health:
+    get:
+      summary: Health check
+      tags: [Health]
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+
+components:
+  schemas:
+    DiagnosisRequest:
+      type: object
+      required:
+        - query_id
+        - student_id
+        - code
+        - error_message
+      properties:
+        query_id:
+          type: string
+          format: uuid
+        student_id:
+          type: string
+        code:
+          type: string
+          maxLength: 10000
+        error_message:
+          type: string
+          description: Error message or stack trace
+        language:
+          type: string
+          enum: [python, javascript, java, cpp]
+          default: "python"
+        context:
+          type: object
+          description: Additional debugging context
+          additionalProperties: true
+
+    DiagnosisResponse:
+      type: object
+      required:
+        - query_id
+        - root_cause
+        - suggested_fix
+      properties:
+        query_id:
+          type: string
+          format: uuid
+        root_cause:
+          type: string
+          description: Explanation of what caused the error
+          example: "You're trying to access index 5, but the list only has 3 elements (indices 0-2)"
+        suggested_fix:
+          type: string
+          description: How to fix the error
+          example: "Check the list length before accessing: if len(my_list) > 5: print(my_list[5])"
+        corrected_code:
+          type: string
+          description: Fixed version of the code
+        explanation:
+          type: string
+          description: Educational explanation of the error type
+        related_concepts:
+          type: array
+          items:
+            type: string
+          example:
+            - "list indexing"
+            - "zero-based indexing"
+        processing_time_ms:
+          type: integer
