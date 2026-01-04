@@ -295,15 +295,15 @@ curl -X POST http://localhost:8001/analyze \
 
 ### Implementation
 
-- [ ] T128 [P] Create mystery-skils-app-ui/app/api/mastery/route.ts with GET endpoint fetching from Progress Tracker (http://localhost:8006/mastery/{student_id})
-- [ ] T129 [P] Create mystery-skils-app-ui/lib/api/progressClient.ts with fetch wrapper for Progress Tracker API
-- [ ] T130 Update mystery-skils-app-ui/lib/hooks/useMasteryState.ts to fetch from /api/mastery instead of simulated data
-- [ ] T131 Update backend/websocket-bridge/main.py to subscribe to mastery-updates and student-struggle Kafka topics
-- [ ] T132 Update backend/websocket-bridge/main.py to emit 'mastery-update' and 'student-struggle' events to Socket.io
-- [ ] T133 Update mystery-skils-app-ui/components/ui/MasterySphere.tsx to listen for mastery-update Socket.io events
-- [ ] T134 Update mystery-skils-app-ui/components/ui/TeacherHUD.tsx to listen for student-struggle Socket.io events
-- [ ] T135 Update backend/agents/progress/services/tracker.py to publish mastery-updates to Kafka when progress changes
-- [ ] T136 Update backend/agents/progress/routes.py POST /struggle-detection to publish student-struggle events when failedRuns >= 5
+- [x] T128 [P] Create mystery-skils-app-ui/app/api/mastery/route.ts with GET endpoint fetching from Progress Tracker (http://localhost:8006/mastery/{student_id})
+- [x] T129 [P] Create mystery-skils-app-ui/lib/api/progressClient.ts with fetch wrapper for Progress Tracker API
+- [x] T130 Update mystery-skils-app-ui/lib/hooks/useMasteryState.ts to fetch from /api/mastery instead of simulated data
+- [x] T131 Update backend/websocket-bridge/main.py to subscribe to mastery-updates and student-struggle Kafka topics (already implemented)
+- [x] T132 Update backend/websocket-bridge/main.py to emit 'mastery-update' and 'student-struggle' events to Socket.io (already implemented)
+- [x] T133 Update mystery-skils-app-ui/components/ui/MasterySphere.tsx to listen for mastery-update Socket.io events (superseded by app/page.tsx)
+- [x] T134 Update mystery-skils-app-ui/components/ui/TeacherHUD.tsx to listen for student-struggle Socket.io events (superseded by app/page.tsx)
+- [x] T135 Update backend/agents/progress/services/tracker.py to publish mastery-updates to Kafka when progress changes (already implemented)
+- [x] T136 Update backend/agents/progress/routes.py POST /struggle-detection to publish student-struggle events when failedRuns >= 5 (already implemented)
 
 **Checkpoint**: Mystery Skills UI is now fully connected to backend - real-time mastery tracking and struggle detection working
 
