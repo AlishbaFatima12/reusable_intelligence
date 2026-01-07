@@ -59,39 +59,42 @@ class ProgressTracker:
         # Find or create topic mastery entry
         topic_mastery = None
         for tm in student_state.progress.topic_mastery:
-            if tm.topic == topic_normalized:
+            if tm.topic_name == topic_normalized:
                 topic_mastery = tm
                 break
 
         if not topic_mastery:
             # Create new topic mastery entry
             topic_mastery = TopicMastery(
-                topic=topic_normalized,
-                mastery_level=0.0,
-                interactions_count=0
+                topic_name=topic_normalized,
+                mastery_percentage=0.0,
+                exercises_completed=0
             )
             student_state.progress.topic_mastery.append(topic_mastery)
 
         # Update interaction count
-        topic_mastery.interactions_count += 1
+        topic_mastery.exercises_completed += 1
 
         # Calculate mastery delta based on interaction type and success
+        # Convert mastery_percentage (0-100) to 0-1 scale for calculation
+        current_mastery = topic_mastery.mastery_percentage / 100.0
         mastery_delta = self._calculate_mastery_delta(
             interaction_type=interaction_type,
             success=success,
-            current_mastery=topic_mastery.mastery_level
+            current_mastery=current_mastery
         )
 
-        # Update mastery level (clamped between 0.0 and 1.0)
-        topic_mastery.mastery_level = max(0.0, min(1.0, topic_mastery.mastery_level + mastery_delta))
+        # Update mastery level (clamped between 0.0 and 100.0)
+        new_mastery = max(0.0, min(1.0, current_mastery + mastery_delta))
+        topic_mastery.mastery_percentage = new_mastery * 100.0
 
         # Check if student is struggling with this topic
-        if topic_mastery.mastery_level < self.STRUGGLING_THRESHOLD:
+        if topic_mastery.mastery_percentage / 100.0 < self.STRUGGLING_THRESHOLD:
             if topic_normalized not in student_state.struggling_topics:
                 student_state.struggling_topics.append(topic_normalized)
                 logger.warning(
                     f"Student {student_state.student_id} struggling with {topic_normalized}: "
-                    f"mastery={topic_mastery.mastery_level:.2f}"
+                    f"mastery={topic_mastery.mastery_percentage:.2f}%"
                 )
         else:
             # Remove from struggling list if mastery improved
@@ -108,7 +111,7 @@ class ProgressTracker:
 
         logger.info(
             f"Updated mastery: student={student_state.student_id}, topic={topic_normalized}, "
-            f"mastery={topic_mastery.mastery_level:.2f}, overall={student_state.progress.overall_mastery:.2f}"
+            f"mastery={topic_mastery.mastery_percentage:.2f}%, overall={student_state.progress.overall_mastery:.2f}"
         )
 
         return student_state
@@ -134,14 +137,14 @@ class ProgressTracker:
 
         # Find topics near mastery (70-80%)
         near_mastery_topics = [
-            tm.topic for tm in student_state.progress.topic_mastery
-            if 0.7 <= tm.mastery_level < self.MASTERY_THRESHOLD
+            tm.topic_name for tm in student_state.progress.topic_mastery
+            if 70.0 <= tm.mastery_percentage < self.MASTERY_THRESHOLD * 100.0
         ]
         if near_mastery_topics:
             return near_mastery_topics[0]
 
         # Find next unstarted topic in curriculum order
-        started_topics = {tm.topic for tm in student_state.progress.topic_mastery}
+        started_topics = {tm.topic_name for tm in student_state.progress.topic_mastery}
         for topic in self.CURRICULUM_TOPICS:
             if topic not in started_topics:
                 return topic
@@ -150,9 +153,9 @@ class ProgressTracker:
         if student_state.progress.topic_mastery:
             lowest_mastery = min(
                 student_state.progress.topic_mastery,
-                key=lambda tm: tm.mastery_level
+                key=lambda tm: tm.mastery_percentage
             )
-            return lowest_mastery.topic
+            return lowest_mastery.topic_name
 
         # Default to first topic
         return self.CURRICULUM_TOPICS[0]
@@ -205,7 +208,8 @@ class ProgressTracker:
         if not topic_mastery_list:
             return 0.0
 
-        total_mastery = sum(tm.mastery_level for tm in topic_mastery_list)
+        # Convert mastery_percentage (0-100) to 0-1 scale and average
+        total_mastery = sum(tm.mastery_percentage / 100.0 for tm in topic_mastery_list)
         return total_mastery / len(topic_mastery_list)
 
     def _normalize_topic(self, topic: str) -> str:

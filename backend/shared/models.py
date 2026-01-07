@@ -135,7 +135,7 @@ class TopicMastery(BaseModel):
 class LearningProgress(BaseModel):
     """Progress tracking for a student"""
     student_id: str
-    python_mastery_levels: List[TopicMastery] = Field(default_factory=list)
+    topic_mastery: List[TopicMastery] = Field(default_factory=list)
     overall_mastery: float = Field(default=0.0, ge=0.0, le=100.0)
     completed_exercises: int = Field(default=0, ge=0)
     topics_mastered: List[str] = Field(default_factory=list)

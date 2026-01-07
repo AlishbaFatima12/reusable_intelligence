@@ -1,4 +1,4 @@
-import type { Config } from 'tailwindcss';
+import type { Config } from 'tailwindcss'
 
 const config: Config = {
   content: [
@@ -9,20 +9,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'hacker-green': '#00ff41',
-        'hacker-cyan': '#00ffff',
-        'matrix-bg': '#0d1117',
-      },
-      fontFamily: {
-        mono: ['Courier New', 'monospace'],
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'spin-slow': 'spin 20s linear infinite',
+        'scan': 'scan 8s linear infinite',
       },
     },
   },
   plugins: [],
-};
-
-export default config;
+}
+export default config

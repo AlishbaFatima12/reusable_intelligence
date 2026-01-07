@@ -18,11 +18,12 @@ class RoutingPublisher:
 
     # Topic mapping based on intent
     TOPIC_MAP = {
-        IntentType.CONCEPT_EXPLANATION: "concepts-queries",
+        IntentType.CONCEPT: "concepts-queries",
         IntentType.CODE_REVIEW: "code-review-queries",
-        IntentType.DEBUGGING: "debug-queries",
-        IntentType.EXERCISE_REQUEST: "exercise-queries",
-        IntentType.GENERAL_QUESTION: "concepts-queries",  # Default
+        IntentType.DEBUG: "debug-queries",
+        IntentType.EXERCISE: "exercise-queries",
+        IntentType.PROGRESS: "progress-queries",
+        IntentType.UNCLEAR: "concepts-queries",  # Default to concepts for unclear intent
     }
 
     def __init__(self, kafka_bootstrap_servers: str):
@@ -81,15 +82,18 @@ class RoutingPublisher:
         """
         # Create Kafka message envelope
         envelope = KafkaMessageEnvelope(
+            trace_id=routing_decision.query_id,
             event_type=event_type,
-            service_name="triage-agent",
-            data={
+            payload={
                 "query_id": routing_decision.query_id,
                 "student_id": routing_decision.student_id,
                 "detected_intent": routing_decision.detected_intent.value,
                 "routed_to_agent": routing_decision.routed_to_agent,
                 "confidence_score": routing_decision.confidence_score,
                 "original_query": routing_decision.original_query.model_dump()
+            },
+            metadata={
+                "service_name": "triage-agent"
             }
         )
 

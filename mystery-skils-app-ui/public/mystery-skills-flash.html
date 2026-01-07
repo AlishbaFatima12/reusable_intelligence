@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MYSTERY SKILLS | Agentic Brutalism</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --obsidian: #010101;
+            --neon-teal: #00ffcc;
+            --neon-green: #39ff14;
+            --neon-blue: #00f0ff;
+            --neon-amber: #ffaa00;
+            --neon-red: #ff3131;
+            --glass-border: rgba(0, 255, 204, 0.3);
+            --glass-bg: rgba(1, 1, 1, 0.75);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: crosshair;
+        }
+
+        body {
+            background-color: var(--obsidian);
+            color: var(--neon-teal);
+            font-family: 'JetBrains Mono', monospace;
+            overflow-x: hidden;
+            scrollbar-width: none;
+        }
+
+        ::-webkit-scrollbar { display: none; }
+
+        /* Scanline Overlay */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0.3;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 255, 204, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: perspective(1000px) rotateX(2deg) rotateY(-2deg);
+            box-shadow: 0 12px 48px 0 rgba(0, 255, 204, 0.2);
+        }
+
+        .glitch-text {
+            text-shadow: 2px 0 var(--neon-red), -2px 0 var(--neon-blue);
+            animation: glitch 2s infinite;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 var(--neon-red), -2px 0 var(--neon-blue); }
+            50% { text-shadow: -2px 0 var(--neon-red), 2px 0 var(--neon-blue); }
+            100% { text-shadow: 2px 0 var(--neon-red), -2px 0 var(--neon-blue); }
+        }
+
+        .laser-btn {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            padding: 1rem 2rem;
+            background: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+            transition: 0.3s;
+        }
+
+        .laser-btn::after {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: var(--neon-green);
+            box-shadow: 0 0 15px var(--neon-green);
+            animation: scan 3s infinite linear;
+            opacity: 0.5;
+        }
+
+        @keyframes scan {
+            0% { top: -10%; }
+            100% { top: 110%; }
+        }
+
+        .skill-node {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--neon-teal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 255, 204, 0.1);
+        }
+
+        .data-packet {
+            width: 6px;
+            height: 6px;
+            background: var(--neon-teal);
+            border-radius: 50%;
+            position: absolute;
+            filter: blur(1px);
+            box-shadow: 0 0 8px var(--neon-teal);
+        }
+
+        .page {
+            display: none;
+            min-height: 100vh;
+            padding: 2rem;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .page.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Dashboard HUD elements */
+        .hud-ring {
+            stroke-dasharray: 440;
+            stroke-dashoffset: 440;
+            transition: stroke-dashoffset 2s ease-out;
+            transform: rotate(-90deg);
+            transform-origin: center;
+        }
+
+        .terminal-scroll {
+            font-size: 0.75rem;
+            color: var(--neon-green);
+            height: 200px;
+            overflow-y: auto;
+        }
+
+        .struggle-alert {
+            animation: alert-pulse 1s infinite;
+        }
+
+        @keyframes alert-pulse {
+            0%, 100% { background: rgba(255, 170, 0, 0.1); border-color: var(--neon-amber); }
+            50% { background: rgba(255, 49, 49, 0.3); border-color: var(--neon-red); transform: scale(1.02); }
+        }
+
+        .heartbeat {
+            animation: heart 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heart {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+        }
+
+        #three-hero-container, #three-dashboard-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="scanlines"></div>
+
+<!-- PAGE 1: HERO LANDING -->
+<section id="landing" class="page active relative flex flex-col items-center justify-center">
+    <div id="three-hero-container"></div>
+
+    <div class="z-10 text-center space-y-8 max-w-5xl">
+        <div class="inline-block px-4 py-1 border border-teal-500 text-xs tracking-widest mb-4 opacity-70">
+            SECURE ACCESS PROTOCOL // SYEDA ALISHBA FATIMA
+        </div>
+        <h1 class="text-6xl md:text-8xl font-black leading-none uppercase glitch-text">
+            Initializing<br>The Learning<br>Revolution
+        </h1>
+
+        <div class="flex justify-center items-center gap-12 py-12">
+            <div class="skill-node" title="Claude Code">C</div>
+            <div class="relative w-48 h-1 bg-teal-900/30">
+                <div class="data-packet" style="animation: packetMove 2s infinite linear;"></div>
+            </div>
+            <div class="skill-node" title="Goose">G</div>
+            <div class="relative w-48 h-1 bg-teal-900/30">
+                <div class="data-packet" style="animation: packetMove 2s infinite linear 0.5s;"></div>
+            </div>
+            <div class="skill-node" title="K8s">K</div>
+        </div>
+
+        <button onclick="showPage('auth')" class="laser-btn text-xl px-12 mt-8">
+            Verify Clearance
+        </button>
+    </div>
+
+    <div class="absolute bottom-8 left-8 text-[10px] opacity-40 uppercase tracking-tighter">
+        Aesthetic: Agentic Brutalism 2025<br>
+        Backend: LearnFlow (Triage + Concepts + Progress)<br>
+        Status: <span id="backend-status">Checking...</span>
+    </div>
+</section>
+
+<!-- PAGE 2: SECURITY HANDSHAKE -->
+<section id="auth" class="page flex items-center justify-center bg-[#010101]">
+    <div class="glass-card p-12 w-full max-w-2xl">
+        <div class="flex justify-between items-center mb-10">
+            <h2 class="text-2xl font-bold tracking-widest text-white uppercase">Identity Check</h2>
+            <div class="flex items-center gap-4">
+                <span class="text-[10px] opacity-50">STUDENT</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="roleToggle" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+                </label>
+                <span class="text-[10px] opacity-50">TEACHER</span>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="border-b border-teal-900 focus-within:border-teal-400 transition">
+                <label class="block text-[10px] mb-1 opacity-50">ACCESS_KEY</label>
+                <input type="password" placeholder="••••••••••••" class="w-full bg-transparent border-none outline-none text-teal-400 font-mono py-2">
+            </div>
+
+            <div id="handshakeLogs" class="terminal-scroll p-4 bg-black/40 border border-teal-950 rounded hidden">
+                <!-- Log entries injected here -->
+            </div>
+
+            <button onclick="startHandshake()" class="w-full py-4 border border-teal-500 hover:bg-teal-500/10 transition text-sm tracking-[0.5em] font-bold">
+                ESTABLISH_CONNECTION
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- PAGE 3: COMMAND & CONTROL DASHBOARD -->
+<section id="dashboard" class="page">
+    <div class="grid grid-cols-12 gap-6 h-[calc(100vh-4rem)]">
+
+        <!-- Left: Skill Vault -->
+        <div class="col-span-3 flex flex-col gap-6">
+            <div class="glass-card p-6 flex-1">
+                <h3 class="text-xs font-bold mb-6 tracking-widest border-b border-teal-900 pb-2">LEARNFLOW_AGENTS</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-3 border border-teal-900/50 bg-teal-900/10">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-green-500 heartbeat" id="triage-heartbeat"></div>
+                            <span class="text-xs">triage-agent</span>
+                        </div>
+                        <span class="text-[10px] opacity-50" id="triage-port">:8001</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 border border-teal-900/50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-green-500 heartbeat" id="concepts-heartbeat"></div>
+                            <span class="text-xs">concepts-agent</span>
+                        </div>
+                        <span class="text-[10px] opacity-50" id="concepts-port">:8002</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 border border-teal-900/50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-blue-500 heartbeat" id="progress-heartbeat"></div>
+                            <span class="text-xs">progress-tracker</span>
+                        </div>
+                        <span class="text-[10px] opacity-50" id="progress-port">:8006</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teacher Console Alert -->
+            <div id="struggleConsole" class="glass-card p-6 struggle-alert hidden">
+                <h3 class="text-xs font-bold text-amber-500 mb-2">!! STRUGGLE DETECTED !!</h3>
+                <p class="text-[10px] text-white opacity-80 mb-4" id="struggle-message">Analyzing student performance...</p>
+                <button class="w-full py-2 bg-amber-600 text-black text-[10px] font-bold">GENERATE_PRACTICE_SET</button>
+            </div>
+        </div>
+
+        <!-- Center: Neural Sphere HUD -->
+        <div class="col-span-6 glass-card relative overflow-hidden flex items-center justify-center">
+            <div id="three-dashboard-container"></div>
+            <div class="absolute inset-0 pointer-events-none p-8 flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <div class="text-[10px] leading-tight">
+                        NODE: ALISHBA_MAIN<br>
+                        ARCH: LEARNFLOW_v1<br>
+                        OS: MYSTERY_SKILLS
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-black" id="global-mastery">0%</div>
+                        <div class="text-[8px] opacity-50 tracking-widest uppercase">Global Mastery</div>
+                    </div>
+                </div>
+                <div class="flex justify-center gap-2" id="mastery-bars">
+                    <div class="h-1 w-8 bg-gray-700"></div>
+                    <div class="h-1 w-8 bg-gray-700"></div>
+                    <div class="h-1 w-8 bg-gray-700"></div>
+                    <div class="h-1 w-8 bg-gray-700"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Agent Bridge -->
+        <div class="col-span-3 flex flex-col gap-6">
+            <div class="glass-card p-4 flex-1 flex flex-col">
+                <h3 class="text-xs font-bold mb-4 tracking-widest">AGENT_BRIDGE_TRIAGE</h3>
+                <div id="agent-logs" class="flex-1 overflow-y-auto font-mono text-[10px] space-y-2 pr-2">
+                    <div class="text-teal-500">triage@alishba-k:~$ <span class="text-white">initializing...</span></div>
+                </div>
+                <div class="mt-4 flex gap-2">
+                    <span class="text-teal-500">></span>
+                    <input type="text" id="agent-input" class="bg-transparent border-none outline-none w-full text-[10px] text-white" placeholder="Ask Triage Agent...">
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom: Code Editor -->
+        <div class="col-span-12 glass-card p-4 h-[300px] flex gap-4">
+            <div class="flex-1 flex flex-col">
+                <div class="flex justify-between items-center mb-2 px-2">
+                    <span class="text-[10px] opacity-50">main.py - LearnFlow Agent Integration</span>
+                    <button class="bg-teal-500 text-black px-4 py-1 text-[10px] font-bold hover:bg-white transition">TEST AGENTS</button>
+                </div>
+                <div class="flex-1 bg-black/60 p-4 rounded border border-teal-900/30 font-mono text-xs overflow-hidden">
+                    <div class="text-blue-400">import</div> <div class="inline text-white">requests</div><br>
+                    <br>
+                    <div class="text-gray-500"># LearnFlow Agent Endpoints</div><br>
+                    <div class="text-white">triage = <span class="text-green-400">"http://localhost:8001"</span></div><br>
+                    <div class="text-white">concepts = <span class="text-green-400">"http://localhost:8002"</span></div><br>
+                    <div class="text-white">progress = <span class="text-green-400">"http://localhost:8006"</span></div><br>
+                    <br>
+                    <div class="text-gray-500"># Fetch student mastery</div><br>
+                    <div class="text-white">r = requests.get(<span class="text-green-400">f"{progress}/progress/demo-student-001"</span>)</div><br>
+                    <div class="text-white">print(<span class="text-green-400">f"Mastery: {r.json()}"</span>)</div>
+                </div>
+            </div>
+            <div class="w-1/3 bg-black p-4 font-mono text-[9px] text-green-500 overflow-y-auto border border-white/5" id="console-output">
+                <div class="opacity-50 mb-2">CONSOLE: [OUTPUT]</div>
+                <div>Waiting for backend connection...</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    // Navigation Logic
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        if (pageId === 'dashboard') {
+            initDashboardThree();
+            fetchMasteryData();
+            startAgentLogStream();
+        }
+    }
+
+    // Backend Health Check
+    async function checkBackendHealth() {
+        try {
+            const response = await fetch('http://localhost:8006/health');
+            if (response.ok) {
+                document.getElementById('backend-status').textContent = 'OPERATIONAL';
+                document.getElementById('backend-status').style.color = 'var(--neon-green)';
+                return true;
+            }
+        } catch (error) {
+            document.getElementById('backend-status').textContent = 'OFFLINE';
+            document.getElementById('backend-status').style.color = 'var(--neon-red)';
+        }
+        return false;
+    }
+
+    // Fetch Mastery Data from Progress Agent
+    async function fetchMasteryData() {
+        try {
+            const response = await fetch('http://localhost:8006/api/v1/mastery/demo-student-001');
+            const data = await response.json();
+
+            // Update global mastery
+            const overall = Math.round(data.overall_mastery * 100);
+            document.getElementById('global-mastery').textContent = overall + '%';
+
+            // Update mastery bars
+            const barsContainer = document.getElementById('mastery-bars');
+            barsContainer.innerHTML = '';
+
+            data.topic_mastery.slice(0, 4).forEach(topic => {
+                const percent = topic.mastery_percentage;
+                const color = percent >= 70 ? '#39ff14' : percent >= 40 ? '#ffaa00' : '#ff3131';
+                const bar = document.createElement('div');
+                bar.className = 'h-1 w-8';
+                bar.style.backgroundColor = color;
+                barsContainer.appendChild(bar);
+            });
+
+            // Log to console
+            const consoleOutput = document.getElementById('console-output');
+            consoleOutput.innerHTML = `<div class="opacity-50 mb-2">CONSOLE: [OUTPUT]</div>`;
+            data.topic_mastery.forEach(topic => {
+                const percent = Math.round(topic.mastery_percentage);
+                const color = percent >= 70 ? '#39ff14' : percent >= 40 ? '#ffaa00' : '#ff3131';
+                const line = document.createElement('div');
+                line.className = 'mb-1';
+                line.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-teal-400">${topic.topic_name.toUpperCase().replace(/-/g, ' ')}</span>
+                        <span style="color: ${color}" class="font-bold">${percent}%</span>
+                    </div>
+                    <div class="w-full bg-gray-800 h-1 mt-1">
+                        <div style="width: ${percent}%; background-color: ${color}" class="h-1"></div>
+                    </div>
+                `;
+                consoleOutput.appendChild(line);
+            });
+
+        } catch (error) {
+            console.error('Failed to fetch mastery data:', error);
+            document.getElementById('console-output').innerHTML = '<div class="text-red-500">Backend connection failed</div>';
+        }
+    }
+
+    // Stream Agent Logs
+    function startAgentLogStream() {
+        const logsContainer = document.getElementById('agent-logs');
+
+        // Simulated log stream (replace with WebSocket for real-time)
+        const logs = [
+            'triage@alishba-k:~$ incoming payload from node',
+            '[SUCCESS] Kafka: message acknowledged',
+            'triage@alishba-k:~$ classify --topic=python-fundamentals',
+            '[SUCCESS] Intent: CONCEPT | Confidence: 0.94',
+            '[SUCCESS] Routing to concepts-agent:8002'
+        ];
+
+        logs.forEach((log, i) => {
+            setTimeout(() => {
+                const div = document.createElement('div');
+                div.className = log.includes('[SUCCESS]') ? 'text-green-500' : 'text-teal-500';
+                div.innerHTML = log.includes('triage@')
+                    ? `<span class="text-teal-500">${log.split('$')[0]}$</span> <span class="text-white">${log.split('$')[1]}</span>`
+                    : log;
+                logsContainer.appendChild(div);
+                logsContainer.scrollTop = logsContainer.scrollHeight;
+            }, i * 500);
+        });
+    }
+
+    // Handshake Animation
+    function startHandshake() {
+        const logs = document.getElementById('handshakeLogs');
+        const role = document.getElementById('roleToggle').checked ? 'TEACHER' : 'STUDENT';
+        logs.classList.remove('hidden');
+        const lines = [
+            "[SUCCESS] Connecting to LearnFlow Backend...",
+            "[SUCCESS] Triage Agent: HEALTHY (port 8001)",
+            "[SUCCESS] Concepts Agent: HEALTHY (port 8002)",
+            "[SUCCESS] Progress Tracker: HEALTHY (port 8006)",
+            `[SUCCESS] Identity Verified: ${role}_NODE_PRIMARY`,
+            "Handshake Complete. Loading HUD..."
+        ];
+
+        lines.forEach((line, i) => {
+            setTimeout(() => {
+                const div = document.createElement('div');
+                div.textContent = line;
+                logs.appendChild(div);
+                logs.scrollTop = logs.scrollHeight;
+                if (i === lines.length - 1) {
+                    setTimeout(() => {
+                        showPage('dashboard');
+                        if (role === 'TEACHER') {
+                            document.getElementById('struggleConsole').classList.remove('hidden');
+                        }
+                    }, 1000);
+                }
+            }, i * 400);
+        });
+    }
+
+    // THREE.JS IMPLEMENTATIONS
+    let heroScene, heroCamera, heroRenderer, heroMesh;
+    function initHeroThree() {
+        heroScene = new THREE.Scene();
+        heroCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        heroRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        heroRenderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('three-hero-container').appendChild(heroRenderer.domElement);
+
+        const geometry = new THREE.IcosahedronGeometry(2, 2);
+        const material = new THREE.MeshBasicMaterial({
+            color: 0x00ffcc,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3
+        });
+        heroMesh = new THREE.Mesh(geometry, material);
+        heroScene.add(heroMesh);
+
+        const pointsGeom = new THREE.IcosahedronGeometry(2.1, 3);
+        const pointsMat = new THREE.PointsMaterial({ color: 0x00ffcc, size: 0.05 });
+        const points = new THREE.Points(pointsGeom, pointsMat);
+        heroScene.add(points);
+
+        heroCamera.position.z = 5;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            heroMesh.rotation.y += 0.005;
+            heroMesh.rotation.x += 0.002;
+            points.rotation.y -= 0.003;
+            heroRenderer.render(heroScene, heroCamera);
+        }
+        animate();
+    }
+
+    let dashScene, dashCamera, dashRenderer;
+    function initDashboardThree() {
+        if (dashRenderer) return;
+        const container = document.getElementById('three-dashboard-container');
+        dashScene = new THREE.Scene();
+        dashCamera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        dashRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        dashRenderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(dashRenderer.domElement);
+
+        const group = new THREE.Group();
+        const colors = [0xff3131, 0xffaa00, 0x39ff14, 0x00f0ff, 0x00ffcc, 0x00f0ff, 0x39ff14, 0x39ff14];
+
+        for (let i = 0; i < 8; i++) {
+            const ringGeom = new THREE.TorusGeometry(1.5 + (i * 0.2), 0.01, 16, 100);
+            const ringMat = new THREE.MeshBasicMaterial({ color: colors[i], transparent: true, opacity: 0.5 });
+            const ring = new THREE.Mesh(ringGeom, ringMat);
+            ring.rotation.x = Math.random() * Math.PI;
+            ring.rotation.y = Math.random() * Math.PI;
+            group.add(ring);
+        }
+
+        dashScene.add(group);
+        dashCamera.position.z = 5;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            group.rotation.y += 0.01;
+            group.rotation.x += 0.005;
+            dashRenderer.render(dashScene, dashCamera);
+        }
+        animate();
+    }
+
+    document.addEventListener('mousemove', (e) => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 20;
+        const y = (e.clientY / window.innerHeight - 0.5) * 20;
+        if (heroMesh) {
+            heroMesh.rotation.y = x * 0.1;
+            heroMesh.rotation.x = y * 0.1;
+        }
+    });
+
+    window.onload = () => {
+        initHeroThree();
+        checkBackendHealth();
+        setInterval(checkBackendHealth, 10000);
+    };
+
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes packetMove {
+            0% { left: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { left: 100%; opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+</body>
+</html>

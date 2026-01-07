@@ -113,13 +113,17 @@ async def explain_concept(request: ConceptExplanationRequest):
 
         # Publish response to Kafka
         envelope = KafkaMessageEnvelope(
+            trace_id=request.query_id,
             event_type="concept_explained",
-            service_name="concepts-agent",
-            data={
+            payload={
                 "query_id": request.query_id,
                 "student_id": request.student_id,
                 "concept": request.concept,
                 "response": response.model_dump()
+            },
+            metadata={
+                "service_name": "concepts-agent",
+                "processing_time_ms": processing_time
             }
         )
 

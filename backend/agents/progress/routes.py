@@ -117,16 +117,18 @@ async def update_mastery(student_id: str, request: MasteryRequest):
         state_manager.save_student_progress(student_state)
 
         # Publish progress update to Kafka
+        from uuid import uuid4
         envelope = KafkaMessageEnvelope(
+            trace_id=str(uuid4()),
             event_type="progress_updated",
-            service_name="progress-tracker-agent",
-            data={
+            payload={
                 "student_id": student_id,
                 "topic": request.topic,
                 "old_mastery": old_overall_mastery,
                 "new_mastery": student_state.progress.overall_mastery,
                 "struggling_topics": student_state.struggling_topics
-            }
+            },
+            metadata={"service_name": "progress-tracker-agent"}
         )
 
         kafka_publisher.publish(
@@ -208,15 +210,17 @@ async def detect_struggle(request: StruggleDetectionRequest):
 
         # If struggling, publish alert to Kafka
         if struggle_data.get("is_struggling", False):
+            from uuid import uuid4
             envelope = KafkaMessageEnvelope(
+                trace_id=str(uuid4()),
                 event_type="student_struggling",
-                service_name="progress-tracker-agent",
-                data={
+                payload={
                     "student_id": request.student_id,
                     "confidence": struggle_data.get("confidence", 0.0),
                     "indicators": struggle_data.get("struggle_indicators", []),
                     "interventions": struggle_data.get("suggested_interventions", [])
-                }
+                },
+                metadata={"service_name": "progress-tracker-agent"}
             )
 
             kafka_publisher.publish(

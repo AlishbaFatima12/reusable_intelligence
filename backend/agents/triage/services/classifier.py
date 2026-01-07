@@ -21,19 +21,22 @@ class IntentClassifier:
 
 Your task is to analyze student queries and classify their intent into one of these categories:
 
-1. **CONCEPT_EXPLANATION**: Student wants to understand a programming concept
+1. **CONCEPT**: Student wants to understand a programming concept
    - Examples: "What is recursion?", "Explain how decorators work"
 
 2. **CODE_REVIEW**: Student wants feedback on their code
    - Examples: "Is this code correct?", "How can I improve this function?"
 
-3. **DEBUGGING**: Student has an error or bug to fix
+3. **DEBUG**: Student has an error or bug to fix
    - Examples: "Why am I getting IndexError?", "My code doesn't run"
 
-4. **EXERCISE_REQUEST**: Student wants practice problems
+4. **EXERCISE**: Student wants practice problems
    - Examples: "Give me a problem on loops", "I need practice with lists"
 
-5. **GENERAL_QUESTION**: General question about programming or learning
+5. **PROGRESS**: Student asking about their learning progress
+   - Examples: "How am I doing?", "What have I mastered?"
+
+6. **UNCLEAR**: General or unclear question about programming
    - Examples: "What should I learn next?", "How long does it take to learn Python?"
 
 Respond with a JSON object containing:
@@ -50,11 +53,12 @@ Respond with a JSON object containing:
 }
 
 Agent routing rules:
-- CONCEPT_EXPLANATION → "concepts-agent"
+- CONCEPT → "concepts-agent"
 - CODE_REVIEW → "code-review-agent"
-- DEBUGGING → "debug-agent"
-- EXERCISE_REQUEST → "exercise-generator-agent"
-- GENERAL_QUESTION → "concepts-agent" (default)
+- DEBUG → "debug-agent"
+- EXERCISE → "exercise-generator-agent"
+- PROGRESS → "progress-tracker-agent"
+- UNCLEAR → "concepts-agent" (default)
 """
 
     def __init__(self, claude_client: ClaudeClient):
@@ -107,12 +111,12 @@ Agent routing rules:
             classification = json.loads(response_text)
 
             # Validate and normalize intent
-            intent_str = classification.get("intent", "GENERAL_QUESTION").upper()
+            intent_str = classification.get("intent", "unclear").lower()
             try:
                 intent = IntentType(intent_str)
             except ValueError:
-                logger.warning(f"Unknown intent '{intent_str}', defaulting to GENERAL_QUESTION")
-                intent = IntentType.GENERAL_QUESTION
+                logger.warning(f"Unknown intent '{intent_str}', defaulting to UNCLEAR")
+                intent = IntentType.UNCLEAR
 
             return {
                 "intent": intent,
@@ -147,19 +151,22 @@ Agent routing rules:
 
         # Rule-based classification
         if any(word in query_lower for word in ["error", "bug", "wrong", "doesn't work", "traceback"]):
-            intent = IntentType.DEBUGGING
+            intent = IntentType.DEBUG
             agent = "debug-agent"
         elif any(word in query_lower for word in ["review", "feedback", "improve", "check my code"]):
             intent = IntentType.CODE_REVIEW
             agent = "code-review-agent"
         elif any(word in query_lower for word in ["practice", "exercise", "problem", "challenge"]):
-            intent = IntentType.EXERCISE_REQUEST
+            intent = IntentType.EXERCISE
             agent = "exercise-generator-agent"
+        elif any(word in query_lower for word in ["progress", "how am i doing", "mastered", "struggling"]):
+            intent = IntentType.PROGRESS
+            agent = "progress-tracker-agent"
         elif any(word in query_lower for word in ["what is", "explain", "how does", "why"]):
-            intent = IntentType.CONCEPT_EXPLANATION
+            intent = IntentType.CONCEPT
             agent = "concepts-agent"
         else:
-            intent = IntentType.GENERAL_QUESTION
+            intent = IntentType.UNCLEAR
             agent = "concepts-agent"
 
         logger.info(f"Used fallback classification: {intent.value} -> {agent}")

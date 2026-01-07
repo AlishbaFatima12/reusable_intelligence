@@ -1,19 +1,21 @@
-import type { Metadata } from 'next';
-import './globals.css';
+import type { Metadata } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Mystery Skills - LearnFlow Platform',
-  description: '3D Learning Mastery Visualization with AI Agent Monitoring',
-};
+  title: 'Mystery Skills - 3D Learning Mastery Platform',
+  description: 'Real-time visualization of student learning progress with AI agent monitoring',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en">
-      <body className="bg-matrix-bg text-white antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+      </body>
     </html>
-  );
+  )
 }
