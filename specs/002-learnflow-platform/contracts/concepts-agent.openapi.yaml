@@ -1,0 +1,193 @@
+openapi: 3.0.3
+info:
+  title: Concepts Agent API
+  description: Programming concept explanation service powered by Claude API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8002
+    description: Local development
+  - url: http://concepts-service:8002
+    description: Kubernetes cluster
+
+paths:
+  /explain:
+    post:
+      summary: Explain a programming concept
+      description: |
+        Receives a concept query from Kafka topic (via Triage Agent) or direct API call,
+        uses Claude API to generate clear explanation with code examples, and returns response.
+      operationId: explainConcept
+      tags:
+        - Concept Explanation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConceptExplanationRequest'
+            examples:
+              recursion:
+                summary: Explain recursion
+                value:
+                  query_id: "550e8400-e29b-41d4-a716-446655440000"
+                  student_id: "student_123"
+                  concept: "recursion"
+                  detail_level: "beginner"
+              list_vs_tuple:
+                summary: Difference between list and tuple
+                value:
+                  query_id: "660e8400-e29b-41d4-a716-446655440001"
+                  student_id: "student_456"
+                  concept: "list vs tuple"
+                  detail_level: "intermediate"
+                  include_code_examples: true
+      responses:
+        '200':
+          description: Explanation generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConceptExplanationResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Claude API error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+
+  /ready:
+    get:
+      summary: Readiness check
+      operationId: readinessCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ready:
+                    type: boolean
+                    example: true
+                  kafka_connected:
+                    type: boolean
+                    example: true
+
+components:
+  schemas:
+    ConceptExplanationRequest:
+      type: object
+      required:
+        - query_id
+        - student_id
+        - concept
+      properties:
+        query_id:
+          type: string
+          format: uuid
+        student_id:
+          type: string
+        concept:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Concept to explain
+          example: "recursion"
+        detail_level:
+          type: string
+          enum: [beginner, intermediate, advanced]
+          default: "beginner"
+        include_code_examples:
+          type: boolean
+          default: true
+        context:
+          type: object
+          description: Student's prior knowledge
+          additionalProperties: true
+
+    ConceptExplanationResponse:
+      type: object
+      required:
+        - query_id
+        - explanation
+      properties:
+        query_id:
+          type: string
+          format: uuid
+        explanation:
+          type: string
+          description: Plain text explanation
+          example: "Recursion is when a function calls itself..."
+        code_examples:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              explanation:
+                type: string
+          example:
+            - code: "def factorial(n):\n    if n == 0: return 1\n    return n * factorial(n-1)"
+              explanation: "Classic recursive factorial implementation"
+        key_points:
+          type: array
+          items:
+            type: string
+          example:
+            - "Base case prevents infinite recursion"
+            - "Recursive case breaks problem into smaller subproblem"
+        related_concepts:
+          type: array
+          items:
+            type: string
+          example:
+            - "iteration"
+            - "stack frames"
+        processing_time_ms:
+          type: integer
+          example: 1200
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.92
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string

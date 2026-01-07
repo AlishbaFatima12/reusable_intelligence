@@ -1,0 +1,284 @@
+openapi: 3.0.3
+info:
+  title: Progress Tracker API
+  description: Learning analytics and mastery tracking service
+  version: 1.0.0
+servers:
+  - url: http://localhost:8006
+    description: Local development
+  - url: http://progress-service:8006
+    description: Kubernetes cluster
+
+paths:
+  /mastery/{student_id}:
+    get:
+      summary: Get student mastery levels
+      description: Returns mastery percentages for all Python curriculum topics
+      operationId: getMastery
+      tags:
+        - Mastery Tracking
+      parameters:
+        - name: student_id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "student_123"
+      responses:
+        '200':
+          description: Mastery data retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasteryResponse'
+        '404':
+          description: Student not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /mastery/{student_id}:
+    post:
+      summary: Update student mastery
+      description: Updates mastery level after completed exercise or query
+      operationId: updateMastery
+      tags:
+        - Mastery Tracking
+      parameters:
+        - name: student_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MasteryUpdateRequest'
+      responses:
+        '200':
+          description: Mastery updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasteryResponse'
+
+  /insights/{student_id}:
+    get:
+      summary: Get learning insights
+      description: AI-generated insights about learning progress, strengths, and recommendations
+      operationId: getInsights
+      tags:
+        - Learning Insights
+      parameters:
+        - name: student_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Insights generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LearningInsightsResponse'
+
+  /struggle-detection:
+    post:
+      summary: Detect student struggle
+      description: Analyzes query history to detect when student needs intervention (5+ failed runs)
+      operationId: detectStruggle
+      tags:
+        - Struggle Detection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StruggleDetectionRequest'
+      responses:
+        '200':
+          description: Struggle analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StruggleDetectionResponse'
+
+  /health:
+    get:
+      summary: Health check
+      tags: [Health]
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+
+components:
+  schemas:
+    MasteryResponse:
+      type: object
+      required:
+        - student_id
+        - levels
+        - overall_mastery
+      properties:
+        student_id:
+          type: string
+        levels:
+          type: array
+          items:
+            type: object
+            properties:
+              topic:
+                type: string
+                example: "Variables & Types"
+              progress:
+                type: number
+                format: float
+                minimum: 0.0
+                maximum: 100.0
+                example: 75.5
+              exercises_completed:
+                type: integer
+              last_practiced:
+                type: string
+                format: date-time
+          example:
+            - topic: "Variables & Types"
+              progress: 85.0
+              exercises_completed: 12
+              last_practiced: "2026-01-02T14:30:00Z"
+            - topic: "Control Flow"
+              progress: 60.0
+              exercises_completed: 8
+              last_practiced: "2026-01-01T10:15:00Z"
+        overall_mastery:
+          type: number
+          format: float
+          description: Average mastery across all topics
+          example: 67.3
+        strengths:
+          type: array
+          items:
+            type: string
+          description: Topics with ≥90% mastery
+          example: ["Variables & Types", "Functions"]
+        weaknesses:
+          type: array
+          items:
+            type: string
+          description: Topics with <50% mastery
+          example: ["OOP Basics", "Error Handling"]
+
+    MasteryUpdateRequest:
+      type: object
+      required:
+        - topic
+        - delta
+      properties:
+        topic:
+          type: string
+          description: Topic to update
+          example: "Functions"
+        delta:
+          type: number
+          format: float
+          description: Change in mastery (+10 for completed exercise, -5 for failed)
+          example: 10.0
+        exercise_id:
+          type: string
+          format: uuid
+          description: Exercise that was completed
+        success:
+          type: boolean
+          description: Whether exercise was completed successfully
+
+    LearningInsightsResponse:
+      type: object
+      required:
+        - student_id
+        - insights
+      properties:
+        student_id:
+          type: string
+        insights:
+          type: string
+          description: AI-generated learning insights
+          example: "You're making great progress on functions! Focus on error handling next to round out your skills."
+        recommended_topics:
+          type: array
+          items:
+            type: string
+          description: Topics to practice next
+          example: ["Error Handling", "File I/O"]
+        learning_velocity:
+          type: number
+          format: float
+          description: Topics mastered per week
+          example: 1.5
+        study_streak:
+          type: integer
+          description: Consecutive days active
+          example: 7
+        processing_time_ms:
+          type: integer
+
+    StruggleDetectionRequest:
+      type: object
+      required:
+        - student_id
+        - recent_queries
+      properties:
+        student_id:
+          type: string
+        recent_queries:
+          type: array
+          items:
+            type: object
+            properties:
+              query_id:
+                type: string
+              success:
+                type: boolean
+              timestamp:
+                type: string
+                format: date-time
+
+    StruggleDetectionResponse:
+      type: object
+      required:
+        - student_id
+        - struggling
+      properties:
+        student_id:
+          type: string
+        struggling:
+          type: boolean
+          description: True if ≥5 failed runs detected
+        failed_count:
+          type: integer
+          description: Number of recent failures
+        current_topic:
+          type: string
+          description: Topic where struggle detected
+        intervention_message:
+          type: string
+          description: Message for teacher/student
+          example: "Student has failed 6 times on OOP Basics - may need help"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string

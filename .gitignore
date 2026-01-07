@@ -55,3 +55,32 @@ secrets/
 *.tar.gz
 *.jar
 *.war
+
+# Backend Python Specific
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/.venv/
+backend/venv/
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+
+# Docker
+coverage/
+
+# Dapr
+.dapr/
+
+# Kafka
+kafka-logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+pgdata/
+
+# Frontend Next.js Build
+mystery-skils-app-ui/.next/
+mystery-skils-app-ui/out/
+mystery-skils-app-ui/.cache/

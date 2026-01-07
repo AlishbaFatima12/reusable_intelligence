@@ -1,0 +1,191 @@
+openapi: 3.0.3
+info:
+  title: Exercise Generator API
+  description: Personalized practice problem generation using Claude API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8005
+    description: Local development
+  - url: http://exercise-service:8005
+    description: Kubernetes cluster
+
+paths:
+  /generate:
+    post:
+      summary: Generate practice exercises
+      description: Creates personalized exercises based on topic and difficulty level
+      operationId: generateExercise
+      tags:
+        - Exercise Generation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExerciseGenerationRequest'
+            examples:
+              loops_beginner:
+                summary: Beginner loops exercise
+                value:
+                  query_id: "990e8400-e29b-41d4-a716-446655440004"
+                  student_id: "student_202"
+                  topic: "loops"
+                  difficulty: "beginner"
+                  count: 3
+      responses:
+        '200':
+          description: Exercises generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseGenerationResponse'
+
+  /exercises/{topic}:
+    get:
+      summary: List exercises by topic
+      description: Retrieve previously generated exercises for a specific topic
+      operationId: listExercises
+      tags:
+        - Exercise Library
+      parameters:
+        - name: topic
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "functions"
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum: [beginner, intermediate, advanced]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Exercise list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exercises:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Exercise'
+
+  /health:
+    get:
+      summary: Health check
+      tags: [Health]
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+
+components:
+  schemas:
+    ExerciseGenerationRequest:
+      type: object
+      required:
+        - query_id
+        - student_id
+        - topic
+        - difficulty
+      properties:
+        query_id:
+          type: string
+          format: uuid
+        student_id:
+          type: string
+        topic:
+          type: string
+          description: Python curriculum topic
+          example: "functions"
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        count:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 3
+          description: Number of exercises to generate
+        context:
+          type: object
+          description: Student's current mastery level
+          additionalProperties: true
+
+    ExerciseGenerationResponse:
+      type: object
+      required:
+        - query_id
+        - exercises
+      properties:
+        query_id:
+          type: string
+          format: uuid
+        exercises:
+          type: array
+          items:
+            $ref: '#/components/schemas/Exercise'
+        processing_time_ms:
+          type: integer
+
+    Exercise:
+      type: object
+      required:
+        - exercise_id
+        - topic
+        - difficulty
+        - problem_text
+        - solution
+      properties:
+        exercise_id:
+          type: string
+          format: uuid
+        topic:
+          type: string
+          example: "functions"
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        problem_text:
+          type: string
+          description: Problem description
+          example: "Write a function that calculates the factorial of a number"
+        starter_code:
+          type: string
+          description: Code scaffolding
+          example: "def factorial(n):\n    # Your code here\n    pass"
+        solution:
+          type: string
+          description: Reference solution
+        test_cases:
+          type: array
+          items:
+            type: object
+            properties:
+              input:
+                type: string
+              expected_output:
+                type: string
+          example:
+            - input: "factorial(5)"
+              expected_output: "120"
+        hints:
+          type: array
+          items:
+            type: string
+          example:
+            - "Start with the base case: factorial(0) = 1"
+            - "Use recursion or a loop"

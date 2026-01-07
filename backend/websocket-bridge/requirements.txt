@@ -1,0 +1,11 @@
+# WebSocket Bridge Dependencies
+
+# Socket.io
+python-socketio==5.11.0
+aiohttp==3.9.1
+
+# Kafka
+kafka-python==2.0.2
+
+# Utilities
+python-dotenv==1.0.1

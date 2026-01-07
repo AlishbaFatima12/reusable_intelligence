@@ -1,0 +1,483 @@
+# Kafka Message Schemas for LearnFlow Platform
+# Defines message formats for all pub/sub topics
+
+schemas:
+  # Base message envelope used by all topics
+  MessageEnvelope:
+    description: Standard wrapper for all Kafka messages
+    properties:
+      message_id:
+        type: string
+        format: uuid
+        description: Unique message identifier
+      trace_id:
+        type: string
+        format: uuid
+        description: Correlation ID (same as query_id for tracing)
+      timestamp:
+        type: string
+        format: date-time
+        description: Message creation timestamp (ISO 8601)
+      event_type:
+        type: string
+        description: Event name (e.g., "student.query.submitted")
+      payload:
+        type: object
+        description: Event-specific data
+      metadata:
+        type: object
+        properties:
+          source_agent:
+            type: string
+            description: Agent that published this message
+          agent_version:
+            type: string
+          schema_version:
+            type: string
+            default: "1.0.0"
+    required:
+      - message_id
+      - trace_id
+      - timestamp
+      - event_type
+      - payload
+    example:
+      message_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      trace_id: "550e8400-e29b-41d4-a716-446655440000"
+      timestamp: "2026-01-02T15:30:00Z"
+      event_type: "student.query.submitted"
+      payload:
+        student_id: "student_123"
+        query_text: "What is recursion?"
+      metadata:
+        source_agent: "api-gateway"
+        agent_version: "1.0.0"
+        schema_version: "1.0.0"
+
+topics:
+  # Topic: student-queries
+  # Description: Student submits a query via chat interface
+  # Producers: API Gateway, Frontend
+  # Consumers: Triage Agent
+  student-queries:
+    topic_name: "student-queries"
+    partitions: 6
+    replication_factor: 3
+    retention_ms: 604800000  # 7 days
+    event_types:
+      - student.query.submitted
+    message_schema:
+      event_type: "student.query.submitted"
+      payload:
+        type: object
+        properties:
+          query_id:
+            type: string
+            format: uuid
+          student_id:
+            type: string
+          query_text:
+            type: string
+            maxLength: 5000
+          code_snippet:
+            type: string
+            maxLength: 10000
+            nullable: true
+          context:
+            type: object
+            description: Student's current topic, skill level
+        required:
+          - query_id
+          - student_id
+          - query_text
+    example:
+      message_id: "msg-001"
+      trace_id: "query-001"
+      timestamp: "2026-01-02T15:30:00Z"
+      event_type: "student.query.submitted"
+      payload:
+        query_id: "query-001"
+        student_id: "student_123"
+        query_text: "Can you explain recursion with an example?"
+        code_snippet: null
+        context:
+          current_topic: "Functions"
+          skill_level: "beginner"
+
+  # Topic: triage-routing
+  # Description: Triage Agent routes query to specialist
+  # Producers: Triage Agent
+  # Consumers: Concepts, Code Review, Debug, Exercise, Progress Agents
+  triage-routing:
+    topic_name: "triage-routing"
+    partitions: 6
+    replication_factor: 3
+    retention_ms: 604800000  # 7 days
+    event_types:
+      - triage.routing.decision
+    message_schema:
+      event_type: "triage.routing.decision"
+      payload:
+        type: object
+        properties:
+          query_id:
+            type: string
+            format: uuid
+          student_id:
+            type: string
+          detected_intent:
+            type: string
+            enum: [concept, code_review, debug, exercise, progress]
+          routed_to_agent:
+            type: string
+            enum: [concepts, code-review, debug, exercise, progress]
+          confidence_score:
+            type: number
+            minimum: 0.0
+            maximum: 1.0
+          routing_reason:
+            type: string
+          original_query:
+            type: object
+            description: Original query data
+        required:
+          - query_id
+          - student_id
+          - detected_intent
+          - routed_to_agent
+    example:
+      message_id: "msg-002"
+      trace_id: "query-001"
+      timestamp: "2026-01-02T15:30:02Z"
+      event_type: "triage.routing.decision"
+      payload:
+        query_id: "query-001"
+        student_id: "student_123"
+        detected_intent: "concept"
+        routed_to_agent: "concepts"
+        confidence_score: 0.95
+        routing_reason: "Query asks for explanation of recursion concept"
+
+  # Topic: agent-responses
+  # Description: Specialist agent generates response
+  # Producers: Concepts, Code Review, Debug, Exercise, Progress Agents
+  # Consumers: API Gateway, Progress Tracker, WebSocket Server
+  agent-responses:
+    topic_name: "agent-responses"
+    partitions: 6
+    replication_factor: 3
+    retention_ms: 604800000  # 7 days
+    event_types:
+      - agent.response.generated
+    message_schema:
+      event_type: "agent.response.generated"
+      payload:
+        type: object
+        properties:
+          query_id:
+            type: string
+            format: uuid
+          student_id:
+            type: string
+          agent_type:
+            type: string
+            enum: [concepts, code-review, debug, exercise, progress]
+          response_text:
+            type: string
+            maxLength: 20000
+          code_examples:
+            type: array
+            items:
+              type: string
+          processing_time_ms:
+            type: integer
+          confidence_score:
+            type: number
+        required:
+          - query_id
+          - student_id
+          - agent_type
+          - response_text
+    example:
+      message_id: "msg-003"
+      trace_id: "query-001"
+      timestamp: "2026-01-02T15:30:04Z"
+      event_type: "agent.response.generated"
+      payload:
+        query_id: "query-001"
+        student_id: "student_123"
+        agent_type: "concepts"
+        response_text: "Recursion is when a function calls itself..."
+        code_examples:
+          - "def factorial(n):\n    if n == 0: return 1\n    return n * factorial(n-1)"
+        processing_time_ms: 1200
+        confidence_score: 0.92
+
+  # Topic: student-struggle
+  # Description: Progress Tracker detects student struggling (5+ failed runs)
+  # Producers: Progress Tracker Agent
+  # Consumers: Teacher HUD (Frontend WebSocket), Alert System
+  student-struggle:
+    topic_name: "student-struggle"
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 86400000  # 24 hours
+    event_types:
+      - student.struggle.detected
+    message_schema:
+      event_type: "student.struggle.detected"
+      payload:
+        type: object
+        properties:
+          student_id:
+            type: string
+          student_name:
+            type: string
+          failed_runs:
+            type: integer
+            minimum: 5
+          current_topic:
+            type: string
+          last_activity:
+            type: string
+            format: date-time
+          intervention_message:
+            type: string
+        required:
+          - student_id
+          - failed_runs
+          - current_topic
+    example:
+      message_id: "msg-004"
+      trace_id: "struggle-001"
+      timestamp: "2026-01-02T15:35:00Z"
+      event_type: "student.struggle.detected"
+      payload:
+        student_id: "student_456"
+        student_name: "Jane Doe"
+        failed_runs: 6
+        current_topic: "OOP Basics"
+        last_activity: "2026-01-02T15:34:00Z"
+        intervention_message: "Student needs help with OOP Basics"
+
+  # Topic: mastery-updates
+  # Description: Progress Tracker updates student mastery levels
+  # Producers: Progress Tracker Agent
+  # Consumers: Mystery Skills UI (Frontend WebSocket)
+  mastery-updates:
+    topic_name: "mastery-updates"
+    partitions: 6
+    replication_factor: 3
+    retention_ms: 604800000  # 7 days
+    event_types:
+      - mastery.level.updated
+    message_schema:
+      event_type: "mastery.level.updated"
+      payload:
+        type: object
+        properties:
+          student_id:
+            type: string
+          topic:
+            type: string
+          old_progress:
+            type: number
+            minimum: 0.0
+            maximum: 100.0
+          new_progress:
+            type: number
+            minimum: 0.0
+            maximum: 100.0
+          delta:
+            type: number
+          reason:
+            type: string
+            description: Why mastery changed (exercise completed, etc.)
+        required:
+          - student_id
+          - topic
+          - new_progress
+    example:
+      message_id: "msg-005"
+      trace_id: "mastery-update-001"
+      timestamp: "2026-01-02T15:40:00Z"
+      event_type: "mastery.level.updated"
+      payload:
+        student_id: "student_123"
+        topic: "Functions"
+        old_progress: 65.0
+        new_progress: 75.0
+        delta: 10.0
+        reason: "Completed exercise: factorial implementation"
+
+  # Topic: agent-logs
+  # Description: Agent log events for real-time terminal display
+  # Producers: All 6 agents
+  # Consumers: Hacker Terminal (Frontend WebSocket)
+  agent-logs:
+    topic_name: "agent-logs"
+    partitions: 6
+    replication_factor: 2
+    retention_ms: 86400000  # 24 hours
+    event_types:
+      - agent.log.entry
+    message_schema:
+      event_type: "agent.log.entry"
+      payload:
+        type: object
+        properties:
+          agent:
+            type: string
+            enum: [triage, concepts, code-review, debug, exercise, progress]
+          level:
+            type: string
+            enum: [INFO, WARN, ERROR, SUCCESS]
+          message:
+            type: string
+          trace_id:
+            type: string
+            format: uuid
+            nullable: true
+        required:
+          - agent
+          - level
+          - message
+    example:
+      message_id: "msg-006"
+      trace_id: "query-001"
+      timestamp: "2026-01-02T15:30:01Z"
+      event_type: "agent.log.entry"
+      payload:
+        agent: "triage"
+        level: "INFO"
+        message: "Analyzing query intent for student_123"
+        trace_id: "query-001"
+
+  # Topic: agent-status
+  # Description: Agent health heartbeat updates
+  # Producers: All 6 agents
+  # Consumers: Agent Status Cards (Frontend WebSocket), Monitoring System
+  agent-status:
+    topic_name: "agent-status"
+    partitions: 1
+    replication_factor: 3
+    retention_ms: 86400000  # 24 hours
+    event_types:
+      - agent.status.heartbeat
+    message_schema:
+      event_type: "agent.status.heartbeat"
+      payload:
+        type: object
+        properties:
+          agent_name:
+            type: string
+            enum: [triage, concepts, code-review, debug, exercise, progress]
+          status:
+            type: string
+            enum: [active, idle, degraded, error]
+          uptime_seconds:
+            type: integer
+          queue_depth:
+            type: integer
+          avg_response_time_ms:
+            type: number
+        required:
+          - agent_name
+          - status
+    example:
+      message_id: "msg-007"
+      trace_id: "heartbeat-001"
+      timestamp: "2026-01-02T15:30:00Z"
+      event_type: "agent.status.heartbeat"
+      payload:
+        agent_name: "concepts"
+        status: "active"
+        uptime_seconds: 7200
+        queue_depth: 3
+        avg_response_time_ms: 1150.5
+
+# Kafka Topic Configuration Summary
+topic_summary:
+  total_topics: 7
+  topics:
+    - name: "student-queries"
+      producers: ["api-gateway", "frontend"]
+      consumers: ["triage"]
+    - name: "triage-routing"
+      producers: ["triage"]
+      consumers: ["concepts", "code-review", "debug", "exercise", "progress"]
+    - name: "agent-responses"
+      producers: ["concepts", "code-review", "debug", "exercise", "progress"]
+      consumers: ["api-gateway", "progress-tracker", "websocket-server"]
+    - name: "student-struggle"
+      producers: ["progress-tracker"]
+      consumers: ["websocket-server", "alert-system"]
+    - name: "mastery-updates"
+      producers: ["progress-tracker"]
+      consumers: ["websocket-server"]
+    - name: "agent-logs"
+      producers: ["all-agents"]
+      consumers: ["websocket-server"]
+    - name: "agent-status"
+      producers: ["all-agents"]
+      consumers: ["websocket-server", "monitoring"]
+
+# Partitioning Strategy
+partitioning_strategy:
+  description: |
+    All topics use student_id as partition key to ensure ordering guarantees
+    for messages related to the same student. This prevents race conditions
+    where responses arrive out of order.
+  partition_count_rationale:
+    6_partitions: "Allows parallel processing by 6 agent instances"
+    3_partitions: "Lower throughput topics (struggle detection)"
+    1_partition: "Global ordering required (agent status)"
+
+# Consumer Groups
+consumer_groups:
+  - group_id: "triage-consumers"
+    topics: ["student-queries"]
+    instances: 6
+  - group_id: "concepts-consumers"
+    topics: ["triage-routing"]
+    instances: 6
+    filter: 'routed_to_agent == "concepts"'
+  - group_id: "code-review-consumers"
+    topics: ["triage-routing"]
+    instances: 6
+    filter: 'routed_to_agent == "code-review"'
+  - group_id: "debug-consumers"
+    topics: ["triage-routing"]
+    instances: 6
+    filter: 'routed_to_agent == "debug"'
+  - group_id: "exercise-consumers"
+    topics: ["triage-routing"]
+    instances: 6
+    filter: 'routed_to_agent == "exercise"'
+  - group_id: "progress-consumers"
+    topics: ["agent-responses", "triage-routing"]
+    instances: 3
+  - group_id: "websocket-bridge"
+    topics: ["agent-responses", "agent-logs", "agent-status", "student-struggle", "mastery-updates"]
+    instances: 3
+
+# Retention Policies
+retention_policies:
+  analytics_topics:
+    retention_ms: 604800000  # 7 days
+    topics: ["student-queries", "triage-routing", "agent-responses", "mastery-updates"]
+    rationale: "Allows historical analysis and replay for debugging"
+
+  ephemeral_topics:
+    retention_ms: 86400000  # 24 hours
+    topics: ["agent-logs", "agent-status", "student-struggle"]
+    rationale: "Real-time monitoring data, not needed long-term"
+
+# Message Size Limits
+message_size_limits:
+  max_message_bytes: 1048576  # 1 MB
+  large_payload_handling: "Code snippets and explanations may approach limit; compress if needed"
+  recommended_max:
+    query_text: 5000  # characters
+    code_snippet: 10000  # characters
+    response_text: 20000  # characters

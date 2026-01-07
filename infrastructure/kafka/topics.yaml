@@ -1,0 +1,138 @@
+# Kafka Topics Configuration for LearnFlow
+# These topics enable event-driven communication between agents
+
+topics:
+  # Student submits query via chat interface
+  - name: student-queries
+    partitions: 6
+    replication_factor: 1
+    retention_ms: 604800000  # 7 days
+    config:
+      cleanup.policy: delete
+      compression.type: lz4
+    description: "Student query submissions from frontend"
+    producers:
+      - api-gateway
+      - frontend
+    consumers:
+      - triage-agent
+
+  # Triage Agent routes query to specialist
+  - name: triage-routing
+    partitions: 6
+    replication_factor: 1
+    retention_ms: 604800000  # 7 days
+    config:
+      cleanup.policy: delete
+      compression.type: lz4
+    description: "Routing decisions from Triage Agent to specialists"
+    producers:
+      - triage-agent
+    consumers:
+      - concepts-agent
+      - code-review-agent
+      - debug-agent
+      - exercise-agent
+      - progress-agent
+
+  # Specialist agent generates response
+  - name: agent-responses
+    partitions: 6
+    replication_factor: 1
+    retention_ms: 604800000  # 7 days
+    config:
+      cleanup.policy: delete
+      compression.type: lz4
+    description: "Responses from specialist agents"
+    producers:
+      - concepts-agent
+      - code-review-agent
+      - debug-agent
+      - exercise-agent
+      - progress-agent
+    consumers:
+      - api-gateway
+      - progress-tracker
+      - websocket-server
+
+  # Progress Tracker detects student struggling (5+ failed runs)
+  - name: student-struggle
+    partitions: 3
+    replication_factor: 1
+    retention_ms: 86400000  # 24 hours
+    config:
+      cleanup.policy: delete
+    description: "Struggle detection alerts for Teacher HUD"
+    producers:
+      - progress-agent
+    consumers:
+      - websocket-server
+      - alert-system
+
+  # Progress Tracker updates student mastery levels
+  - name: mastery-updates
+    partitions: 6
+    replication_factor: 1
+    retention_ms: 604800000  # 7 days
+    config:
+      cleanup.policy: delete
+      compression.type: lz4
+    description: "Mastery level updates for 3D Sphere visualization"
+    producers:
+      - progress-agent
+    consumers:
+      - websocket-server
+
+  # Agent log events for real-time terminal display
+  - name: agent-logs
+    partitions: 6
+    replication_factor: 1
+    retention_ms: 86400000  # 24 hours
+    config:
+      cleanup.policy: delete
+    description: "Real-time agent logs for Hacker Terminal"
+    producers:
+      - triage-agent
+      - concepts-agent
+      - code-review-agent
+      - debug-agent
+      - exercise-agent
+      - progress-agent
+    consumers:
+      - websocket-server
+
+  # Agent health heartbeat updates
+  - name: agent-status
+    partitions: 1
+    replication_factor: 1
+    retention_ms: 86400000  # 24 hours
+    config:
+      cleanup.policy: delete
+    description: "Agent health heartbeats for monitoring dashboard"
+    producers:
+      - triage-agent
+      - concepts-agent
+      - code-review-agent
+      - debug-agent
+      - exercise-agent
+      - progress-agent
+    consumers:
+      - websocket-server
+      - monitoring-system
+
+# Partitioning Strategy
+partitioning:
+  key: student_id
+  description: "Partition by student_id to ensure ordering guarantees for messages related to the same student"
+
+# Consumer Groups
+consumer_groups:
+  - group_id: triage-consumers
+    topics: [student-queries]
+    instances: 6
+  - group_id: concepts-consumers
+    topics: [triage-routing]
+    instances: 6
+  - group_id: websocket-bridge
+    topics: [agent-responses, agent-logs, agent-status, student-struggle, mastery-updates]
+    instances: 3

@@ -1,0 +1,143 @@
+openapi: 3.0.3
+info:
+  title: Code Review Agent API
+  description: Automated code quality feedback service using Claude API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8003
+    description: Local development
+  - url: http://code-review-service:8003
+    description: Kubernetes cluster
+
+paths:
+  /review:
+    post:
+      summary: Review submitted code
+      description: Analyzes code for style, efficiency, correctness, and best practices
+      operationId: reviewCode
+      tags:
+        - Code Review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CodeReviewRequest'
+            examples:
+              python_function:
+                summary: Review Python function
+                value:
+                  query_id: "770e8400-e29b-41d4-a716-446655440002"
+                  student_id: "student_789"
+                  code: "def add(a, b):\n    result = a + b\n    return result"
+                  language: "python"
+                  review_focus: ["style", "efficiency"]
+      responses:
+        '200':
+          description: Code review completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodeReviewResponse'
+        '400':
+          description: Invalid code or request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /health:
+    get:
+      summary: Health check
+      tags: [Health]
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+
+components:
+  schemas:
+    CodeReviewRequest:
+      type: object
+      required:
+        - query_id
+        - student_id
+        - code
+        - language
+      properties:
+        query_id:
+          type: string
+          format: uuid
+        student_id:
+          type: string
+        code:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          description: Code to review
+        language:
+          type: string
+          enum: [python, javascript, java, cpp, go, rust]
+        review_focus:
+          type: array
+          items:
+            type: string
+            enum: [style, efficiency, correctness, best_practices, security]
+          default: ["style", "correctness"]
+
+    CodeReviewResponse:
+      type: object
+      required:
+        - query_id
+        - overall_rating
+        - feedback
+      properties:
+        query_id:
+          type: string
+          format: uuid
+        overall_rating:
+          type: string
+          enum: [excellent, good, needs_improvement, poor]
+          example: "good"
+        feedback:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+                enum: [style, efficiency, correctness, best_practices, security]
+              severity:
+                type: string
+                enum: [critical, warning, suggestion]
+              line_number:
+                type: integer
+              message:
+                type: string
+              suggested_fix:
+                type: string
+          example:
+            - category: "efficiency"
+              severity: "suggestion"
+              line_number: 2
+              message: "Unnecessary intermediate variable 'result'"
+              suggested_fix: "return a + b"
+        improved_code:
+          type: string
+          description: Refactored version (if applicable)
+        processing_time_ms:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
