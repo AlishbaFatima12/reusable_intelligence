@@ -36,7 +36,8 @@ export default function AuthPage() {
         }
 
         // Redirect based on role
-        if (result.data?.user?.role === "teacher") {
+        const user = result.data?.user as any
+        if (user?.role === "teacher") {
           router.push("/teacher")
         } else {
           router.push("/student")
