@@ -4,18 +4,23 @@ Single entry point for cloud deployment (Render, Railway, etc.)
 """
 
 import os
+import sys
+
+# Ensure proper Python path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 
-# Import agent routers
-from agents.triage.routes import router as triage_router
-from agents.concepts.routes import router as concepts_router
-from agents.code_review.routes import router as code_review_router
-from agents.debug.routes import router as debug_router
-from agents.exercise.routes import router as exercise_router
-from agents.progress.routes import router as progress_router
+# Import agent routers (using backend.agents format to match existing imports)
+from backend.agents.triage.routes import router as triage_router
+from backend.agents.concepts.routes import router as concepts_router
+from backend.agents.code_review.routes import router as code_review_router
+from backend.agents.debug.routes import router as debug_router
+from backend.agents.exercise.routes import router as exercise_router
+from backend.agents.progress.routes import router as progress_router
 
 app = FastAPI(
     title="LearnFlow AI Agents",

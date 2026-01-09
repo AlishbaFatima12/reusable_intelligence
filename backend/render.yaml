@@ -4,10 +4,13 @@ services:
     env: python
     region: oregon
     plan: free
-    buildCommand: pip install -r requirements-deploy.txt
-    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    rootDir: ""
+    buildCommand: pip install -r backend/requirements-deploy.txt
+    startCommand: PYTHONPATH=/opt/render/project/src uvicorn backend.server:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: OPENAI_API_KEY
         sync: false
+      - key: PYTHONPATH
+        value: /opt/render/project/src
       - key: PYTHON_VERSION
         value: "3.11"
