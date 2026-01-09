@@ -1,5 +1,7 @@
 import { auth } from "@/lib/auth"
 
+export const dynamic = 'force-dynamic'
+
 const handler = auth.handler
 
 export const GET = handler

@@ -8,6 +8,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 // Progress Tracker backend URL
 const PROGRESS_TRACKER_URL = process.env.PROGRESS_TRACKER_URL || 'http://localhost:8006';
 

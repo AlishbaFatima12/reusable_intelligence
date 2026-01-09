@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+
 const prisma = new PrismaClient()
 
 // Get all assignments (for demo - shows all regardless of teacher ID)
