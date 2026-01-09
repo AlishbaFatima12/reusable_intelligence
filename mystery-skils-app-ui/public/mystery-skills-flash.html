@@ -2239,10 +2239,11 @@
             try {
                 const response = await fetch(agent.url, { timeout: 5000 });
                 const data = await response.json();
-                if (response.ok && data.status === 'healthy') {
+                // Accept both 'healthy' and 'ok' status
+                if (response.ok && (data.status === 'healthy' || data.status === 'ok')) {
                     msg.className = 'text-green-400 text-xs';
-                    msg.textContent = `✓ ${agent.name}: HEALTHY`;
-                    console.log(`✓ ${agent.name}: HEALTHY`);
+                    msg.textContent = `✓ ${agent.name}: ONLINE`;
+                    console.log(`✓ ${agent.name}: ONLINE`);
                 } else {
                     msg.className = 'text-yellow-400 text-xs';
                     msg.textContent = `⚠ ${agent.name}: UNHEALTHY - ${JSON.stringify(data)}`;
