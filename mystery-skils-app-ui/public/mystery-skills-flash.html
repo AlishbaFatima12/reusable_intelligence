@@ -453,51 +453,91 @@
                 </div>
             </div>
 
-            <!-- Code Lab View: Write & Test Python Code -->
+            <!-- Code Lab View: Challenges List -->
             <div id="student-codelab-view" class="absolute inset-0 p-4 hidden flex-col bg-black/95">
                 <div class="flex justify-between items-center mb-3 border-b border-purple-900 pb-3">
                     <div>
                         <div class="text-purple-400 font-bold text-lg tracking-widest">CODE_LAB</div>
-                        <div class="text-xs text-gray-400 mt-1">Write Python code and get AI feedback</div>
+                        <div class="text-xs text-gray-400 mt-1">Select a coding challenge to practice</div>
                     </div>
                     <button onclick="closeCodeLab()" class="text-xs bg-gray-800 px-4 py-2 text-gray-400 hover:bg-red-900 hover:text-white transition rounded">CLOSE</button>
                 </div>
+                <div id="codelab-challenges-list" class="flex-1 overflow-y-auto grid grid-cols-1 gap-3 pr-2">
+                    <!-- Challenges will be loaded here -->
+                </div>
+            </div>
 
-                <!-- Code Editor -->
-                <div class="flex-1 flex flex-col gap-3 overflow-hidden">
-                    <div class="flex-1 flex flex-col bg-gray-900 rounded-lg border border-purple-900/50 overflow-hidden">
-                        <div class="flex items-center justify-between px-3 py-2 bg-gray-800 border-b border-purple-900/30">
-                            <div class="flex items-center gap-2">
-                                <span class="text-purple-400 text-xs">📄</span>
-                                <span class="text-xs text-gray-400">solution.py</span>
-                            </div>
-                            <select id="code-language" class="bg-gray-700 text-white text-xs px-2 py-1 rounded border border-gray-600">
-                                <option value="python">Python</option>
-                            </select>
+            <!-- Code Challenge View: Problem + Editor -->
+            <div id="student-code-challenge-view" class="absolute inset-0 p-4 hidden flex-col bg-black/95">
+                <div class="flex justify-between items-center mb-3 border-b border-purple-900 pb-3">
+                    <div>
+                        <div class="text-purple-400 font-bold text-sm tracking-widest" id="challenge-title">CHALLENGE</div>
+                        <div class="text-xs text-gray-400 mt-1" id="challenge-difficulty">Difficulty: Beginner</div>
+                    </div>
+                    <button onclick="backToChallengesList()" class="text-xs bg-gray-800 px-4 py-2 text-gray-400 hover:bg-purple-900 hover:text-white transition rounded">← BACK</button>
+                </div>
+
+                <div class="flex-1 flex gap-3 overflow-hidden">
+                    <!-- Left: Problem Description -->
+                    <div class="w-2/5 flex flex-col gap-3 overflow-y-auto pr-2">
+                        <!-- Task Description -->
+                        <div class="bg-gray-900/80 rounded-lg border border-purple-900/30 p-4">
+                            <div class="text-purple-400 font-bold text-xs mb-2 tracking-widest">📋 TASK</div>
+                            <div id="challenge-description" class="text-sm text-gray-300 leading-relaxed"></div>
                         </div>
-                        <textarea id="code-editor" class="flex-1 bg-gray-900 text-green-400 font-mono text-sm p-4 resize-none focus:outline-none" placeholder="# Write your Python code here...
-def solution(n):
-    # Your code here
-    pass
-
-# Test your solution
-print(solution(5))"></textarea>
+                        <!-- Expected Output -->
+                        <div class="bg-gray-900/80 rounded-lg border border-green-900/30 p-4">
+                            <div class="text-green-400 font-bold text-xs mb-2 tracking-widest">✅ EXPECTED OUTPUT</div>
+                            <pre id="challenge-expected" class="text-sm text-green-300 font-mono bg-black/50 p-2 rounded"></pre>
+                        </div>
+                        <!-- Hint -->
+                        <div class="bg-gray-900/80 rounded-lg border border-yellow-900/30 p-4">
+                            <div class="text-yellow-400 font-bold text-xs mb-2 tracking-widest">💡 HINT</div>
+                            <div id="challenge-hint" class="text-sm text-yellow-200/80"></div>
+                        </div>
                     </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex gap-3">
-                        <button onclick="submitCodeForReview()" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-bold py-3 px-4 rounded-lg hover:from-blue-500 hover:to-blue-700 transition flex items-center justify-center gap-2">
-                            <span>🔍</span> CODE REVIEW
-                        </button>
-                        <button onclick="submitCodeForDebug()" class="flex-1 bg-gradient-to-r from-orange-600 to-orange-800 text-white font-bold py-3 px-4 rounded-lg hover:from-orange-500 hover:to-orange-700 transition flex items-center justify-center gap-2">
-                            <span>🐛</span> DEBUG HELP
-                        </button>
-                    </div>
+                    <!-- Right: Code Editor + Feedback -->
+                    <div class="w-3/5 flex flex-col gap-3">
+                        <!-- Code Editor -->
+                        <div class="flex-1 flex flex-col bg-gray-900 rounded-lg border border-purple-900/50 overflow-hidden">
+                            <div class="flex items-center justify-between px-3 py-2 bg-gray-800 border-b border-purple-900/30">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-purple-400 text-xs">📄</span>
+                                    <span class="text-xs text-gray-400">solution.py</span>
+                                </div>
+                                <span class="text-xs text-gray-500">Python 3</span>
+                            </div>
+                            <textarea id="code-editor" class="flex-1 bg-gray-900 text-green-400 font-mono text-sm p-4 resize-none focus:outline-none" placeholder="# Write your code here..."></textarea>
+                        </div>
 
-                    <!-- Feedback Panel -->
-                    <div id="code-feedback-panel" class="bg-gray-900/80 rounded-lg border border-purple-900/30 p-4 max-h-48 overflow-y-auto hidden">
-                        <div class="text-purple-400 font-bold text-xs mb-2 tracking-widest">AI_FEEDBACK</div>
-                        <div id="code-feedback-content" class="text-sm text-gray-300"></div>
+                        <!-- Action Buttons -->
+                        <div class="flex gap-2">
+                            <button onclick="runPythonCode()" class="flex-1 bg-gradient-to-r from-green-600 to-green-800 text-white font-bold py-2 px-3 rounded-lg hover:from-green-500 hover:to-green-700 transition flex items-center justify-center gap-2 text-sm">
+                                <span>▶️</span> RUN CODE
+                            </button>
+                            <button onclick="submitCodeForReview()" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-bold py-2 px-3 rounded-lg hover:from-blue-500 hover:to-blue-700 transition flex items-center justify-center gap-2 text-sm">
+                                <span>🔍</span> REVIEW
+                            </button>
+                            <button onclick="submitCodeForDebug()" class="flex-1 bg-gradient-to-r from-orange-600 to-orange-800 text-white font-bold py-2 px-3 rounded-lg hover:from-orange-500 hover:to-orange-700 transition flex items-center justify-center gap-2 text-sm">
+                                <span>🐛</span> DEBUG
+                            </button>
+                        </div>
+
+                        <!-- Console Output -->
+                        <div class="bg-black rounded-lg border border-green-900/50 p-3 h-24 overflow-y-auto">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-green-400 font-bold text-xs tracking-widest">CONSOLE OUTPUT</span>
+                                <button onclick="clearConsole()" class="text-[10px] text-gray-500 hover:text-white">Clear</button>
+                            </div>
+                            <pre id="code-console-output" class="text-sm text-green-300 font-mono whitespace-pre-wrap">>>> Ready to run your code...</pre>
+                        </div>
+
+                        <!-- Feedback Panel -->
+                        <div id="code-feedback-panel" class="bg-gray-900/80 rounded-lg border border-purple-900/30 p-3 max-h-24 overflow-y-auto hidden">
+                            <div class="text-purple-400 font-bold text-xs mb-2 tracking-widest">AI_FEEDBACK</div>
+                            <div id="code-feedback-content" class="text-sm text-gray-300"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2192,19 +2232,338 @@ print(solution(5))"></textarea>
         // Clear previous feedback
         const feedbackPanel = document.getElementById('code-feedback-panel');
         if (feedbackPanel) feedbackPanel.classList.add('hidden');
+
+        // Load coding challenges
+        loadCodingChallenges();
     }
 
     // Close Code Lab and return to overview
     function closeCodeLab() {
         const overviewView = document.getElementById('student-overview-view');
         const codelabView = document.getElementById('student-codelab-view');
+        const challengeView = document.getElementById('student-code-challenge-view');
 
         if (codelabView) {
             codelabView.classList.add('hidden');
             codelabView.style.display = 'none';
         }
+        if (challengeView) {
+            challengeView.classList.add('hidden');
+            challengeView.style.display = 'none';
+        }
         if (overviewView) {
             overviewView.classList.remove('hidden');
+        }
+    }
+
+    // Coding challenges database (like W3Schools)
+    const codingChallenges = [
+        {
+            id: 'print-hello',
+            title: 'Print Hello World',
+            difficulty: 'Beginner',
+            category: 'Python Basics',
+            description: 'Write a Python program that prints "Hello, World!" to the screen.\n\nThis is the traditional first program for learning any programming language.',
+            expected: 'Hello, World!',
+            hint: 'Use the print() function with a string inside.',
+            starterCode: '# Write your code below\n'
+        },
+        {
+            id: 'add-numbers',
+            title: 'Add Two Numbers',
+            difficulty: 'Beginner',
+            category: 'Python Basics',
+            description: 'Create variables x = 5 and y = 10, then print their sum.\n\nLearn how to create variables and perform basic arithmetic.',
+            expected: '15',
+            hint: 'Create two variables with = and use print() to show x + y',
+            starterCode: '# Create variables x and y\nx = 5\ny = 10\n\n# Print the sum\n'
+        },
+        {
+            id: 'string-length',
+            title: 'Find String Length',
+            difficulty: 'Beginner',
+            category: 'Strings',
+            description: 'Given the string txt = "Hello World", print the length of the string.\n\nLearn how to use the len() function.',
+            expected: '11',
+            hint: 'Use the len() function to get the length of a string.',
+            starterCode: 'txt = "Hello World"\n\n# Print the length of txt\n'
+        },
+        {
+            id: 'list-access',
+            title: 'Access List Item',
+            difficulty: 'Beginner',
+            category: 'Lists',
+            description: 'Given the list fruits = ["apple", "banana", "cherry"], print the second item.\n\nRemember: List indexing starts at 0!',
+            expected: 'banana',
+            hint: 'Use index [1] to access the second item (indexing starts at 0).',
+            starterCode: 'fruits = ["apple", "banana", "cherry"]\n\n# Print the second item\n'
+        },
+        {
+            id: 'for-loop',
+            title: 'Loop Through List',
+            difficulty: 'Beginner',
+            category: 'Loops',
+            description: 'Use a for loop to print each fruit in the list fruits = ["apple", "banana", "cherry"].\n\nEach fruit should be on a new line.',
+            expected: 'apple\nbanana\ncherry',
+            hint: 'Use: for item in list: and then print(item)',
+            starterCode: 'fruits = ["apple", "banana", "cherry"]\n\n# Loop through and print each fruit\n'
+        },
+        {
+            id: 'if-statement',
+            title: 'Check Number',
+            difficulty: 'Beginner',
+            category: 'Conditions',
+            description: 'Given x = 10, write an if statement that prints "x is positive" if x is greater than 0.',
+            expected: 'x is positive',
+            hint: 'Use: if x > 0: followed by print()',
+            starterCode: 'x = 10\n\n# Check if x is positive\n'
+        },
+        {
+            id: 'function-def',
+            title: 'Create a Function',
+            difficulty: 'Intermediate',
+            category: 'Functions',
+            description: 'Create a function called greet that takes a name parameter and returns "Hello, " followed by the name.\n\nThen call greet("Python") and print the result.',
+            expected: 'Hello, Python',
+            hint: 'Use def greet(name): and return "Hello, " + name',
+            starterCode: '# Define the greet function\n\n\n# Call the function and print result\n'
+        },
+        {
+            id: 'list-comprehension',
+            title: 'List Comprehension',
+            difficulty: 'Intermediate',
+            category: 'Lists',
+            description: 'Using list comprehension, create a list of squares for numbers 1-5.\n\nPrint the resulting list.',
+            expected: '[1, 4, 9, 16, 25]',
+            hint: 'Use: [x**2 for x in range(1, 6)]',
+            starterCode: '# Create list of squares using list comprehension\n\n\n# Print the list\n'
+        },
+        {
+            id: 'dictionary-access',
+            title: 'Dictionary Access',
+            difficulty: 'Intermediate',
+            category: 'Dictionaries',
+            description: 'Given person = {"name": "John", "age": 30}, print the value of the "name" key.',
+            expected: 'John',
+            hint: 'Use person["name"] or person.get("name")',
+            starterCode: 'person = {"name": "John", "age": 30}\n\n# Print the name\n'
+        },
+        {
+            id: 'class-create',
+            title: 'Create a Class',
+            difficulty: 'Advanced',
+            category: 'OOP',
+            description: 'Create a class called Dog with an __init__ method that takes name as parameter.\n\nAdd a bark method that returns "Woof!".\n\nCreate an instance my_dog with name "Buddy" and print my_dog.bark().',
+            expected: 'Woof!',
+            hint: 'Use class Dog: with def __init__(self, name): and def bark(self):',
+            starterCode: '# Create the Dog class\n\n\n# Create instance and call bark()\n'
+        }
+    ];
+
+    // Load challenges into Code Lab
+    function loadCodingChallenges() {
+        const list = document.getElementById('codelab-challenges-list');
+        if (!list) return;
+
+        const categories = [...new Set(codingChallenges.map(c => c.category))];
+
+        let html = '';
+        categories.forEach(category => {
+            const challenges = codingChallenges.filter(c => c.category === category);
+            html += `
+                <div class="mb-4">
+                    <div class="text-purple-400 font-bold text-xs mb-2 tracking-widest">${category.toUpperCase()}</div>
+                    <div class="space-y-2">
+                        ${challenges.map(c => `
+                            <button onclick="startCodingChallenge('${c.id}')" class="w-full bg-gray-900/80 hover:bg-purple-900/30 border border-purple-900/30 hover:border-purple-500 p-3 rounded-lg text-left transition">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-white font-bold text-sm">${c.title}</span>
+                                    <span class="text-xs px-2 py-1 rounded ${c.difficulty === 'Beginner' ? 'bg-green-900/50 text-green-400' : c.difficulty === 'Intermediate' ? 'bg-yellow-900/50 text-yellow-400' : 'bg-red-900/50 text-red-400'}">${c.difficulty}</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">${c.description.split('\n')[0]}</div>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+
+        list.innerHTML = html;
+    }
+
+    // Current challenge being worked on
+    let currentChallenge = null;
+
+    // Start a specific coding challenge
+    function startCodingChallenge(challengeId) {
+        const challenge = codingChallenges.find(c => c.id === challengeId);
+        if (!challenge) return;
+
+        currentChallenge = challenge;
+
+        // Hide challenges list, show challenge view
+        const codelabView = document.getElementById('student-codelab-view');
+        const challengeView = document.getElementById('student-code-challenge-view');
+
+        if (codelabView) {
+            codelabView.classList.add('hidden');
+            codelabView.style.display = 'none';
+        }
+        if (challengeView) {
+            challengeView.classList.remove('hidden');
+            challengeView.style.display = 'flex';
+        }
+
+        // Populate challenge details
+        document.getElementById('challenge-title').textContent = challenge.title;
+        document.getElementById('challenge-difficulty').textContent = `Difficulty: ${challenge.difficulty} | Category: ${challenge.category}`;
+        document.getElementById('challenge-description').innerHTML = challenge.description.replace(/\n/g, '<br>');
+        document.getElementById('challenge-expected').textContent = challenge.expected;
+        document.getElementById('challenge-hint').textContent = challenge.hint;
+        document.getElementById('code-editor').value = challenge.starterCode;
+
+        // Clear feedback
+        const feedbackPanel = document.getElementById('code-feedback-panel');
+        if (feedbackPanel) feedbackPanel.classList.add('hidden');
+    }
+
+    // Go back to challenges list
+    function backToChallengesList() {
+        const codelabView = document.getElementById('student-codelab-view');
+        const challengeView = document.getElementById('student-code-challenge-view');
+
+        if (challengeView) {
+            challengeView.classList.add('hidden');
+            challengeView.style.display = 'none';
+        }
+        if (codelabView) {
+            codelabView.classList.remove('hidden');
+            codelabView.style.display = 'flex';
+        }
+
+        currentChallenge = null;
+    }
+
+    // Simple Python code evaluator (simulated for demo)
+    function runPythonCode() {
+        const codeEditor = document.getElementById('code-editor');
+        const consoleOutput = document.getElementById('code-console-output');
+
+        if (!codeEditor || !codeEditor.value.trim()) {
+            consoleOutput.textContent = '>>> Error: No code to run';
+            return;
+        }
+
+        const code = codeEditor.value;
+        consoleOutput.textContent = '>>> Running code...\n';
+
+        // Simulate Python execution for common patterns
+        try {
+            let output = simulatePython(code);
+
+            // Check if output matches expected (if in a challenge)
+            if (currentChallenge && output.trim() === currentChallenge.expected.trim()) {
+                consoleOutput.innerHTML = `<span class="text-green-400">>>> ${output}</span>\n\n<span class="text-yellow-400">✅ Correct! Your output matches the expected result.</span>`;
+                showToast('Correct!', 'Your code produces the expected output!', 'success');
+            } else if (currentChallenge) {
+                consoleOutput.innerHTML = `>>> ${output}\n\n<span class="text-yellow-400">Expected: ${currentChallenge.expected}</span>`;
+            } else {
+                consoleOutput.textContent = `>>> ${output}`;
+            }
+        } catch (err) {
+            consoleOutput.innerHTML = `<span class="text-red-400">>>> Error: ${err.message}</span>`;
+        }
+    }
+
+    // Simulate basic Python code execution
+    function simulatePython(code) {
+        // Extract print statements and simulate output
+        const lines = code.split('\n');
+        let outputs = [];
+        let variables = {};
+
+        for (let line of lines) {
+            line = line.trim();
+
+            // Skip comments and empty lines
+            if (line.startsWith('#') || line === '') continue;
+
+            // Variable assignment: x = 5
+            const assignMatch = line.match(/^(\w+)\s*=\s*(.+)$/);
+            if (assignMatch) {
+                const varName = assignMatch[1];
+                let value = assignMatch[2].trim();
+
+                // Evaluate simple expressions
+                try {
+                    // Replace variable names with their values
+                    for (let v in variables) {
+                        value = value.replace(new RegExp('\\b' + v + '\\b', 'g'), JSON.stringify(variables[v]));
+                    }
+                    variables[varName] = eval(value);
+                } catch {
+                    variables[varName] = value;
+                }
+                continue;
+            }
+
+            // Print statement: print(...)
+            const printMatch = line.match(/^print\s*\(\s*(.+)\s*\)$/);
+            if (printMatch) {
+                let content = printMatch[1];
+
+                // Replace variables
+                for (let v in variables) {
+                    content = content.replace(new RegExp('\\b' + v + '\\b', 'g'), JSON.stringify(variables[v]));
+                }
+
+                // Handle f-strings simply
+                content = content.replace(/f["'](.+?)["']/g, (match, str) => {
+                    return '"' + str.replace(/\{(\w+)\}/g, (m, varName) => {
+                        return variables[varName] !== undefined ? variables[varName] : m;
+                    }) + '"';
+                });
+
+                try {
+                    let result = eval(content);
+                    outputs.push(String(result));
+                } catch {
+                    // Remove quotes for simple strings
+                    content = content.replace(/^["']|["']$/g, '');
+                    outputs.push(content);
+                }
+                continue;
+            }
+
+            // For loop simulation (basic)
+            const forMatch = line.match(/^for\s+(\w+)\s+in\s+(\w+)\s*:$/);
+            if (forMatch) {
+                const loopVar = forMatch[1];
+                const listVar = forMatch[2];
+                const list = variables[listVar];
+
+                if (Array.isArray(list)) {
+                    // Find next print statement
+                    const nextLineIdx = lines.indexOf(line) + 1;
+                    if (nextLineIdx < lines.length) {
+                        const nextLine = lines[nextLineIdx].trim();
+                        if (nextLine.match(/print\s*\(\s*(\w+)\s*\)/)) {
+                            list.forEach(item => outputs.push(String(item)));
+                        }
+                    }
+                }
+                continue;
+            }
+        }
+
+        return outputs.length > 0 ? outputs.join('\n') : 'No output';
+    }
+
+    // Clear console output
+    function clearConsole() {
+        const consoleOutput = document.getElementById('code-console-output');
+        if (consoleOutput) {
+            consoleOutput.textContent = '>>> Ready to run your code...';
         }
     }
 
@@ -3442,6 +3801,11 @@ print(solution(5))"></textarea>
     window.closeCodeLab = closeCodeLab;
     window.submitCodeForReview = submitCodeForReview;
     window.submitCodeForDebug = submitCodeForDebug;
+    window.loadCodingChallenges = loadCodingChallenges;
+    window.startCodingChallenge = startCodingChallenge;
+    window.backToChallengesList = backToChallengesList;
+    window.runPythonCode = runPythonCode;
+    window.clearConsole = clearConsole;
     window.loadTopicsInCenter = loadTopicsInCenter;
     window.teacherGeneratePractice = teacherGeneratePractice;
     window.autoAssignPractice = autoAssignPractice;
