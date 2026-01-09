@@ -46,3 +46,34 @@ class CachedExplanation(BaseModel):
     explanation: ConceptExplanationResponse
     cache_timestamp: int = Field(..., description="Unix timestamp when cached")
     hit_count: int = Field(default=1, description="Number of times this cache was hit")
+
+
+# MCQ Generation Models
+class MCQOption(BaseModel):
+    """Single MCQ option"""
+    text: str = Field(..., description="Option text")
+    is_correct: bool = Field(default=False, description="Whether this is the correct answer")
+
+
+class MCQ(BaseModel):
+    """Single multiple choice question"""
+    question: str = Field(..., description="The question text")
+    options: List[str] = Field(..., min_length=4, max_length=4, description="Four answer options")
+    correct: int = Field(..., ge=0, le=3, description="Index of correct answer (0-3)")
+    explanation: Optional[str] = Field(None, description="Why this answer is correct")
+
+
+class MCQGenerationRequest(BaseModel):
+    """Request to generate MCQs"""
+    topic: str = Field(..., description="Topic for MCQs (e.g., 'python-basics')")
+    difficulty: str = Field(default="easy", description="Difficulty: easy, medium, hard")
+    count: int = Field(default=3, ge=1, le=10, description="Number of questions to generate")
+    student_id: Optional[str] = Field(None, description="Student ID for personalization")
+
+
+class MCQGenerationResponse(BaseModel):
+    """Response containing generated MCQs"""
+    topic: str
+    difficulty: str
+    questions: List[MCQ]
+    generated_at: int = Field(..., description="Unix timestamp")

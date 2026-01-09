@@ -104,7 +104,8 @@ Provide your response as a JSON object following the specified format.
             elif response_text.startswith("```"):
                 response_text = response_text.split("```")[1].split("```")[0].strip()
 
-            explanation_data = json.loads(response_text)
+            # Parse JSON with strict=False to handle control characters
+            explanation_data = json.loads(response_text, strict=False)
 
             # Convert code examples to CodeExample objects
             code_examples = []
@@ -128,7 +129,18 @@ Provide your response as a JSON object following the specified format.
 
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse Claude response as JSON: {e}")
-            return self._fallback_explanation(concept, difficulty_level)
+            logger.debug(f"Raw response (first 500 chars): {response_text[:500]}")
+            # Try to extract plain text explanation if JSON parsing fails
+            return {
+                "explanation": response_text if len(response_text) < 2000 else response_text[:2000],
+                "code_examples": [],
+                "visualization": None,
+                "key_points": [],
+                "common_mistakes": [],
+                "next_steps": "Practice writing Python code",
+                "processing_time_ms": result.get("processing_time_ms", 0),
+                "token_count": result.get("token_count", 0)
+            }
 
         except Exception as e:
             logger.error(f"Error generating explanation: {e}", exc_info=True)

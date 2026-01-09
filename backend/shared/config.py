@@ -15,7 +15,7 @@ class AgentConfig(BaseSettings):
     """Base configuration for all agents"""
 
     model_config = SettingsConfigDict(
-        env_file='.env',
+        env_file=['D:/reuse-skills/.env', 'D:/reuse-skills/backend/.env', '.env'],
         env_file_encoding='utf-8',
         case_sensitive=False,
         extra='ignore'
@@ -28,7 +28,7 @@ class AgentConfig(BaseSettings):
 
     # Claude API Configuration
     anthropic_api_key: str = Field(..., description="Anthropic API key for Claude")
-    claude_model: str = Field(default="claude-sonnet-3-5-20241022", description="Claude model to use")
+    claude_model: str = Field(default="claude-3-haiku-20240307", description="Claude model to use")
     claude_max_tokens: int = Field(default=4096, description="Max tokens for Claude responses")
     claude_timeout: int = Field(default=30, description="Claude API timeout in seconds")
     claude_rate_limit: int = Field(default=60, description="Claude API requests per minute")

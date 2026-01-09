@@ -5,6 +5,7 @@ FastAPI application for generating programming concept explanations.
 """
 
 import logging
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,10 +15,9 @@ from backend.shared.logging_config import setup_logging
 from backend.shared.health_checks import create_health_router
 from backend.shared.metrics import MetricsCollector
 from backend.agents.concepts.routes import router as concepts_router
-from backend.agents.concepts.config import config
 
 # Setup logging
-logger = setup_logging(service_name="concepts-agent", log_level=config.log_level)
+logger = setup_logging(service_name="concepts-agent", log_level=os.getenv("LOG_LEVEL", "INFO"))
 
 # Initialize metrics
 metrics = MetricsCollector(agent_name="concepts-agent")
@@ -33,17 +33,15 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting Concepts Agent...")
     logger.info(
-        f"Configuration: model={config.claude_model}, port={config.agent_port}, "
-        f"caching={config.enable_caching}"
+        f"Configuration: model={os.getenv('OPENAI_MODEL', 'gpt-4o-mini')}, port=8002"
     )
 
     # Set agent metadata
     metrics.set_agent_info(
         version="1.0.0",
         metadata={
-            "model": config.claude_model,
-            "environment": config.environment,
-            "caching_enabled": str(config.enable_caching)
+            "model": os.getenv('OPENAI_MODEL', 'gpt-4o-mini'),
+            "environment": os.getenv('ENVIRONMENT', 'development')
         }
     )
 
@@ -68,7 +66,7 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if config.is_development else ["http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -79,9 +77,8 @@ app.include_router(concepts_router, prefix="/api/v1", tags=["concepts"])
 app.include_router(create_health_router(), tags=["health"])
 
 # Prometheus metrics endpoint
-if config.enable_metrics:
-    metrics_app = make_asgi_app()
-    app.mount("/metrics", metrics_app)
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 
 
 @app.get("/")
@@ -107,7 +104,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=config.agent_port,
-        reload=config.is_development,
-        log_level=config.log_level.lower()
+        port=8002,
+        reload=True,
+        log_level="info"
     )

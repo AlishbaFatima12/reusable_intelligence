@@ -13,24 +13,25 @@ from backend.agents.exercise.models import (
     ExercisesListResponse
 )
 from backend.agents.exercise.services.generator import ExerciseGenerator
-from backend.shared.claude_client import ClaudeClient
+from backend.shared.openai_client import OpenAIClient
 from backend.shared.kafka_client import KafkaPublisher
 from backend.shared.models import KafkaMessageEnvelope
 from backend.shared.metrics import MetricsCollector, track_latency
-from backend.agents.exercise.config import config
+import os
 
 logger = logging.getLogger(__name__)
 
 # Initialize dependencies
-claude_client = ClaudeClient(
-    model=config.claude_model,
-    max_tokens=config.claude_max_tokens,
-    rate_limit=config.claude_rate_limit,
-    timeout=config.claude_timeout
+openai_client = OpenAIClient(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+    max_tokens=4096,
+    rate_limit=60,
+    timeout=30
 )
 
-generator = ExerciseGenerator(claude_client=claude_client)
-kafka_publisher = KafkaPublisher(bootstrap_servers=config.kafka_bootstrap_servers)
+generator = ExerciseGenerator(claude_client=openai_client)
+kafka_publisher = KafkaPublisher(bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"))
 metrics = MetricsCollector(agent_name="exercise-generator-agent")
 
 router = APIRouter()
@@ -70,9 +71,9 @@ async def generate_exercises(request: ExerciseGenerationRequest):
             mastery_score=request.mastery_score
         )
 
-        # Track Claude API metrics
+        # Track OpenAI API metrics
         metrics.track_claude_call(
-            model=config.claude_model,
+            model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
             status="success",
             duration_seconds=0,  # TODO: track actual time
             input_tokens=0,

@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize dependencies
 claude_client = ClaudeClient(
+    api_key=config.anthropic_api_key,  # ✅ FIX: Pass API key from config
     model=config.claude_model,
     max_tokens=config.claude_max_tokens,
     rate_limit=config.claude_rate_limit,
@@ -91,7 +92,7 @@ async def update_mastery(student_id: str, request: MasteryRequest):
     try:
         logger.info(
             f"Updating mastery: student={student_id}, topic={request.topic}, "
-            f"type={request.interaction_type}, success={request.success}"
+            f"type={request.interaction_type}, success={request.success}, score={request.score}"
         )
 
         # Get current progress state
@@ -100,13 +101,21 @@ async def update_mastery(student_id: str, request: MasteryRequest):
         # Store old mastery for comparison
         old_overall_mastery = student_state.progress.overall_mastery
 
-        # Update mastery
-        student_state = tracker.update_topic_mastery(
-            student_state=student_state,
-            topic=request.topic,
-            interaction_type=request.interaction_type,
-            success=request.success
-        )
+        # Update mastery - if score is provided, set directly; otherwise use delta
+        if request.score is not None:
+            # Direct score setting (0-100%)
+            student_state = tracker.set_topic_mastery_direct(
+                student_state=student_state,
+                topic=request.topic,
+                score=request.score
+            )
+        else:
+            student_state = tracker.update_topic_mastery(
+                student_state=student_state,
+                topic=request.topic,
+                interaction_type=request.interaction_type,
+                success=request.success
+            )
 
         # Update query counts
         student_state.total_queries += 1

@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
 
   // Environment variables exposed to the browser
   env: {
@@ -9,6 +8,9 @@ const nextConfig = {
     TRIAGE_AGENT_URL: process.env.TRIAGE_AGENT_URL || 'http://localhost:8001',
     WEBSOCKET_URL: process.env.WEBSOCKET_URL || 'http://localhost:4001',
   },
+
+  // Silence multiple lockfiles warning
+  outputFileTracingRoot: require('path').join(__dirname, '..'),
 
   // Webpack config for Three.js
   webpack: (config) => {
