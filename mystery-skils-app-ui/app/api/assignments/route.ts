@@ -7,28 +7,40 @@ const prisma = new PrismaClient()
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { teacherId, studentId, studentName, topic, level, questions } = body
+    // Support both 'level' and 'difficulty' field names for compatibility
+    const { teacherId, studentId, studentName, topic, level, difficulty, type, questions } = body
+    const assignmentLevel = level || difficulty || 'easy'
+    const assignmentType = type || 'mcq'
+
+    console.log('[Assignments API] Creating assignment:', { studentId, topic, type: assignmentType, level: assignmentLevel })
 
     const assignment = await prisma.assignment.create({
       data: {
         teacherId,
         studentId,
-        studentName,
+        studentName: studentName || 'Student',
         topic,
-        level,
+        level: assignmentLevel,
+        type: assignmentType,
         questions: JSON.stringify(questions),
         completed: false
       }
     })
 
-    // Create notification for student
+    // Create notification for student with appropriate message
+    const isCoding = assignmentType === 'coding'
+    const notificationTitle = isCoding ? '💻 New Coding Challenge!' : '📝 New Practice Assignment'
+    const notificationMessage = isCoding
+      ? `Your teacher assigned you a coding challenge: "${topic}". Go to CODE LAB to complete it!`
+      : `Your teacher assigned you a practice on ${topic}`
+
     await prisma.notification.create({
       data: {
         userId: studentId,
         type: 'assignment',
-        title: 'New Practice Assignment',
-        message: `Your teacher assigned you a practice on ${topic}`,
-        metadata: JSON.stringify({ assignmentId: assignment.id })
+        title: notificationTitle,
+        message: notificationMessage,
+        metadata: JSON.stringify({ assignmentId: assignment.id, type: assignmentType })
       }
     })
 
@@ -38,11 +50,12 @@ export async function POST(request: NextRequest) {
         userId: teacherId,
         type: 'confirmation',
         title: 'Assignment Sent',
-        message: `Practice on "${topic}" assigned to ${studentName} successfully`,
-        metadata: JSON.stringify({ assignmentId: assignment.id, studentId, studentName })
+        message: `${isCoding ? 'Coding challenge' : 'Practice'} on "${topic}" assigned to ${studentName || 'student'} successfully`,
+        metadata: JSON.stringify({ assignmentId: assignment.id, studentId, studentName, type: assignmentType })
       }
     })
 
+    console.log('[Assignments API] Assignment created:', assignment.id)
     return NextResponse.json({ success: true, assignment })
   } catch (error: any) {
     console.error('Create assignment error:', error)

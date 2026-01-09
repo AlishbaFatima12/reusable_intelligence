@@ -70,7 +70,8 @@ class Debugger:
             )
 
             # Call Claude API
-            response = await self.claude_client.generate(prompt=prompt)
+            result = self.claude_client.generate_response(prompt=prompt)
+            response = result.get("response_text", "")
 
             # Parse Claude's response
             diagnosis = self._parse_diagnosis_response(

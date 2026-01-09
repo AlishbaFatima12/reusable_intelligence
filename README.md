@@ -1,74 +1,251 @@
 # LearnFlow - AI-Powered Learning Platform
-## Hackathon III: Reusable Intelligence & Cloud-Native Mastery
 
-**Repository**: [reusable_intelligence](https://github.com/AlishbaFatima12/reusable_intelligence)
-**Team**: AlishbaFatima12
-**Last Updated**: 2025-12-29
+**Transform the way you learn programming with AI-powered personalized education**
 
 ---
 
-## Project Overview
+## What is LearnFlow?
 
-LearnFlow is an **AI-native learning platform** that uses specialized AI agents to provide personalized programming education. Built using **agent-native development principles**, LearnFlow demonstrates the power of reusable intelligence through skills-based architecture.
+LearnFlow is a modern **AI-powered learning platform** designed for programming education. It provides a unique experience where **teachers can assign tasks** and **students can practice coding** with real-time AI assistance.
 
-### The LearnFlow Difference
-
-- **6 Specialized AI Agents**: Triage, Concepts, Code Review, Debug, Exercise, and Progress
-- **Real-time Collaboration**: Agents communicate via Kafka event streaming
-- **Personalized Learning**: Each student gets AI tutoring adapted to their skill level
-- **Cloud-Native**: Built for scale with Kubernetes, Dapr, and microservices
+### Live Demo
+> **URL**: _Coming Soon_
 
 ---
 
-## Architecture
+## Key Features
 
-### High-Level Architecture
+### For Students
+
+| Feature | Description |
+|---------|-------------|
+| **Practice Topics** | Interactive MCQ quizzes on Python, Data Structures, Algorithms, and more |
+| **Code Lab** | Write and run Python code directly in the browser |
+| **22+ Coding Challenges** | From beginner to advanced - Print Hello World to Fibonacci |
+| **Custom Problem Generator** | Type any topic and generate a coding challenge instantly |
+| **AI Code Review** | Get instant feedback on your code from AI |
+| **Real-time Notifications** | Instant popups when teachers assign tasks |
+| **Progress Tracking** | XP points, achievements, and learning streaks |
+| **Gamification** | Confetti celebrations, badges, and level progression |
+
+### For Teachers
+
+| Feature | Description |
+|---------|-------------|
+| **Student Dashboard** | View all students and their progress at a glance |
+| **Assign MCQ Tests** | Create and assign practice tests on any topic |
+| **Assign Coding Challenges** | Send coding tasks to students with one click |
+| **Send Notes & Reminders** | Encourage students or send deadline reminders |
+| **View Completions** | Track which students completed assignments |
+| **Auto-Generate Questions** | AI generates fresh questions every time |
+
+---
+
+## Screenshot Preview
 
 ```
-Student Query → API Gateway → Kafka: query.received
-                                      ↓
-                                Triage Agent (AI classification)
-                                      ↓
-                                Kafka: query.routed
-                      ┌───────────────┴────────────────┐
-                      ↓                                ↓
-            Concepts Agent (AI)              Debug Agent (AI)
-            Code Review Agent (AI)           Exercise Agent (AI)
-            Progress Agent (Analytics)
-                      ↓
-            Kafka: response.ready
-                      ↓
-            API Gateway → Student (Next.js UI)
++------------------------------------------+
+|  LEARNFLOW                    [Teacher]  |
++------------------------------------------+
+|                                          |
+|  STUDENTS          CENTER PANEL          |
+|  +--------+   +---------------------+    |
+|  | Alishba|   |  PRACTICE TOPICS    |    |
+|  | Ali    |   |  [Python] [Data]    |    |
+|  | Sara   |   |  [Algo]  [OOP]      |    |
+|  +--------+   +---------------------+    |
+|                                          |
+|  TEACHER ACTIONS                         |
+|  +------------------+                    |
+|  | ASSIGN MCQ TEST  |                    |
+|  | ASSIGN CODE TASK |                    |
+|  +------------------+                    |
++------------------------------------------+
 ```
 
-### Technology Stack
+---
 
-**Frontend**:
-- Next.js + React 19 + TypeScript
-- Monaco Editor (code editing)
-- Immersive dark UI with glassmorphism
+## Technology Stack
 
-**Backend**:
-- FastAPI (Python 3.11+) microservices
-- Dapr sidecar (pub/sub, state, service invocation)
-- Apache Kafka (event streaming)
-- PostgreSQL (state persistence)
+### Frontend
+- **Next.js 15** - React framework with App Router
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Modern styling with glassmorphism
+- **In-browser Python** - Run Python code without backend
 
-**AI/ML**:
-- Claude API (Anthropic) for AI agent intelligence
-- Vector database for learned explanations
-- Context-aware personalization
+### Backend (6 AI Agents)
+| Agent | Port | Purpose |
+|-------|------|---------|
+| Triage Agent | 8001 | Route queries to correct agent |
+| Concepts Agent | 8002 | Explain programming concepts + Generate MCQs |
+| Code Review Agent | 8003 | Review student code with AI feedback |
+| Debug Agent | 8004 | Help debug code errors |
+| Exercise Generator | 8005 | Generate coding exercises |
+| Progress Tracker | 8006 | Track student mastery and progress |
 
-**Infrastructure**:
-- Kubernetes (orchestration)
-- Docker (containerization)
-- ArgoCD (GitOps CD)
-- GitHub Actions (CI)
+### Database
+- **PostgreSQL** (via Neon) - Store users, assignments, notifications
+- **Prisma ORM** - Type-safe database access
 
-**Observability**:
-- Structured JSON logging
-- Prometheus metrics
-- Jaeger/Zipkin tracing (via Dapr)
+### AI
+- **Claude API** (Anthropic) - Powers all AI features
+
+---
+
+## Quick Start (Local Development)
+
+### Prerequisites
+- Node.js 18+
+- Python 3.11+
+- PostgreSQL database (or use Neon free tier)
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/AlishbaFatima12/reusable_intelligence.git
+cd reusable_intelligence
+```
+
+### 2. Setup Frontend
+```bash
+cd mystery-skils-app-ui
+npm install
+cp .env.example .env
+# Edit .env with your DATABASE_URL and ANTHROPIC_API_KEY
+npx prisma db push
+npm run dev
+```
+
+### 3. Setup Backend Agents
+```bash
+cd ..
+python -m venv venv
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Mac/Linux
+pip install -r backend/requirements.txt
+```
+
+### 4. Start All Agents
+```bash
+# Windows
+start-agents.bat
+
+# Or manually start each agent:
+python -m uvicorn backend.agents.triage.main:app --port 8001
+python -m uvicorn backend.agents.concepts.main:app --port 8002
+# ... etc
+```
+
+### 5. Access the App
+Open http://localhost:4000/mystery-skills-flash.html
+
+---
+
+## User Guide
+
+### Student Flow
+1. **Register** as a student with email/password
+2. Click **PRACTICE TOPICS** to take MCQ quizzes
+3. Click **CODE LAB** to practice coding challenges
+4. Use **RUN CODE** to execute your Python code
+5. Use **REVIEW** to get AI feedback on your code
+6. Check **notifications** for teacher assignments
+7. Complete assignments to earn **XP and achievements**
+
+### Teacher Flow
+1. **Register** as a teacher with email/password
+2. View all registered **students** in left panel
+3. Click a student to see their **progress and assignments**
+4. **Generate MCQ Test**: Select topic → Generate → Assign to students
+5. **Assign Coding Task**: Select students → Select challenge → Assign
+6. Send **appreciation notes** to high performers
+7. Send **reminders** for pending assignments
+
+---
+
+## Coding Challenges Available
+
+### Beginner
+- Print Hello World
+- Add Two Numbers
+- Find String Length
+- Access List Item
+- Loop Through List
+- Check Number (if/else)
+
+### Easy
+- Reverse a String
+- Sum of List
+- Find Maximum
+- Sort a List
+
+### Medium
+- Count Vowels
+- Filter Even Numbers
+- Calculate Factorial
+- Check Palindrome
+- FizzBuzz
+- List Comprehension
+
+### Hard
+- Word Frequency Counter
+- Check Prime Number
+- Fibonacci Sequence
+- Create a Class
+
+---
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/students` - Get all students (teacher only)
+
+### Assignments
+- `POST /api/assignments` - Create assignment
+- `GET /api/assignments/student/:id` - Get student assignments
+- `PUT /api/assignments/:id/complete` - Mark complete
+
+### Notifications
+- `GET /api/notifications/:userId` - Get user notifications
+- `POST /api/notifications` - Create notification
+- `PUT /api/notifications/:id/mark-read` - Mark as read
+
+### AI Agents
+- `POST :8002/api/v1/generate-mcqs` - Generate MCQ questions
+- `POST :8002/api/v1/explain` - Explain a concept
+- `POST :8003/api/v1/review` - Review code
+- `GET :8006/api/v1/mastery/:studentId` - Get student mastery
+
+---
+
+## Environment Variables
+
+```env
+# Database
+DATABASE_URL="postgresql://user:pass@host:5432/db"
+
+# AI
+ANTHROPIC_API_KEY="sk-ant-..."
+
+# Optional
+CLAUDE_MODEL="claude-sonnet-3-5-20241022"
+```
+
+---
+
+## Deployment
+
+### Frontend (Vercel - Recommended)
+1. Push to GitHub
+2. Connect repo to Vercel
+3. Set environment variables
+4. Deploy automatically
+
+### Backend (Railway/Render)
+1. Deploy each agent as separate service
+2. Set ANTHROPIC_API_KEY
+3. Configure ports 8001-8006
 
 ---
 
@@ -76,352 +253,60 @@ Student Query → API Gateway → Kafka: query.received
 
 ```
 reusable_intelligence/
-├── .claude/                    # Claude Code skills
-│   └── skills/
-│       ├── agents-md-gen/      # Generate AGENTS.md
-│       ├── kafka-k8s-setup/    # Deploy Kafka
-│       ├── postgres-k8s-setup/ # Deploy PostgreSQL
-│       ├── fastapi-dapr-agent/ # Create microservices
-│       ├── nextjs-k8s-deploy/  # Deploy frontend
-│       └── mcp-code-execution/ # MCP integration
-├── backend/                    # Microservices
-│   ├── triage-agent/          # Query routing (AI)
-│   ├── concepts-agent/        # Concept explanations (AI)
-│   ├── debug-agent/           # Code debugging (AI)
-│   ├── code-review-agent/     # Code review (AI)
-│   ├── exercise-agent/        # Exercise generation (AI)
-│   └── progress-agent/        # Progress tracking
-├── frontend/                   # Next.js application
-│   └── learnflow-ui/          # Student & teacher dashboards
-├── infrastructure/             # Kubernetes manifests
-│   ├── kafka/                 # Kafka deployment
-│   ├── postgres/              # PostgreSQL deployment
-│   └── dapr/                  # Dapr components
-├── specs/                      # Feature specifications
-├── history/                    # Development history
-│   ├── prompts/               # Prompt History Records (PHRs)
-│   └── adr/                   # Architecture Decision Records
-├── .specify/                   # SDD-RI artifacts
-│   ├── memory/
-│   │   └── constitution.md    # Project constitution
-│   └── templates/             # Document templates
-├── docs/                       # Documentation
-└── README.md                  # This file
+├── mystery-skils-app-ui/     # Next.js frontend
+│   ├── app/                  # App router pages
+│   │   ├── api/             # API routes
+│   │   ├── auth/            # Auth pages
+│   │   ├── student/         # Student dashboard
+│   │   └── teacher/         # Teacher dashboard
+│   ├── public/
+│   │   └── mystery-skills-flash.html  # Main UI
+│   └── prisma/
+│       └── schema.prisma    # Database schema
+├── backend/                  # Python microservices
+│   └── agents/
+│       ├── triage/          # Query routing
+│       ├── concepts/        # MCQ generation
+│       ├── code_review/     # Code review
+│       ├── debug/           # Debugging help
+│       ├── exercise/        # Exercise generation
+│       └── progress/        # Progress tracking
+└── README.md
 ```
-
----
-
-## Core Principles (Constitution)
-
-### 1. Agent-Native Development
-- AI agents are digital FTEs, not assistants
-- Skills are the product; code is generated
-- 168 hours/week autonomous work
-
-### 2. Token Efficiency (98%+ Reduction)
-- MCP Code Execution Pattern
-- <1000 tokens for full deployment (vs 50,000+)
-- Skills: ~100 tokens, Scripts: 0 tokens
-
-### 3. Spec-Driven Development
-- Specification precedes implementation
-- Specs are executable blueprints
-- Agents make autonomous decisions
-
-### 4. Skills as Permanent Knowledge
-- Reusable across projects and agents
-- Cross-agent compatible (Claude Code + Goose)
-- Composable with emergent capabilities
-
-### 5. Event-Driven Cloud-Native
-- Microservices via Kafka pub/sub
-- Stateless services + Dapr state management
-- Kubernetes for scale and resilience
-
-Read the full constitution: `.specify/memory/constitution.md`
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- **Docker** (24.0+)
-- **Minikube** (1.32+)
-- **Helm** (3.13+)
-- **Claude Code** or **Goose** (agent runtime)
-- **Node.js** (20+)
-- **Python** (3.11+)
-
-### Quick Start
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/AlishbaFatima12/reusable_intelligence.git
-   cd reusable_intelligence
-   ```
-
-2. **Start Minikube**:
-   ```bash
-   minikube start --cpus=4 --memory=8192 --driver=docker
-   ```
-
-3. **Deploy infrastructure** (using skills):
-   ```bash
-   # With Claude Code
-   claude "Deploy Kafka to Kubernetes using kafka-k8s-setup skill"
-   claude "Deploy PostgreSQL using postgres-k8s-setup skill"
-
-   # Or with Goose
-   goose run "Deploy Kafka and PostgreSQL infrastructure"
-   ```
-
-4. **Build LearnFlow agents** (autonomous):
-   ```bash
-   claude "Build all 6 LearnFlow microservices from specifications"
-   ```
-
-5. **Deploy frontend**:
-   ```bash
-   claude "Deploy LearnFlow UI using nextjs-k8s-deploy skill"
-   ```
-
-6. **Verify deployment**:
-   ```bash
-   kubectl get pods -A
-   # All pods should be Running
-   ```
-
-7. **Access LearnFlow**:
-   ```bash
-   minikube service learnflow-frontend -n learnflow
-   ```
-
-### Development Workflow
-
-1. **Create specification**: Define feature in `specs/<feature>/spec.md`
-2. **Create/use skill**: Build reusable skill or use existing
-3. **Autonomous build**: Agent implements from spec + skill
-4. **Validate**: Automated validation scripts verify success
-5. **Deploy**: GitOps via ArgoCD (auto-deployment from main branch)
-
----
-
-## Skills Library
-
-### Infrastructure Skills
-
-| Skill | Purpose | Token Cost | Status |
-|-------|---------|------------|--------|
-| `kafka-k8s-setup` | Deploy Kafka cluster | ~110 | ✅ Ready |
-| `postgres-k8s-setup` | Deploy PostgreSQL DB | ~105 | ✅ Ready |
-| `dapr-setup` | Configure Dapr components | ~95 | 🚧 In Progress |
-
-### Application Skills
-
-| Skill | Purpose | Token Cost | Status |
-|-------|---------|------------|--------|
-| `fastapi-dapr-agent` | Create FastAPI microservice | ~120 | ✅ Ready |
-| `nextjs-k8s-deploy` | Deploy Next.js app | ~115 | ✅ Ready |
-| `mcp-code-execution` | MCP with code execution | ~95 | 🚧 In Progress |
-
-### Utility Skills
-
-| Skill | Purpose | Token Cost | Status |
-|-------|---------|------------|--------|
-| `agents-md-gen` | Generate AGENTS.md | ~100 | ✅ Ready |
-| `docusaurus-deploy` | Deploy documentation site | ~100 | 📋 Planned |
-
-**Total Token Budget**: ~840 tokens (vs 115,000 traditional MCP) = **99.3% reduction**
-
----
-
-## LearnFlow Agents
-
-### 1. Triage Agent (AI)
-- **Purpose**: Route student queries to specialized agents
-- **Input**: User query text
-- **Output**: Target agent + confidence score
-- **AI Model**: Claude Sonnet 4.5 (classification)
-- **Port**: 8001
-
-### 2. Concepts Agent (AI)
-- **Purpose**: Explain programming concepts
-- **Input**: Concept name + student skill level
-- **Output**: Personalized explanation
-- **AI Model**: Claude Sonnet 4.5 (generation)
-- **Port**: 8002
-
-### 3. Code Review Agent (AI)
-- **Purpose**: Review and improve student code
-- **Input**: Code snippet + context
-- **Output**: Review with suggestions
-- **AI Model**: Claude Sonnet 4.5 (analysis)
-- **Port**: 8003
-
-### 4. Debug Agent (AI)
-- **Purpose**: Help debug code errors
-- **Input**: Code + error message
-- **Output**: Debug strategy + fix
-- **AI Model**: Claude Sonnet 4.5 (debugging)
-- **Port**: 8004
-
-### 5. Exercise Agent (AI)
-- **Purpose**: Generate practice exercises
-- **Input**: Topic + difficulty level
-- **Output**: Coding exercise + test cases
-- **AI Model**: Claude Sonnet 4.5 (generation)
-- **Port**: 8005
-
-### 6. Progress Agent (Analytics)
-- **Purpose**: Track student learning progress
-- **Input**: Student ID + timeframe
-- **Output**: Progress metrics + insights
-- **Data Source**: PostgreSQL state store
-- **Port**: 8006
-
----
-
-## UI Design
-
-### Selected UI: "Diffusion Chat - Radical Redesign"
-
-**Design Characteristics**:
-- **Modern**: Deep dark theme (#09090b), glassmorphism, Inter font
-- **Tech-Forward**: React 19, TypeScript, 3D perspective effects
-- **Advanced**: Immersive full-screen, floating input, focus mode, code streaming
-
-**Key Features**:
-- Card-based artifact grid (perfect for multi-agent responses)
-- Focus mode for detailed interactions
-- Side drawer for code/variations
-- Responsive mobile design
-- Advanced animations (cubic-bezier, dramatic entrances)
-
-**Location**: `frontend/learnflow-ui/`
-
-**Modifications Needed**:
-- Rebrand from "Diffusion Chat" → "LearnFlow"
-- Adapt for educational context (learning queries, not UI generation)
-- Add Monaco code editor integration
-- Connect to FastAPI backend (replace Google GenAI)
-
----
-
-## Token Efficiency Strategy
-
-### MCP Code Execution Pattern
-
-**Traditional MCP** (Avoid):
-```
-Agent → MCP Kubernetes → 15k tokens loaded
-Agent → get_pods() → 5k tokens JSON returned
-Agent → filter → 5k tokens processed
-Total: 25k tokens
-```
-
-**Code Execution Pattern** (Use):
-```python
-# scripts/get_service_health.py
-from mcp_kubernetes import KubernetesClient
-
-client = KubernetesClient()
-pods = client.get_pods(namespace="learnflow")
-
-# Filter CLIENT-SIDE (0 tokens in agent context)
-healthy = sum(1 for p in pods if p.status.phase == "Running")
-total = len(pods)
-
-# Return MINIMAL output
-if healthy == total:
-    print(f"✓ All {total} services healthy")
-else:
-    print(f"✗ {healthy}/{total} healthy")
-```
-
-**Agent sees**: `✓ All 6 services healthy` (~10 tokens)
-**Reduction**: 99.96% (10 vs 25,000 tokens)
-
----
-
-## Success Metrics
-
-### Hackathon III Targets
-
-| Criterion | Weight | Target | Status |
-|-----------|--------|--------|--------|
-| Skills Autonomy | 15% | Single-prompt deployment | 🚧 |
-| Token Efficiency | 10% | 98%+ reduction | ✅ |
-| Cross-Agent | 5% | Works on Claude + Goose | 📋 |
-| Architecture | 20% | Event-driven, cloud-native | 🚧 |
-| MCP Integration | 10% | Code execution pattern | 🚧 |
-| Documentation | 10% | Auto-generated | 📋 |
-| Spec-Kit Plus | 15% | Specs executable | 🚧 |
-| LearnFlow | 15% | All 6 agents operational | 📋 |
-
-**Target Score**: 85/100+ (Top Tier)
-
-### Current Progress
-
-- ✅ Constitution created
-- ✅ UI selected and adapted
-- ✅ GitHub repository configured
-- ✅ Project structure established
-- 🚧 Skills library (3/7 complete)
-- 📋 Infrastructure deployment (planned)
-- 📋 Agent implementation (planned)
-- 📋 Integration testing (planned)
-
----
-
-## Development Timeline
-
-| Phase | Duration | Deliverable | Status |
-|-------|----------|-------------|--------|
-| **Setup** | Day 1 | Environment + foundation skills | ✅ |
-| **Infrastructure** | Day 2 | Kafka + PostgreSQL deployed | 📋 |
-| **Backend** | Day 3-4 | 6 AI agents operational | 📋 |
-| **Frontend** | Day 5 | Next.js UI deployed | 📋 |
-| **Integration** | Day 6 | End-to-end testing | 📋 |
-| **Cloud Deploy** | Day 7 | ArgoCD + GitHub Actions | 📋 |
-| **Polish** | Day 8 | Documentation + demo | 📋 |
 
 ---
 
 ## Contributing
 
-This is a hackathon project. Contributions follow the constitution:
-
-1. **Specification First**: Create `specs/<feature>/spec.md`
-2. **Skills Over Code**: Build/use skills for implementation
-3. **Validate Autonomously**: Include validation scripts
-4. **Cross-Agent Test**: Verify on Claude Code AND Goose
-5. **Token Efficient**: Measure and minimize token usage
-
----
-
-## Resources
-
-- **Constitution**: `.specify/memory/constitution.md`
-- **Agent Principles**: `AGENT_NATIVE_PRINCIPLES.md`
-- **Roadmap**: `HACKATHON_III_ROADMAP.md`
-- **Prompt History**: `history/prompts/`
-- **Architecture Decisions**: `history/adr/`
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
 ---
 
 ## License
 
-MIT License - See LICENSE file
+MIT License - feel free to use for your own learning projects!
 
 ---
 
-## Contact
+## Credits
 
-**Team**: AlishbaFatima12
-**Repository**: https://github.com/AlishbaFatima12/reusable_intelligence
-**Hackathon**: Hackathon III - Reusable Intelligence & Cloud-Native Mastery
+- **Team**: AlishbaFatima12
+- **Hackathon**: Reusable Intelligence & Cloud-Native Mastery
+- **AI**: Powered by Claude (Anthropic)
 
 ---
 
-**Remember**: We're not building an app. We're building digital FTEs that build apps. Skills are the product; agents are the workforce.
+## Support
+
+Having issues?
+- Open a GitHub issue
+- Check the browser console for errors
+- Ensure all agents are running (ports 8001-8006)
+
+---
+
+**Built with AI, for AI-powered learning**

@@ -372,31 +372,52 @@
 
         <!-- Left: Skill Vault OR Teacher Student List -->
         <div class="col-span-3 flex flex-col gap-6">
-            <!-- STUDENT VIEW: Agent Status -->
+            <!-- STUDENT VIEW: Learning Progress & Stats -->
             <div id="studentAgentPanel" class="glass-card p-6 flex-1">
-                <h3 class="text-xs font-bold mb-6 tracking-widest border-b border-teal-900 pb-2">LEARNFLOW_AGENTS</h3>
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between p-3 border border-teal-900/50 bg-teal-900/10">
-                        <div class="flex items-center gap-3">
-                            <div class="w-2 h-2 bg-green-500 heartbeat" id="triage-heartbeat"></div>
-                            <span class="text-xs">triage-agent</span>
-                        </div>
-                        <span class="text-[10px] opacity-50" id="triage-port">:8001</span>
+                <h3 class="text-xs font-bold mb-4 tracking-widest border-b border-teal-900 pb-2">📊 MY_PROGRESS</h3>
+
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div class="bg-gradient-to-br from-green-900/40 to-green-800/20 p-3 rounded-lg border border-green-700/30 text-center">
+                        <div class="text-2xl font-bold text-green-400" id="student-completed-count">0</div>
+                        <div class="text-[9px] text-green-300/70 uppercase tracking-wider">Completed</div>
                     </div>
-                    <div class="flex items-center justify-between p-3 border border-teal-900/50">
-                        <div class="flex items-center gap-3">
-                            <div class="w-2 h-2 bg-green-500 heartbeat" id="concepts-heartbeat"></div>
-                            <span class="text-xs">concepts-agent</span>
-                        </div>
-                        <span class="text-[10px] opacity-50" id="concepts-port">:8002</span>
+                    <div class="bg-gradient-to-br from-yellow-900/40 to-yellow-800/20 p-3 rounded-lg border border-yellow-700/30 text-center">
+                        <div class="text-2xl font-bold text-yellow-400" id="student-streak-count">🔥 0</div>
+                        <div class="text-[9px] text-yellow-300/70 uppercase tracking-wider">Day Streak</div>
                     </div>
-                    <div class="flex items-center justify-between p-3 border border-teal-900/50">
-                        <div class="flex items-center gap-3">
-                            <div class="w-2 h-2 bg-blue-500 heartbeat" id="progress-heartbeat"></div>
-                            <span class="text-xs">progress-tracker</span>
-                        </div>
-                        <span class="text-[10px] opacity-50" id="progress-port">:8006</span>
+                </div>
+
+                <!-- Current Level -->
+                <div class="bg-gradient-to-r from-purple-900/30 to-pink-900/30 p-3 rounded-lg border border-purple-700/30 mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] text-purple-300 uppercase tracking-wider">Current Level</span>
+                        <span class="text-xs font-bold text-purple-400" id="student-level">Beginner</span>
                     </div>
+                    <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500" id="student-level-progress" style="width: 20%"></div>
+                    </div>
+                    <div class="text-[8px] text-gray-400 mt-1 text-right" id="student-xp-text">200/1000 XP</div>
+                </div>
+
+                <!-- Recent Achievements -->
+                <div class="space-y-2">
+                    <div class="text-[10px] text-teal-400 uppercase tracking-wider mb-2">🏆 Achievements</div>
+                    <div id="student-achievements" class="space-y-1">
+                        <div class="flex items-center gap-2 p-2 bg-gray-800/50 rounded border border-gray-700/50">
+                            <span class="text-lg">🌟</span>
+                            <div>
+                                <div class="text-[10px] font-bold text-white">First Steps</div>
+                                <div class="text-[8px] text-gray-400">Complete your first practice</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Tip -->
+                <div class="mt-4 p-3 bg-gradient-to-r from-cyan-900/20 to-teal-900/20 rounded-lg border border-cyan-800/30">
+                    <div class="text-[10px] text-cyan-400 uppercase tracking-wider mb-1">💡 Tip of the Day</div>
+                    <div class="text-[10px] text-gray-300" id="daily-tip">Practice coding daily to build muscle memory!</div>
                 </div>
             </div>
 
@@ -453,16 +474,35 @@
                 </div>
             </div>
 
-            <!-- Code Lab View: Challenges List -->
-            <div id="student-codelab-view" class="absolute inset-0 p-4 hidden flex-col bg-black/95">
-                <div class="flex justify-between items-center mb-3 border-b border-purple-900 pb-3">
+            <!-- Code Lab View: Challenges List (same style as Practice Topics) -->
+            <div id="student-codelab-view" class="absolute inset-0 p-6 hidden flex-col bg-black/95">
+                <div class="flex justify-between items-center mb-4 border-b border-purple-900 pb-3">
                     <div>
                         <div class="text-purple-400 font-bold text-lg tracking-widest">CODE_LAB</div>
-                        <div class="text-xs text-gray-400 mt-1">Select a coding challenge to practice</div>
+                        <div class="text-xs text-gray-400 mt-1">Select a challenge or generate your own!</div>
                     </div>
                     <button onclick="closeCodeLab()" class="text-xs bg-gray-800 px-4 py-2 text-gray-400 hover:bg-red-900 hover:text-white transition rounded">CLOSE</button>
                 </div>
-                <div id="codelab-challenges-list" class="flex-1 overflow-y-auto grid grid-cols-1 gap-3 pr-2">
+
+                <!-- Generate Custom Problem Section -->
+                <div class="bg-gradient-to-r from-purple-900/30 to-pink-900/30 p-4 rounded-lg border border-purple-700/50 mb-4">
+                    <div class="text-purple-300 font-bold text-xs mb-3 tracking-widest">✨ GENERATE CUSTOM PROBLEM</div>
+                    <div class="flex gap-2">
+                        <input type="text" id="custom-topic-input" placeholder="Type any topic: loops, strings, math, games..." class="flex-1 bg-gray-900 border border-purple-900 text-white text-sm px-3 py-2 rounded-lg" onkeypress="if(event.key==='Enter')generateCustomProblem()">
+                        <select id="custom-difficulty-select" class="bg-gray-900 border border-purple-900 text-white text-sm px-2 py-2 rounded-lg">
+                            <option value="Beginner">🌱 Beginner</option>
+                            <option value="Easy">📘 Easy</option>
+                            <option value="Medium" selected>🔥 Medium</option>
+                            <option value="Hard">💎 Hard</option>
+                        </select>
+                        <button onclick="generateCustomProblem()" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold px-4 py-2 rounded-lg hover:from-purple-500 hover:to-pink-500 transition text-sm">GENERATE</button>
+                    </div>
+                    <div class="text-[10px] text-gray-400 mt-2">Examples: "calculator", "password checker", "number guessing", "shopping cart"</div>
+                </div>
+
+                <!-- Search existing challenges -->
+                <input type="text" id="codelab-search" placeholder="🔍 Search existing challenges..." class="bg-gray-900 border border-purple-900 text-white text-sm px-4 py-3 mb-4 rounded-lg w-full" oninput="filterCodingChallenges()">
+                <div id="codelab-challenges-list" class="flex-1 overflow-y-auto grid grid-cols-2 gap-3 pr-2">
                     <!-- Challenges will be loaded here -->
                 </div>
             </div>
@@ -518,9 +558,6 @@
                             </button>
                             <button onclick="submitCodeForReview()" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-bold py-2 px-3 rounded-lg hover:from-blue-500 hover:to-blue-700 transition flex items-center justify-center gap-2 text-sm">
                                 <span>🔍</span> REVIEW
-                            </button>
-                            <button onclick="submitCodeForDebug()" class="flex-1 bg-gradient-to-r from-orange-600 to-orange-800 text-white font-bold py-2 px-3 rounded-lg hover:from-orange-500 hover:to-orange-700 transition flex items-center justify-center gap-2 text-sm">
-                                <span>🐛</span> DEBUG
                             </button>
                         </div>
 
@@ -636,13 +673,56 @@
                     <button onclick="teacherGeneratePractice()" class="w-full bg-blue-500 text-black text-[9px] font-bold py-2 hover:bg-white transition">GENERATE TEST</button>
                 </div>
 
-                <!-- Assign to Student -->
-                <div class="mb-4 p-3 border border-teal-900/50 bg-teal-900/10">
-                    <div class="text-[10px] font-bold mb-2 text-teal-400">ASSIGN TO STUDENT</div>
-                    <div id="assign-student-list" class="max-h-32 overflow-y-auto mb-2 text-[9px]">
-                        <div class="text-gray-500">Select students...</div>
+                <!-- Assign MCQ Test (with student selection) -->
+                <div class="mb-3 p-3 border border-teal-900/50 bg-teal-900/10">
+                    <div class="text-[10px] font-bold mb-2 text-teal-400">📝 ASSIGN MCQ TEST</div>
+                    <div class="text-[9px] text-gray-400 mb-2">Select students:</div>
+                    <div id="assign-student-list" class="max-h-20 overflow-y-auto mb-2 text-[9px] bg-black/30 p-2 rounded">
+                        <div class="text-gray-500">Loading students...</div>
                     </div>
-                    <button onclick="assignPracticeToSelected()" class="w-full bg-amber-500 text-black text-[9px] font-bold py-2 hover:bg-white transition">ASSIGN TO SELECTED</button>
+                    <button onclick="assignPracticeToSelected()" class="w-full bg-amber-500 text-black text-[9px] font-bold py-2 hover:bg-white transition">ASSIGN MCQ</button>
+                </div>
+
+                <!-- Assign Coding Challenge (with student selection) -->
+                <div class="mb-3 p-3 border border-purple-900/50 bg-purple-900/10">
+                    <div class="text-[10px] font-bold mb-2 text-purple-400">💻 ASSIGN CODE TASK</div>
+                    <div class="text-[9px] text-gray-400 mb-2">1. Select students:</div>
+                    <div id="code-assign-student-list" class="max-h-20 overflow-y-auto mb-2 text-[9px] bg-black/30 p-2 rounded">
+                        <div class="text-gray-500">Loading students...</div>
+                    </div>
+                    <div class="text-[9px] text-gray-400 mb-2">2. Select challenge:</div>
+                    <select id="coding-challenge-select" class="w-full bg-black border border-purple-900 text-white text-[9px] p-1 mb-2">
+                        <option value="">Select challenge...</option>
+                        <optgroup label="🌱 Beginner">
+                            <option value="print-hello">Print Hello World</option>
+                            <option value="add-numbers">Add Two Numbers</option>
+                            <option value="string-length">Find String Length</option>
+                            <option value="list-access">Access List Item</option>
+                            <option value="for-loop">Loop Through List</option>
+                            <option value="if-statement">Check Number</option>
+                        </optgroup>
+                        <optgroup label="📘 Easy">
+                            <option value="reverse-string">Reverse a String</option>
+                            <option value="sum-list">Sum of List</option>
+                            <option value="max-value">Find Maximum</option>
+                            <option value="sort-list">Sort a List</option>
+                        </optgroup>
+                        <optgroup label="🔥 Medium">
+                            <option value="count-vowels">Count Vowels</option>
+                            <option value="even-numbers">Filter Even Numbers</option>
+                            <option value="factorial">Calculate Factorial</option>
+                            <option value="palindrome">Check Palindrome</option>
+                            <option value="fizzbuzz">FizzBuzz</option>
+                            <option value="list-comprehension">List Comprehension</option>
+                        </optgroup>
+                        <optgroup label="💎 Hard">
+                            <option value="word-frequency">Word Frequency</option>
+                            <option value="prime-check">Check Prime Number</option>
+                            <option value="fibonacci">Fibonacci Sequence</option>
+                            <option value="class-create">Create a Class</option>
+                        </optgroup>
+                    </select>
+                    <button onclick="assignCodingChallenge()" class="w-full bg-purple-500 text-black text-[9px] font-bold py-2 hover:bg-white transition">ASSIGN CODE</button>
                 </div>
 
                 <!-- Struggle Alert -->
@@ -777,7 +857,14 @@
             startAgentLogStream();
             updateHeaderBadge();
             loadNotifications();
-            loadStudentAssignments();
+            // Only load student assignments for students (not teachers)
+            const userStr = localStorage.getItem('learnflow_user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                if (user.role === 'student') {
+                    loadStudentAssignments();
+                }
+            }
             startNotificationPolling();  // Start auto-refresh for notifications
         } else {
             stopNotificationPolling();  // Stop polling when leaving dashboard
@@ -895,6 +982,11 @@
 
                 // Load teacher stats and recent submissions
                 loadTeacherStats();
+
+                // Load student lists for MCQ and Coding assignment sections (with delay for DOM)
+                setTimeout(() => {
+                    loadStudentsForAssignment();
+                }, 500);
             }
 
         } catch (error) {
@@ -2357,6 +2449,127 @@
             expected: 'Woof!',
             hint: 'Use class Dog: with def __init__(self, name): and def bark(self):',
             starterCode: '# Create the Dog class\n\n\n# Create instance and call bark()\n'
+        },
+        // More challenges for practice
+        {
+            id: 'reverse-string',
+            title: 'Reverse a String',
+            difficulty: 'Easy',
+            category: 'Strings',
+            description: 'Given txt = "Python", print the string reversed.',
+            expected: 'nohtyP',
+            hint: 'Use string slicing: txt[::-1]',
+            starterCode: 'txt = "Python"\n\n# Print the reversed string\n'
+        },
+        {
+            id: 'sum-list',
+            title: 'Sum of List',
+            difficulty: 'Easy',
+            category: 'Lists',
+            description: 'Given numbers = [1, 2, 3, 4, 5], print the sum of all numbers.',
+            expected: '15',
+            hint: 'Use the sum() function',
+            starterCode: 'numbers = [1, 2, 3, 4, 5]\n\n# Print the sum\n'
+        },
+        {
+            id: 'max-value',
+            title: 'Find Maximum',
+            difficulty: 'Easy',
+            category: 'Lists',
+            description: 'Given numbers = [3, 7, 2, 9, 1], print the maximum value.',
+            expected: '9',
+            hint: 'Use the max() function',
+            starterCode: 'numbers = [3, 7, 2, 9, 1]\n\n# Print the maximum\n'
+        },
+        {
+            id: 'count-vowels',
+            title: 'Count Vowels',
+            difficulty: 'Medium',
+            category: 'Strings',
+            description: 'Count and print the number of vowels (a,e,i,o,u) in "Hello World".',
+            expected: '3',
+            hint: 'Loop through each character and check if it is in "aeiouAEIOU"',
+            starterCode: 'txt = "Hello World"\nvowels = "aeiouAEIOU"\ncount = 0\n\n# Count vowels\n'
+        },
+        {
+            id: 'even-numbers',
+            title: 'Filter Even Numbers',
+            difficulty: 'Medium',
+            category: 'Lists',
+            description: 'From numbers = [1,2,3,4,5,6,7,8,9,10], create a list of even numbers and print it.',
+            expected: '[2, 4, 6, 8, 10]',
+            hint: 'Use list comprehension: [x for x in numbers if x % 2 == 0]',
+            starterCode: 'numbers = [1,2,3,4,5,6,7,8,9,10]\n\n# Filter even numbers\n'
+        },
+        {
+            id: 'factorial',
+            title: 'Calculate Factorial',
+            difficulty: 'Medium',
+            category: 'Functions',
+            description: 'Create a function factorial(n) that calculates n! (factorial).\n\nPrint factorial(5) which should be 120.',
+            expected: '120',
+            hint: 'Use a loop or recursion: result = result * i',
+            starterCode: 'def factorial(n):\n    # Your code here\n    pass\n\n# Print factorial(5)\n'
+        },
+        {
+            id: 'palindrome',
+            title: 'Check Palindrome',
+            difficulty: 'Medium',
+            category: 'Strings',
+            description: 'Check if "radar" is a palindrome (same forwards and backwards).\n\nPrint "Yes" if it is, "No" if not.',
+            expected: 'Yes',
+            hint: 'Compare word with word[::-1]',
+            starterCode: 'word = "radar"\n\n# Check if palindrome and print Yes or No\n'
+        },
+        {
+            id: 'fizzbuzz',
+            title: 'FizzBuzz',
+            difficulty: 'Medium',
+            category: 'Loops',
+            description: 'Print numbers 1-15. For multiples of 3 print "Fizz", for 5 print "Buzz", for both print "FizzBuzz".',
+            expected: '1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz',
+            hint: 'Use if/elif/else with modulo operator %',
+            starterCode: '# Print FizzBuzz for 1-15\n'
+        },
+        {
+            id: 'word-frequency',
+            title: 'Word Frequency',
+            difficulty: 'Hard',
+            category: 'Dictionaries',
+            description: 'Count word frequency in "apple banana apple cherry banana apple".\n\nPrint the dictionary.',
+            expected: "{'apple': 3, 'banana': 2, 'cherry': 1}",
+            hint: 'Use a dictionary and loop through words.split()',
+            starterCode: 'text = "apple banana apple cherry banana apple"\nword_count = {}\n\n# Count words\n'
+        },
+        {
+            id: 'prime-check',
+            title: 'Check Prime Number',
+            difficulty: 'Hard',
+            category: 'Functions',
+            description: 'Create a function is_prime(n) that returns True if n is prime.\n\nPrint is_prime(17).',
+            expected: 'True',
+            hint: 'Check if n is divisible by any number from 2 to sqrt(n)',
+            starterCode: 'def is_prime(n):\n    # Your code here\n    pass\n\n# Print is_prime(17)\n'
+        },
+        {
+            id: 'fibonacci',
+            title: 'Fibonacci Sequence',
+            difficulty: 'Hard',
+            category: 'Functions',
+            description: 'Print the first 10 Fibonacci numbers: 0, 1, 1, 2, 3, 5, 8, 13, 21, 34',
+            expected: '0\n1\n1\n2\n3\n5\n8\n13\n21\n34',
+            hint: 'Each number is sum of previous two: fib(n) = fib(n-1) + fib(n-2)',
+            starterCode: '# Print first 10 Fibonacci numbers\n'
+        },
+        {
+            id: 'sort-list',
+            title: 'Sort a List',
+            difficulty: 'Easy',
+            category: 'Lists',
+            description: 'Sort the list [5, 2, 8, 1, 9] in ascending order and print it.',
+            expected: '[1, 2, 5, 8, 9]',
+            hint: 'Use sorted() or list.sort()',
+            starterCode: 'numbers = [5, 2, 8, 1, 9]\n\n# Sort and print\n'
         }
     ];
 
@@ -2365,30 +2578,48 @@
         const list = document.getElementById('codelab-challenges-list');
         if (!list) return;
 
-        const categories = [...new Set(codingChallenges.map(c => c.category))];
+        // Define colors for difficulty levels (same style as Practice Topics)
+        const difficultyColors = {
+            'Beginner': 'from-green-600 to-green-800',
+            'Easy': 'from-blue-600 to-blue-800',
+            'Medium': 'from-yellow-600 to-orange-800',
+            'Hard': 'from-red-600 to-red-800'
+        };
 
-        let html = '';
-        categories.forEach(category => {
-            const challenges = codingChallenges.filter(c => c.category === category);
-            html += `
-                <div class="mb-4">
-                    <div class="text-purple-400 font-bold text-xs mb-2 tracking-widest">${category.toUpperCase()}</div>
-                    <div class="space-y-2">
-                        ${challenges.map(c => `
-                            <button onclick="startCodingChallenge('${c.id}')" class="w-full bg-gray-900/80 hover:bg-purple-900/30 border border-purple-900/30 hover:border-purple-500 p-3 rounded-lg text-left transition">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-white font-bold text-sm">${c.title}</span>
-                                    <span class="text-xs px-2 py-1 rounded ${c.difficulty === 'Beginner' ? 'bg-green-900/50 text-green-400' : c.difficulty === 'Intermediate' ? 'bg-yellow-900/50 text-yellow-400' : 'bg-red-900/50 text-red-400'}">${c.difficulty}</span>
-                                </div>
-                                <div class="text-xs text-gray-500 mt-1">${c.description.split('\n')[0]}</div>
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
+        const difficultyIcons = {
+            'Beginner': '🌱',
+            'Easy': '📘',
+            'Medium': '🔥',
+            'Hard': '💎'
+        };
+
+        // Create cards similar to Practice Topics style (2-column grid)
+        list.innerHTML = codingChallenges.map(c => `
+            <button onclick="startCodingChallenge('${c.id}')"
+                    class="bg-gradient-to-br ${difficultyColors[c.difficulty] || 'from-purple-600 to-purple-800'} p-4 rounded-lg hover:scale-105 transition transform text-left shadow-lg"
+                    data-title="${c.title.toLowerCase()}" data-category="${c.category.toLowerCase()}">
+                <div class="text-3xl mb-2">${difficultyIcons[c.difficulty] || '💻'}</div>
+                <div class="text-white font-bold text-sm">${c.title}</div>
+                <div class="text-white/60 text-xs mt-1">${c.category}</div>
+                <div class="mt-2 inline-block text-[10px] px-2 py-1 bg-black/30 rounded text-white/80">${c.difficulty}</div>
+            </button>
+        `).join('');
+    }
+
+    // Filter coding challenges based on search
+    function filterCodingChallenges() {
+        const searchInput = document.getElementById('codelab-search');
+        const list = document.getElementById('codelab-challenges-list');
+        if (!searchInput || !list) return;
+
+        const query = searchInput.value.toLowerCase();
+        const buttons = list.querySelectorAll('button');
+
+        buttons.forEach(btn => {
+            const title = btn.dataset.title || '';
+            const category = btn.dataset.category || '';
+            btn.style.display = (title.includes(query) || category.includes(query)) ? 'block' : 'none';
         });
-
-        list.innerHTML = html;
     }
 
     // Current challenge being worked on
@@ -2463,10 +2694,30 @@
 
             // Check if output matches expected (if in a challenge)
             if (currentChallenge && output.trim() === currentChallenge.expected.trim()) {
-                consoleOutput.innerHTML = `<span class="text-green-400">>>> ${output}</span>\n\n<span class="text-yellow-400">✅ Correct! Your output matches the expected result.</span>`;
-                showToast('Correct!', 'Your code produces the expected output!', 'success');
+                // Random encouraging messages
+                const encouragements = [
+                    "Excellent! You're a coding star! 🌟",
+                    "Amazing work! Keep it up! 🚀",
+                    "Perfect! You nailed it! 💪",
+                    "Brilliant! Your code is spot on! ✨",
+                    "Fantastic job! You're mastering Python! 🐍",
+                    "Outstanding! Keep this momentum! 🔥",
+                    "Superb! You're on fire! 💯",
+                    "Well done! That's the correct solution! 🎯"
+                ];
+                const randomMsg = encouragements[Math.floor(Math.random() * encouragements.length)];
+
+                consoleOutput.innerHTML = `<span class="text-green-400">>>> ${output}</span>\n\n<span class="text-green-300 text-lg font-bold">✅ CORRECT!</span>\n<span class="text-yellow-400">${randomMsg}</span>\n\n<button onclick="generateSimilarChallenge()" class="mt-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold py-2 px-4 rounded hover:from-purple-500 hover:to-pink-500">🔄 PRACTICE MORE (Similar)</button>`;
+                showToast('🎉 Excellent!', randomMsg, 'success', 4000);
+
+                // Update progress stats
+                updateStudentProgress('correct');
+
+                // Show celebration effect
+                showCelebration();
             } else if (currentChallenge) {
-                consoleOutput.innerHTML = `>>> ${output}\n\n<span class="text-yellow-400">Expected: ${currentChallenge.expected}</span>`;
+                consoleOutput.innerHTML = `>>> ${output}\n\n<span class="text-red-400">❌ Not quite right...</span>\n<span class="text-yellow-400">Expected: ${currentChallenge.expected}</span>\n<span class="text-gray-400">Keep trying! You've got this! 💪</span>`;
+                showToast('Try Again', 'Check your code and try again!', 'info');
             } else {
                 consoleOutput.textContent = `>>> ${output}`;
             }
@@ -2475,9 +2726,292 @@
         }
     }
 
+    // Generate custom problem based on user input
+    function generateCustomProblem() {
+        const topicInput = document.getElementById('custom-topic-input');
+        const difficultySelect = document.getElementById('custom-difficulty-select');
+
+        const topic = topicInput ? topicInput.value.trim() : '';
+        const difficulty = difficultySelect ? difficultySelect.value : 'Medium';
+
+        if (!topic) {
+            showToast('Enter Topic', 'Please type a topic or keyword', 'error');
+            return;
+        }
+
+        showToast('Generating...', `Creating ${difficulty} problem about "${topic}"`, 'info', 2000);
+
+        // Problem templates based on difficulty
+        const problemTemplates = {
+            'Beginner': [
+                {
+                    title: `Print ${topic}`,
+                    description: `Write a Python program that prints "${topic}" to the screen.\n\nThis is a simple print exercise to practice basic output.`,
+                    expected: topic,
+                    hint: `Use print("${topic}")`,
+                    starterCode: `# Print ${topic}\n`
+                },
+                {
+                    title: `${topic} Variable`,
+                    description: `Create a variable called "item" with the value "${topic}".\n\nThen print the variable.`,
+                    expected: topic,
+                    hint: `Create: item = "${topic}" then use print(item)`,
+                    starterCode: `# Create a variable and print it\n`
+                },
+                {
+                    title: `${topic} Length`,
+                    description: `Find and print the length of the string "${topic}".`,
+                    expected: String(topic.length),
+                    hint: `Use len("${topic}") to get the length`,
+                    starterCode: `text = "${topic}"\n\n# Print the length\n`
+                }
+            ],
+            'Easy': [
+                {
+                    title: `${topic} Counter`,
+                    description: `Create a list with 5 items related to ${topic}.\n\nPrint how many items are in the list.`,
+                    expected: '5',
+                    hint: 'Use len() to count items in a list',
+                    starterCode: `# Create a list of 5 ${topic} items\nitems = []\n\n# Print the count\n`
+                },
+                {
+                    title: `Reverse ${topic}`,
+                    description: `Given the word "${topic}", print it reversed.`,
+                    expected: topic.split('').reverse().join(''),
+                    hint: 'Use string slicing: text[::-1]',
+                    starterCode: `word = "${topic}"\n\n# Print reversed\n`
+                },
+                {
+                    title: `${topic} in Uppercase`,
+                    description: `Convert "${topic}" to uppercase and print it.`,
+                    expected: topic.toUpperCase(),
+                    hint: 'Use .upper() method on strings',
+                    starterCode: `text = "${topic}"\n\n# Convert to uppercase and print\n`
+                }
+            ],
+            'Medium': [
+                {
+                    title: `${topic} Checker`,
+                    description: `Write a function called check_${topic.toLowerCase().replace(/\\s+/g, '_')}(value) that:\n- Returns "Valid" if value is not empty\n- Returns "Invalid" if value is empty\n\nTest with check_${topic.toLowerCase().replace(/\\s+/g, '_')}("${topic}") and print result.`,
+                    expected: 'Valid',
+                    hint: 'Use if/else to check if value is truthy',
+                    starterCode: `def check_${topic.toLowerCase().replace(/\\s+/g, '_')}(value):\n    # Your code here\n    pass\n\n# Test and print\n`
+                },
+                {
+                    title: `Count in ${topic}`,
+                    description: `Count how many times the letter "${topic[0]}" appears in "${topic}".\n\nPrint the count.`,
+                    expected: String(topic.split('').filter(c => c.toLowerCase() === topic[0].toLowerCase()).length),
+                    hint: `Use a loop or .count() method`,
+                    starterCode: `text = "${topic}"\nletter = "${topic[0]}"\n\n# Count and print\n`
+                },
+                {
+                    title: `${topic} Dictionary`,
+                    description: `Create a dictionary with:\n- "name": "${topic}"\n- "type": "custom"\n- "active": True\n\nPrint the dictionary.`,
+                    expected: `{'name': '${topic}', 'type': 'custom', 'active': True}`,
+                    hint: 'Use {} to create a dictionary with key: value pairs',
+                    starterCode: `# Create the dictionary\ndata = {}\n\n# Print it\n`
+                }
+            ],
+            'Hard': [
+                {
+                    title: `${topic} Manager Class`,
+                    description: `Create a class called ${topic.replace(/\\s+/g, '')}Manager with:\n- __init__ that takes name\n- get_info() that returns "Managing: {name}"\n\nCreate instance with "${topic}" and print get_info().`,
+                    expected: `Managing: ${topic}`,
+                    hint: 'Use class ClassName: with def __init__(self, name): and def get_info(self):',
+                    starterCode: `# Create the class\nclass ${topic.replace(/\\s+/g, '')}Manager:\n    pass\n\n# Create instance and print\n`
+                },
+                {
+                    title: `${topic} Analyzer`,
+                    description: `Write a function analyze_${topic.toLowerCase().replace(/\\s+/g, '_')}(text) that returns a dictionary with:\n- "length": length of text\n- "words": number of words\n- "first_char": first character\n\nTest with "${topic}" and print result.`,
+                    expected: `{'length': ${topic.length}, 'words': ${topic.split(' ').length}, 'first_char': '${topic[0]}'}`,
+                    hint: 'Use len(), split(), and indexing',
+                    starterCode: `def analyze_${topic.toLowerCase().replace(/\\s+/g, '_')}(text):\n    # Your code here\n    pass\n\n# Test and print\n`
+                },
+                {
+                    title: `${topic} Validator`,
+                    description: `Create a function validate(items) that:\n- Takes a list of strings\n- Returns only items containing "${topic[0].toLowerCase()}"\n- Use list comprehension\n\nTest with ["${topic}", "test", "example"] and print.`,
+                    expected: `['${topic}']`,
+                    hint: 'Use [x for x in items if condition]',
+                    starterCode: `def validate(items):\n    # Filter items containing "${topic[0].toLowerCase()}"\n    pass\n\n# Test\ntest_items = ["${topic}", "test", "example"]\n`
+                }
+            ]
+        };
+
+        // Get random template for selected difficulty
+        const templates = problemTemplates[difficulty] || problemTemplates['Medium'];
+        const template = templates[Math.floor(Math.random() * templates.length)];
+
+        // Create custom challenge object
+        const customChallenge = {
+            id: 'custom-' + Date.now(),
+            title: template.title,
+            difficulty: difficulty,
+            category: 'Custom (' + topic + ')',
+            description: template.description,
+            expected: template.expected,
+            hint: template.hint,
+            starterCode: template.starterCode
+        };
+
+        // Start the custom challenge
+        currentChallenge = customChallenge;
+        startCustomChallenge(customChallenge);
+
+        // Clear input
+        if (topicInput) topicInput.value = '';
+    }
+
+    // Start a custom generated challenge
+    function startCustomChallenge(challenge) {
+        // Hide challenges list, show challenge view
+        const codelabView = document.getElementById('student-codelab-view');
+        const challengeView = document.getElementById('student-code-challenge-view');
+
+        if (codelabView) {
+            codelabView.classList.add('hidden');
+            codelabView.style.display = 'none';
+        }
+        if (challengeView) {
+            challengeView.classList.remove('hidden');
+            challengeView.style.display = 'flex';
+        }
+
+        // Fill in challenge details
+        document.getElementById('challenge-title').textContent = challenge.title;
+        document.getElementById('challenge-difficulty').textContent = `Difficulty: ${challenge.difficulty} | ${challenge.category}`;
+        document.getElementById('challenge-description').textContent = challenge.description;
+        document.getElementById('challenge-expected').textContent = challenge.expected;
+        document.getElementById('challenge-hint').textContent = challenge.hint;
+
+        // Set starter code
+        const codeEditor = document.getElementById('code-editor');
+        if (codeEditor) codeEditor.value = challenge.starterCode;
+
+        // Clear console
+        const consoleOutput = document.getElementById('code-console-output');
+        if (consoleOutput) consoleOutput.textContent = '>>> Ready to run your code...';
+
+        // Clear feedback
+        const feedbackPanel = document.getElementById('code-feedback-panel');
+        if (feedbackPanel) feedbackPanel.classList.add('hidden');
+
+        showToast('Custom Challenge!', `"${challenge.title}" - ${challenge.difficulty}`, 'success', 3000);
+    }
+
+    // Generate similar challenge based on current topic/difficulty
+    function generateSimilarChallenge() {
+        if (!currentChallenge) {
+            showToast('Error', 'No current challenge', 'error');
+            return;
+        }
+
+        // Find challenges with same category or difficulty
+        const similarChallenges = codingChallenges.filter(c =>
+            (c.category === currentChallenge.category || c.difficulty === currentChallenge.difficulty)
+            && c.id !== currentChallenge.id
+        );
+
+        if (similarChallenges.length === 0) {
+            showToast('Info', 'No more similar challenges. Try a different topic!', 'info');
+            backToChallengesList();
+            return;
+        }
+
+        // Pick a random similar challenge
+        const nextChallenge = similarChallenges[Math.floor(Math.random() * similarChallenges.length)];
+
+        // Show toast
+        showToast('New Challenge!', `Loading: ${nextChallenge.title}`, 'success', 2000);
+
+        // Start the new challenge
+        startCodingChallenge(nextChallenge.id);
+    }
+
     // Simulate basic Python code execution
     function simulatePython(code) {
-        // Extract print statements and simulate output
+        // Python built-in function helpers
+        const pyLen = (x) => typeof x === 'string' ? x.length : (Array.isArray(x) ? x.length : 0);
+        const pySum = (x) => Array.isArray(x) ? x.reduce((a, b) => a + b, 0) : 0;
+        const pyMax = (x) => Array.isArray(x) ? Math.max(...x) : x;
+        const pyMin = (x) => Array.isArray(x) ? Math.min(...x) : x;
+        const pySorted = (x) => Array.isArray(x) ? JSON.stringify([...x].sort((a, b) => a - b)) : x;
+        const pyReversed = (x) => typeof x === 'string' ? x.split('').reverse().join('') : (Array.isArray(x) ? [...x].reverse() : x);
+
+        // Helper to evaluate Python-like expressions
+        function evalPyExpr(expr, vars) {
+            let result = expr;
+
+            // Replace variables with their values
+            for (let v in vars) {
+                const val = vars[v];
+                const replacement = typeof val === 'string' ? `"${val}"` : JSON.stringify(val);
+                result = result.replace(new RegExp('\\b' + v + '\\b', 'g'), replacement);
+            }
+
+            // Handle len(x)
+            result = result.replace(/len\s*\(\s*([^)]+)\s*\)/g, (match, arg) => {
+                try {
+                    const val = eval(arg);
+                    return pyLen(val);
+                } catch { return '0'; }
+            });
+
+            // Handle .upper()
+            result = result.replace(/("[^"]*"|'[^']*'|\w+)\.upper\s*\(\s*\)/g, (match, arg) => {
+                try {
+                    const val = eval(arg);
+                    return `"${String(val).toUpperCase()}"`;
+                } catch { return match; }
+            });
+
+            // Handle .lower()
+            result = result.replace(/("[^"]*"|'[^']*'|\w+)\.lower\s*\(\s*\)/g, (match, arg) => {
+                try {
+                    const val = eval(arg);
+                    return `"${String(val).toLowerCase()}"`;
+                } catch { return match; }
+            });
+
+            // Handle sum(x)
+            result = result.replace(/sum\s*\(\s*([^)]+)\s*\)/g, (match, arg) => {
+                try { return pySum(eval(arg)); } catch { return '0'; }
+            });
+
+            // Handle max(x)
+            result = result.replace(/max\s*\(\s*([^)]+)\s*\)/g, (match, arg) => {
+                try { return pyMax(eval(arg)); } catch { return '0'; }
+            });
+
+            // Handle min(x)
+            result = result.replace(/min\s*\(\s*([^)]+)\s*\)/g, (match, arg) => {
+                try { return pyMin(eval(arg)); } catch { return '0'; }
+            });
+
+            // Handle sorted(x)
+            result = result.replace(/sorted\s*\(\s*([^)]+)\s*\)/g, (match, arg) => {
+                try { return pySorted(eval(arg)); } catch { return '[]'; }
+            });
+
+            // Handle string slicing [::-1] for reverse
+            result = result.replace(/("[^"]*"|'[^']*'|\w+)\s*\[\s*:\s*:\s*-1\s*\]/g, (match, arg) => {
+                try {
+                    const val = eval(arg);
+                    return `"${pyReversed(val)}"`;
+                } catch { return match; }
+            });
+
+            // Handle .count(char)
+            result = result.replace(/("[^"]*"|'[^']*'|\w+)\.count\s*\(\s*("[^"]*"|'[^']*')\s*\)/g, (match, str, char) => {
+                try {
+                    const s = eval(str);
+                    const c = eval(char);
+                    return (s.split(c).length - 1);
+                } catch { return '0'; }
+            });
+
+            return result;
+        }
+
         const lines = code.split('\n');
         let outputs = [];
         let variables = {};
@@ -2494,15 +3028,13 @@
                 const varName = assignMatch[1];
                 let value = assignMatch[2].trim();
 
-                // Evaluate simple expressions
+                // Evaluate expression with Python functions
                 try {
-                    // Replace variable names with their values
-                    for (let v in variables) {
-                        value = value.replace(new RegExp('\\b' + v + '\\b', 'g'), JSON.stringify(variables[v]));
-                    }
+                    value = evalPyExpr(value, variables);
                     variables[varName] = eval(value);
                 } catch {
-                    variables[varName] = value;
+                    // Store as string if eval fails
+                    variables[varName] = value.replace(/^["']|["']$/g, '');
                 }
                 continue;
             }
@@ -2512,12 +3044,10 @@
             if (printMatch) {
                 let content = printMatch[1];
 
-                // Replace variables
-                for (let v in variables) {
-                    content = content.replace(new RegExp('\\b' + v + '\\b', 'g'), JSON.stringify(variables[v]));
-                }
+                // Evaluate with Python functions
+                content = evalPyExpr(content, variables);
 
-                // Handle f-strings simply
+                // Handle f-strings
                 content = content.replace(/f["'](.+?)["']/g, (match, str) => {
                     return '"' + str.replace(/\{(\w+)\}/g, (m, varName) => {
                         return variables[varName] !== undefined ? variables[varName] : m;
@@ -2528,7 +3058,6 @@
                     let result = eval(content);
                     outputs.push(String(result));
                 } catch {
-                    // Remove quotes for simple strings
                     content = content.replace(/^["']|["']$/g, '');
                     outputs.push(content);
                 }
@@ -2543,7 +3072,6 @@
                 const list = variables[listVar];
 
                 if (Array.isArray(list)) {
-                    // Find next print statement
                     const nextLineIdx = lines.indexOf(line) + 1;
                     if (nextLineIdx < lines.length) {
                         const nextLine = lines[nextLineIdx].trim();
@@ -2565,6 +3093,92 @@
         if (consoleOutput) {
             consoleOutput.textContent = '>>> Ready to run your code...';
         }
+    }
+
+    // Local code analysis helper (helps without giving exact answers)
+    function analyzeCodeLocally(code, mode) {
+        const lines = code.split('\n').filter(l => l.trim() && !l.trim().startsWith('#'));
+        const tips = [];
+        const challenge = currentChallenge;
+
+        // Check for common issues
+        if (!code.includes('print')) {
+            tips.push('💡 <strong>Missing Output:</strong> Remember to use print() to display your result.');
+        }
+
+        if (code.includes('pass') && lines.length < 3) {
+            tips.push('💡 <strong>Incomplete Code:</strong> Replace "pass" with your actual code logic.');
+        }
+
+        // Check if they're using the right approach based on challenge
+        if (challenge) {
+            if (challenge.expected && challenge.expected.includes('[') && !code.includes('[')) {
+                tips.push('💡 <strong>Data Structure:</strong> This challenge expects a list. Consider using square brackets [].');
+            }
+
+            if (challenge.title.toLowerCase().includes('len') && !code.includes('len(')) {
+                tips.push('💡 <strong>Hint:</strong> Think about which Python function gives you the size/length of something.');
+            }
+
+            if (challenge.title.toLowerCase().includes('reverse') && !code.includes('[::-1]') && !code.includes('reverse')) {
+                tips.push('💡 <strong>Hint:</strong> Python has a simple way to reverse strings using slicing.');
+            }
+
+            if (challenge.title.toLowerCase().includes('upper') && !code.includes('.upper()')) {
+                tips.push('💡 <strong>Hint:</strong> Strings have methods to change their case. Check string methods.');
+            }
+
+            if (challenge.title.toLowerCase().includes('sum') && !code.includes('sum(') && !code.includes('+')) {
+                tips.push('💡 <strong>Hint:</strong> Python has a built-in function to add up list items.');
+            }
+
+            if (challenge.title.toLowerCase().includes('max') && !code.includes('max(')) {
+                tips.push('💡 <strong>Hint:</strong> Python has a built-in function to find the largest value.');
+            }
+
+            if (challenge.title.toLowerCase().includes('loop') && !code.includes('for ')) {
+                tips.push('💡 <strong>Hint:</strong> Use a "for" loop to iterate through items.');
+            }
+
+            if (challenge.title.toLowerCase().includes('function') && !code.includes('def ')) {
+                tips.push('💡 <strong>Hint:</strong> Functions are defined using the "def" keyword.');
+            }
+
+            if (challenge.title.toLowerCase().includes('class') && !code.includes('class ')) {
+                tips.push('💡 <strong>Hint:</strong> Classes are defined using the "class" keyword.');
+            }
+        }
+
+        // General code quality tips
+        if (lines.length > 0 && !code.match(/\w+\s*=/)) {
+            tips.push('💡 <strong>Variables:</strong> Consider storing values in variables for clearer code.');
+        }
+
+        // Check indentation issues
+        const indentLines = code.split('\n').filter(l => l.startsWith(' ') || l.startsWith('\t'));
+        if (code.includes('def ') && indentLines.length === 0) {
+            tips.push('⚠️ <strong>Indentation:</strong> Code inside functions needs to be indented.');
+        }
+
+        if (tips.length === 0) {
+            tips.push('✅ <strong>Code Structure:</strong> Your code structure looks good!');
+            tips.push('🔍 <strong>Check Output:</strong> Run your code and compare the output with the expected result.');
+            if (challenge) {
+                tips.push(`📋 <strong>Expected:</strong> The output should be: <code>${challenge.expected}</code>`);
+            }
+        }
+
+        const title = mode === 'debug' ? '🐛 DEBUG HELPER' : '🔍 CODE REVIEW';
+        const color = mode === 'debug' ? 'text-orange-400' : 'text-blue-400';
+
+        return `
+            <div class="mb-2">
+                <span class="${color} font-bold">${title}</span>
+            </div>
+            <div class="space-y-2 text-sm">
+                ${tips.map(t => `<div class="text-gray-300">${t}</div>`).join('')}
+            </div>
+        `;
     }
 
     // Submit code to Code Review Agent (port 8003)
@@ -2614,7 +3228,9 @@
                 `;
                 showToast('Review Complete', 'Check the feedback panel below', 'success');
             } else {
-                feedbackContent.innerHTML = '<div class="text-yellow-400">No specific feedback. Your code looks good!</div>';
+                // Provide helpful local feedback
+                const localReview = analyzeCodeLocally(code, 'review');
+                feedbackContent.innerHTML = localReview;
             }
         } catch (err) {
             console.error('Code review error:', err);
@@ -2638,7 +3254,10 @@
 
         // Show loading
         feedbackPanel.classList.remove('hidden');
-        feedbackContent.innerHTML = '<div class="text-orange-400 animate-pulse">🐛 Analyzing for bugs...</div>';
+        feedbackContent.innerHTML = '<div class="text-orange-400 animate-pulse">🐛 Analyzing your code...</div>';
+
+        // First do local analysis for immediate feedback
+        const localAnalysis = analyzeCodeForDebugging(code);
 
         try {
             const response = await fetch(getAgentURL(API_CONFIG.DEBUG_PORT || '8004', '/api/v1/diagnose'), {
@@ -2646,39 +3265,130 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     query_id: `debug-${Date.now()}`,
-                    code: code,
-                    error_message: '',
-                    language: 'python',
-                    context: 'Student seeking debugging help'
+                    student_id: 'student-debug',
+                    code_snippet: code,
+                    error_message: localAnalysis.issues.length > 0 ? localAnalysis.issues.join('; ') : 'Student needs debugging help',
+                    language: 'python'
                 })
             });
 
             const data = await response.json();
+            console.log('[Debug Agent] Response:', data);
 
-            if (data.diagnosis || data.solution || data.feedback) {
+            // Handle Debug Agent response (root_cause, explanation, diagnostic_steps)
+            if (data.root_cause || data.explanation || data.diagnostic_steps) {
+                let stepsHtml = '';
+                if (data.diagnostic_steps && data.diagnostic_steps.length > 0) {
+                    stepsHtml = '<div class="mt-3"><strong class="text-yellow-400">Steps to Debug:</strong><ol class="list-decimal list-inside mt-1 text-gray-300 text-xs space-y-1">';
+                    data.diagnostic_steps.forEach(step => {
+                        stepsHtml += `<li>${step.description || step}</li>`;
+                    });
+                    stepsHtml += '</ol></div>';
+                }
+
                 feedbackContent.innerHTML = `
-                    <div class="mb-3">
-                        <span class="text-orange-400 font-bold">🐛 DEBUG ANALYSIS</span>
-                    </div>
-                    ${data.diagnosis ? `<div class="text-gray-300 mb-2"><strong>Diagnosis:</strong> ${data.diagnosis}</div>` : ''}
-                    ${data.solution ? `<div class="text-green-400 mb-2"><strong>Solution:</strong> ${data.solution}</div>` : ''}
-                    ${data.feedback ? `<div class="text-gray-300">${data.feedback}</div>` : ''}
-                    ${data.fixed_code ? `
-                        <div class="mt-3 pt-3 border-t border-gray-700">
-                            <span class="text-green-400 font-bold">✅ Suggested Fix:</span>
-                            <pre class="bg-gray-800 p-2 rounded mt-2 text-xs overflow-x-auto"><code>${data.fixed_code}</code></pre>
-                        </div>
-                    ` : ''}
+                    <div class="mb-3"><span class="text-orange-400 font-bold">🐛 DEBUG ANALYSIS</span></div>
+                    ${data.root_cause ? `<div class="text-red-400 mb-2"><strong>Issue:</strong> ${data.root_cause}</div>` : ''}
+                    ${data.explanation ? `<div class="text-gray-300 mb-2"><strong>Explanation:</strong> ${data.explanation}</div>` : ''}
+                    ${stepsHtml}
+                    ${data.suggested_fix ? `<div class="mt-3 pt-3 border-t border-gray-700"><span class="text-yellow-400 font-bold">💡 Hint:</span><div class="text-gray-300 text-xs mt-1">${data.suggested_fix}</div></div>` : ''}
                 `;
-                showToast('Debug Complete', 'Check the feedback panel below', 'success');
+                showToast('Debug Complete', 'Check the hints below', 'success');
             } else {
-                feedbackContent.innerHTML = '<div class="text-green-400">✅ No obvious bugs detected. Your code looks correct!</div>';
+                // Use local analysis as fallback
+                feedbackContent.innerHTML = localAnalysis.html;
+                showToast('Analysis Complete', 'Check the hints below', 'info');
             }
         } catch (err) {
             console.error('Debug error:', err);
-            feedbackContent.innerHTML = `<div class="text-red-400">❌ Failed to connect to Debug agent. Make sure it's running on port 8004.</div>`;
-            showToast('Error', 'Debug agent not available', 'error');
+            // Use local analysis when agent is unavailable
+            feedbackContent.innerHTML = localAnalysis.html;
+            showToast('Local Analysis', 'Check the debugging hints', 'info');
         }
+    }
+
+    // Local code analysis for debugging hints (guides without giving exact answers)
+    function analyzeCodeForDebugging(code) {
+        const issues = [];
+        const hints = [];
+        const lines = code.split('\n');
+
+        // Check for common Python issues
+        if (!code.includes('print')) {
+            hints.push('💡 <strong>Tip:</strong> Use <code>print()</code> to see what your code produces');
+        }
+
+        // Check for incomplete code
+        if (code.trim().endsWith(':')) {
+            issues.push('Code block appears incomplete');
+            hints.push('🔍 <strong>Check:</strong> You started a block (if/for/def) but it needs code inside');
+        }
+
+        // Check for missing colons
+        const blockKeywords = ['if ', 'for ', 'while ', 'def ', 'class ', 'elif ', 'else'];
+        lines.forEach((line, idx) => {
+            const trimmed = line.trim();
+            blockKeywords.forEach(kw => {
+                if (trimmed.startsWith(kw) && !trimmed.endsWith(':') && !trimmed.includes('#')) {
+                    hints.push(`🔍 <strong>Line ${idx + 1}:</strong> ${kw.trim()} statements need a colon at the end`);
+                }
+            });
+        });
+
+        // Check for = vs == confusion
+        lines.forEach((line, idx) => {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('if ') && trimmed.includes('=') && !trimmed.includes('==') && !trimmed.includes('!=') && !trimmed.includes('<=') && !trimmed.includes('>=')) {
+                hints.push(`🔍 <strong>Line ${idx + 1}:</strong> For comparison, use <code>==</code> not <code>=</code>`);
+            }
+        });
+
+        // Check for string method calls
+        if (code.includes('.upper') && !code.includes('.upper()')) {
+            hints.push('💡 <strong>Tip:</strong> String methods need parentheses: <code>.upper()</code>');
+        }
+        if (code.includes('.lower') && !code.includes('.lower()')) {
+            hints.push('💡 <strong>Tip:</strong> String methods need parentheses: <code>.lower()</code>');
+        }
+        if (code.includes('len') && !code.includes('len(')) {
+            hints.push('💡 <strong>Tip:</strong> <code>len</code> is a function: use <code>len(variable)</code>');
+        }
+
+        // Check for range usage
+        if (code.includes('range') && code.includes('for')) {
+            hints.push('💡 <strong>Remember:</strong> <code>range(5)</code> gives 0,1,2,3,4 (not including 5)');
+        }
+
+        // Build response HTML
+        let html = '<div class="mb-3"><span class="text-orange-400 font-bold">🐛 CODE ANALYSIS</span></div>';
+
+        if (issues.length > 0) {
+            html += '<div class="text-red-400 mb-2"><strong>Issues Found:</strong></div>';
+            html += '<ul class="list-disc list-inside text-xs text-gray-300 mb-3">';
+            issues.forEach(issue => { html += `<li>${issue}</li>`; });
+            html += '</ul>';
+        }
+
+        if (hints.length > 0) {
+            html += '<div class="text-yellow-400 mb-2"><strong>Debugging Hints:</strong></div>';
+            html += '<div class="space-y-2 text-xs">';
+            hints.forEach(hint => { html += `<div class="bg-gray-800/50 p-2 rounded">${hint}</div>`; });
+            html += '</div>';
+        }
+
+        if (issues.length === 0 && hints.length === 0) {
+            html += `
+                <div class="text-gray-300 mb-2">Your code syntax looks okay! Debugging tips:</div>
+                <div class="space-y-2 text-xs">
+                    <div class="bg-gray-800/50 p-2 rounded">💡 <strong>Add print statements</strong> to see variable values</div>
+                    <div class="bg-gray-800/50 p-2 rounded">💡 <strong>Check your logic:</strong> Does each step do what you expect?</div>
+                    <div class="bg-gray-800/50 p-2 rounded">💡 <strong>Test with simple input:</strong> Try easy test cases first</div>
+                    <div class="bg-gray-800/50 p-2 rounded">💡 <strong>Read error messages:</strong> They tell you the line number</div>
+                </div>
+            `;
+        }
+
+        return { issues, hints, html };
     }
 
     // Load topics into center panel grid
@@ -2702,7 +3412,7 @@
                     class="bg-gradient-to-br ${topic.color} p-4 rounded-lg hover:scale-105 transition transform text-left shadow-lg">
                 <div class="text-3xl mb-2">${topic.icon}</div>
                 <div class="text-white font-bold text-sm">${topic.name}</div>
-                <div class="text-white/60 text-xs mt-1">5 questions</div>
+                <div class="text-white/60 text-xs mt-1">3 questions</div>
             </button>
         `).join('');
 
@@ -2870,30 +3580,77 @@
         consoleContent.appendChild(readyMsg);
     }
 
-    // Load students into assignment list
+    // Load students into assignment lists (MCQ and Coding separate)
     async function loadStudentsForAssignment() {
+        console.log('[loadStudentsForAssignment] Starting...');
         try {
             const response = await fetch('/api/auth/students');
             const data = await response.json();
+            console.log('[loadStudentsForAssignment] API response:', data);
 
-            const assignList = document.getElementById('assign-student-list');
-            if (!assignList) return;
+            if (!data.success || !data.students) {
+                console.log('[loadStudentsForAssignment] No students data');
+                return;
+            }
 
-            assignList.innerHTML = '';
+            // Build HTML for student checkboxes
+            let mcqHtml = '';
+            let codeHtml = '';
 
-            if (data.success && data.students && data.students.length > 0) {
-                data.students.forEach(student => {
-                    const checkbox = document.createElement('div');
-                    checkbox.className = 'mb-1 text-white';
-                    checkbox.innerHTML = `
+            data.students.forEach(student => {
+                mcqHtml += `
+                    <div class="mb-1 text-white">
                         <label class="flex items-center gap-2 cursor-pointer hover:text-teal-400 transition">
                             <input type="checkbox" class="assign-checkbox" value="${student.studentId}" data-name="${student.name}">
                             <span class="text-[9px]">${student.name}</span>
                         </label>
-                    `;
-                    assignList.appendChild(checkbox);
-                });
+                    </div>
+                `;
+                codeHtml += `
+                    <div class="mb-1 text-white">
+                        <label class="flex items-center gap-2 cursor-pointer hover:text-purple-400 transition">
+                            <input type="checkbox" class="code-assign-checkbox" value="${student.studentId}" data-name="${student.name}">
+                            <span class="text-[9px]">${student.name}</span>
+                        </label>
+                    </div>
+                `;
+            });
+
+            if (data.students.length === 0) {
+                mcqHtml = '<div class="text-gray-500">No students registered</div>';
+                codeHtml = '<div class="text-gray-500">No students registered</div>';
             }
+
+            // Store HTML globally for retry
+            window._studentMcqHtml = mcqHtml;
+            window._studentCodeHtml = codeHtml;
+
+            // Populate both lists immediately
+            const mcqList = document.getElementById('assign-student-list');
+            const codeList = document.getElementById('code-assign-student-list');
+
+            console.log('[loadStudentsForAssignment] MCQ list:', mcqList ? 'FOUND' : 'NOT FOUND');
+            console.log('[loadStudentsForAssignment] Code list:', codeList ? 'FOUND' : 'NOT FOUND');
+
+            if (mcqList) mcqList.innerHTML = mcqHtml;
+            if (codeList) codeList.innerHTML = codeHtml;
+
+            // Retry both after delay if not found
+            if (!mcqList || !codeList) {
+                setTimeout(() => {
+                    const retryMcq = document.getElementById('assign-student-list');
+                    const retryCode = document.getElementById('code-assign-student-list');
+                    if (retryMcq && !retryMcq.innerHTML.includes('checkbox')) {
+                        retryMcq.innerHTML = window._studentMcqHtml;
+                        console.log('[loadStudentsForAssignment] MCQ populated on retry');
+                    }
+                    if (retryCode && !retryCode.innerHTML.includes('checkbox')) {
+                        retryCode.innerHTML = window._studentCodeHtml;
+                        console.log('[loadStudentsForAssignment] Code populated on retry');
+                    }
+                }, 300);
+            }
+
         } catch (error) {
             console.error('Failed to load students:', error);
         }
@@ -3048,6 +3805,107 @@
                 const count = myTests.length;
                 showToast('New Assignments', `You have ${count} new assignment${count > 1 ? 's' : ''}!`, 'info', 5000);
             }, 2000);
+        }
+    }
+
+    // ============ ASSIGN CODING CHALLENGE ============
+    async function assignCodingChallenge() {
+        const challengeSelect = document.getElementById('coding-challenge-select');
+        const challengeId = challengeSelect ? challengeSelect.value : '';
+
+        if (!challengeId) {
+            showToast('Error', 'Please select a coding challenge', 'error');
+            return;
+        }
+
+        // Get selected students from CODING student list (separate from MCQ)
+        const checkboxes = document.querySelectorAll('.code-assign-checkbox:checked');
+        if (checkboxes.length === 0) {
+            showToast('Error', 'Please select at least one student for coding task', 'error');
+            return;
+        }
+
+        const userStr = localStorage.getItem('learnflow_user');
+        if (!userStr) {
+            showToast('Error', 'Not logged in', 'error');
+            return;
+        }
+        const teacher = JSON.parse(userStr);
+
+        // Find the challenge details
+        const challenge = codingChallenges.find(c => c.id === challengeId);
+        if (!challenge) {
+            showToast('Error', 'Challenge not found', 'error');
+            return;
+        }
+
+        const assigned = [];
+        const consoleContent = document.getElementById('console-content');
+
+        for (const checkbox of checkboxes) {
+            // checkbox.value contains studentId, data-name contains student name
+            const studentId = checkbox.value || checkbox.dataset.studentId;
+            const studentName = checkbox.dataset.name || checkbox.dataset.studentName || 'Student';
+
+            try {
+                console.log('[Coding Assignment] Assigning to:', studentId, studentName);
+
+                // Create assignment in database (API also creates notification automatically)
+                const assignResponse = await fetch('/api/assignments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        studentId: studentId,
+                        studentName: studentName,
+                        teacherId: teacher.teacherId || teacher.id,
+                        topic: challenge.title,
+                        type: 'coding',
+                        difficulty: challenge.difficulty.toLowerCase(),
+                        questions: [{
+                            id: challenge.id,
+                            type: 'coding',
+                            title: challenge.title,
+                            description: challenge.description,
+                            expected: challenge.expected,
+                            hint: challenge.hint,
+                            starterCode: challenge.starterCode
+                        }]
+                    })
+                });
+
+                const data = await assignResponse.json();
+                console.log('[Coding Assignment] Response:', data);
+
+                if (data.success) {
+                    assigned.push(studentName);
+                } else {
+                    console.error('[Coding Assignment] Failed:', data.error);
+                }
+            } catch (err) {
+                console.error('Error assigning to student:', err);
+            }
+        }
+
+        if (assigned.length > 0) {
+            // Show success in console
+            if (consoleContent) {
+                const successMsg = document.createElement('div');
+                successMsg.className = 'text-purple-400 text-xs my-2 p-2 border border-purple-900 rounded';
+                successMsg.innerHTML = `
+                    <div>💻 Coding Challenge Assigned!</div>
+                    <div class="text-white font-normal mt-1">Challenge: ${challenge.title}</div>
+                    <div class="text-white font-normal">Assigned to: ${assigned.join(', ')}</div>
+                    <div class="text-[7px] text-gray-400 mt-1">Students will receive notification instantly</div>
+                `;
+                consoleContent.appendChild(successMsg);
+            }
+            showToast('Code Task Assigned!', `"${challenge.title}" sent to ${assigned.join(', ')}`, 'success', 5000);
+
+            // Clear selection
+            challengeSelect.value = '';
+            checkboxes.forEach(cb => cb.checked = false);
+        } else {
+            showToast('Error', 'Failed to assign coding challenge', 'error');
         }
     }
 
@@ -3349,20 +4207,30 @@
         const pending = assignments.filter(a => !a.completed);
         const completed = assignments.filter(a => a.completed);
 
-        // Render pending assignments
+        // Render pending assignments (both MCQ and Coding)
         if (pending.length === 0) {
             list.innerHTML = '<div class="text-xs text-gray-500">No pending assignments</div>';
         } else {
-            list.innerHTML = pending.map(a => `
-                <div id="assignment-${a.id}" class="assignment-item p-3 border cursor-pointer transition-all ${activeAssignmentId === a.id ? 'border-green-500 bg-green-900/20' : 'border-teal-900/50 bg-teal-900/10 hover:bg-teal-900/20'}" onclick="startAssignment('${a.id}', '${a.topic}', ${JSON.stringify(a.questions).replace(/"/g, '&quot;')}, '${a.level || 'easy'}')">
+            list.innerHTML = pending.map(a => {
+                const isCoding = a.type === 'coding';
+                const bgColor = isCoding ? 'border-purple-900/50 bg-purple-900/10 hover:bg-purple-900/20' : 'border-teal-900/50 bg-teal-900/10 hover:bg-teal-900/20';
+                const activeColor = isCoding ? 'border-purple-500 bg-purple-900/20' : 'border-green-500 bg-green-900/20';
+                const titleColor = isCoding ? 'text-purple-400' : 'text-teal-400';
+                const icon = isCoding ? '💻' : '📝';
+                const typeText = isCoding ? 'Coding Challenge' : '3 fresh MCQs';
+                const clickHint = isCoding ? 'Click to open in Code Lab' : 'Click to start';
+
+                return `
+                <div id="assignment-${a.id}" class="assignment-item p-3 border cursor-pointer transition-all ${activeAssignmentId === a.id ? activeColor : bgColor}" onclick="${isCoding ? `startCodingAssignment('${a.id}', '${a.topic}')` : `startAssignment('${a.id}', '${a.topic}', ${JSON.stringify(a.questions || []).replace(/"/g, '&quot;')}, '${a.level || 'easy'}')`}">
                     <div class="flex justify-between items-center">
-                        <div class="text-xs font-bold text-teal-400">${a.topic.toUpperCase()}</div>
+                        <div class="text-xs font-bold ${titleColor}">${icon} ${a.topic.toUpperCase()}</div>
                         ${activeAssignmentId === a.id ? '<span class="text-[8px] text-green-400">ACTIVE</span>' : ''}
                     </div>
-                    <div class="text-[10px] text-white mt-1">3 fresh MCQs • ${a.level}</div>
-                    <div class="text-[8px] text-gray-500 mt-1">Click to generate new questions</div>
+                    <div class="text-[10px] text-white mt-1">${typeText} • ${a.level || a.difficulty || 'medium'}</div>
+                    <div class="text-[8px] text-gray-500 mt-1">${clickHint}</div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         // Render completed assignments
@@ -3382,6 +4250,44 @@
     }
 
     let currentAssignment = null;
+
+    // Start a coding assignment - opens Code Lab with the challenge
+    function startCodingAssignment(assignmentId, topic) {
+        console.log('startCodingAssignment called:', { assignmentId, topic });
+
+        // Find the challenge by topic name
+        const challenge = codingChallenges.find(c =>
+            c.title.toLowerCase() === topic.toLowerCase() ||
+            c.id === topic.toLowerCase().replace(/\s+/g, '-')
+        );
+
+        if (challenge) {
+            // Open Code Lab and start the challenge
+            activeAssignmentId = assignmentId;
+            displayStudentAssignments(studentAssignments);
+
+            showToast('Coding Assignment!', `Opening: ${challenge.title}`, 'success', 2000);
+            startCodingChallenge(challenge.id);
+        } else {
+            // If challenge not found in predefined list, create custom one
+            showToast('Coding Assignment!', `Opening: ${topic}`, 'success', 2000);
+
+            // Create a custom challenge from assignment
+            const customChallenge = {
+                id: 'assigned-' + assignmentId,
+                title: topic,
+                difficulty: 'Medium',
+                category: 'Assigned',
+                description: `Complete this coding challenge: ${topic}`,
+                expected: '',
+                hint: 'Follow the problem description carefully',
+                starterCode: '# Write your code here\n'
+            };
+
+            currentChallenge = customChallenge;
+            startCustomChallenge(customChallenge);
+        }
+    }
 
     async function startAssignment(assignmentId, topic, originalQuestions, difficulty = 'easy') {
         console.log('startAssignment called:', { assignmentId, topic, questionsCount: originalQuestions?.length, difficulty });
@@ -3776,11 +4682,167 @@
     }
 
     // Show header when on dashboard
+    // ═══════════════════════════════════════════════════════════════
+    // STUDENT PROGRESS TRACKING
+    // ═══════════════════════════════════════════════════════════════
+
+    // Daily tips rotation
+    const dailyTips = [
+        "Practice coding daily to build muscle memory!",
+        "Read error messages carefully - they tell you what's wrong!",
+        "Break complex problems into smaller steps.",
+        "Use print() to debug your code step by step.",
+        "Don't be afraid to make mistakes - that's how you learn!",
+        "Try explaining your code out loud - it helps you understand it!",
+        "Take breaks when stuck - fresh eyes see solutions!",
+        "Comment your code to remember what it does later."
+    ];
+
+    // Update student progress panel
+    function updateStudentProgress(type) {
+        const completedEl = document.getElementById('student-completed-count');
+        const streakEl = document.getElementById('student-streak-count');
+        const levelEl = document.getElementById('student-level');
+        const progressEl = document.getElementById('student-level-progress');
+        const xpEl = document.getElementById('student-xp-text');
+        const achievementsEl = document.getElementById('student-achievements');
+
+        // Get stored progress or initialize
+        let progress = JSON.parse(localStorage.getItem('student_progress') || '{"completed": 0, "streak": 1, "xp": 200, "achievements": ["first-steps"]}');
+
+        if (type === 'correct') {
+            progress.completed++;
+            progress.xp += 50;
+
+            // Check for level ups
+            const levels = [
+                { name: 'Beginner', maxXp: 500 },
+                { name: 'Novice', maxXp: 1000 },
+                { name: 'Apprentice', maxXp: 2000 },
+                { name: 'Intermediate', maxXp: 4000 },
+                { name: 'Advanced', maxXp: 8000 },
+                { name: 'Expert', maxXp: 15000 },
+                { name: 'Master', maxXp: 999999 }
+            ];
+
+            let currentLevel = levels[0];
+            let prevLevel = 0;
+            for (let i = 0; i < levels.length; i++) {
+                if (progress.xp < levels[i].maxXp) {
+                    currentLevel = levels[i];
+                    prevLevel = i > 0 ? levels[i-1].maxXp : 0;
+                    break;
+                }
+            }
+
+            // Update UI
+            if (completedEl) completedEl.textContent = progress.completed;
+            if (streakEl) streakEl.textContent = '🔥 ' + progress.streak;
+            if (levelEl) levelEl.textContent = currentLevel.name;
+
+            const levelProgress = ((progress.xp - prevLevel) / (currentLevel.maxXp - prevLevel)) * 100;
+            if (progressEl) progressEl.style.width = Math.min(levelProgress, 100) + '%';
+            if (xpEl) xpEl.textContent = `${progress.xp}/${currentLevel.maxXp} XP`;
+
+            // Check for new achievements
+            if (progress.completed === 1 && !progress.achievements.includes('first-code')) {
+                progress.achievements.push('first-code');
+                addAchievement('first-code', '💻', 'Code Rookie', 'Complete your first coding challenge');
+            }
+            if (progress.completed === 5 && !progress.achievements.includes('five-star')) {
+                progress.achievements.push('five-star');
+                addAchievement('five-star', '⭐', 'Rising Star', 'Complete 5 coding challenges');
+            }
+            if (progress.completed === 10 && !progress.achievements.includes('ten-complete')) {
+                progress.achievements.push('ten-complete');
+                addAchievement('ten-complete', '🏅', 'Code Warrior', 'Complete 10 coding challenges');
+            }
+
+            // Save progress
+            localStorage.setItem('student_progress', JSON.stringify(progress));
+        }
+    }
+
+    // Add achievement to UI
+    function addAchievement(id, icon, title, description) {
+        const achievementsEl = document.getElementById('student-achievements');
+        if (!achievementsEl) return;
+
+        const achDiv = document.createElement('div');
+        achDiv.className = 'flex items-center gap-2 p-2 bg-gradient-to-r from-yellow-900/30 to-orange-900/30 rounded border border-yellow-700/50 animate-pulse';
+        achDiv.innerHTML = `
+            <span class="text-lg">${icon}</span>
+            <div>
+                <div class="text-[10px] font-bold text-yellow-300">${title}</div>
+                <div class="text-[8px] text-gray-400">${description}</div>
+            </div>
+        `;
+        achievementsEl.insertBefore(achDiv, achievementsEl.firstChild);
+
+        showToast('🏆 Achievement Unlocked!', title, 'success', 5000);
+    }
+
+    // Celebration effect for correct answers
+    function showCelebration() {
+        // Create confetti effect
+        const colors = ['#22c55e', '#eab308', '#3b82f6', '#ec4899', '#8b5cf6'];
+
+        for (let i = 0; i < 30; i++) {
+            setTimeout(() => {
+                const confetti = document.createElement('div');
+                confetti.style.cssText = `
+                    position: fixed;
+                    top: -10px;
+                    left: ${Math.random() * 100}%;
+                    width: 10px;
+                    height: 10px;
+                    background: ${colors[Math.floor(Math.random() * colors.length)]};
+                    border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+                    pointer-events: none;
+                    z-index: 9999;
+                    animation: confettiFall 3s forwards;
+                `;
+                document.body.appendChild(confetti);
+
+                setTimeout(() => confetti.remove(), 3000);
+            }, i * 50);
+        }
+    }
+
+    // Add confetti animation CSS
+    const celebrationStyle = document.createElement('style');
+    celebrationStyle.textContent = `
+        @keyframes confettiFall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(celebrationStyle);
+
+    // Initialize student progress on load
+    function initStudentProgress() {
+        const progress = JSON.parse(localStorage.getItem('student_progress') || '{"completed": 0, "streak": 1, "xp": 200, "achievements": ["first-steps"]}');
+
+        const completedEl = document.getElementById('student-completed-count');
+        const streakEl = document.getElementById('student-streak-count');
+
+        if (completedEl) completedEl.textContent = progress.completed;
+        if (streakEl) streakEl.textContent = '🔥 ' + progress.streak;
+
+        // Set random daily tip
+        const tipEl = document.getElementById('daily-tip');
+        if (tipEl) {
+            tipEl.textContent = dailyTips[Math.floor(Math.random() * dailyTips.length)];
+        }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
         // Validate stored user first
         validateStoredUser();
         // Update header badge when page loads
         updateHeaderBadge();
+        // Initialize student progress panel
+        initStudentProgress();
     });
 
     // ═══════════════════════════════════════════════════════════════
@@ -3812,6 +4874,12 @@
     window.handleNotificationClick = handleNotificationClick;
     window.startAssignment = startAssignment;
     window.sendEncouragement = sendEncouragement;
+    window.assignCodingChallenge = assignCodingChallenge;
+    window.filterCodingChallenges = filterCodingChallenges;
+    window.generateSimilarChallenge = generateSimilarChallenge;
+    window.generateCustomProblem = generateCustomProblem;
+    window.startCustomChallenge = startCustomChallenge;
+    window.startCodingAssignment = startCodingAssignment;
 </script>
 </body>
 </html>

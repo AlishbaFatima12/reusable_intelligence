@@ -58,6 +58,7 @@ model Assignment {
   studentName String
   topic       String
   level       String
+  type        String    @default("mcq")
   questions   String
   completed   Boolean   @default(false)
   score       Int?
