@@ -1,0 +1,14 @@
+{
+  "name": "learnflow-dashboard-debugger",
+  "version": "1.0.0",
+  "description": "Specialized debugger for LearnFlow student/teacher dashboards - handles auth, role-based UI, notifications, and page navigation issues",
+  "trigger": "auto",
+  "priority": 100,
+  "tags": ["debugging", "dashboard", "auth", "teacher", "student", "notifications", "learnflow"],
+  "metadata": {
+    "author": "Claude Code",
+    "created": "2026-01-09",
+    "scope": "mystery-skills-flash-dashboard",
+    "purpose": "Debug and fix common LearnFlow dashboard issues with minimal token usage"
+  }
+}

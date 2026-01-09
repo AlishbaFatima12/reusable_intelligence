@@ -103,6 +103,45 @@
             100% { top: 110%; }
         }
 
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast {
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid var(--neon-teal);
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-size: 11px;
+            max-width: 350px;
+            pointer-events: auto;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+        }
+        .toast.success { border-color: var(--neon-green); }
+        .toast.error { border-color: var(--neon-red); }
+        .toast.info { border-color: var(--neon-blue); }
+        .toast-title { font-weight: bold; margin-bottom: 4px; }
+        .toast.success .toast-title { color: var(--neon-green); }
+        .toast.error .toast-title { color: var(--neon-red); }
+        .toast.info .toast-title { color: var(--neon-blue); }
+        .toast-message { color: white; font-size: 10px; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
         .skill-node {
             width: 40px;
             height: 40px;
@@ -125,15 +164,22 @@
 
         .page {
             display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
             min-height: 100vh;
             padding: 2rem;
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
+            overflow-y: auto;
+            z-index: 10;
         }
 
         .page.active {
             display: block;
             opacity: 1;
+            z-index: 20;
         }
 
         /* Dashboard HUD elements */
@@ -184,6 +230,9 @@
 
 <div class="scanlines"></div>
 
+<!-- Toast Notifications Container -->
+<div id="toast-container" class="toast-container"></div>
+
 <!-- PAGE 1: HERO LANDING -->
 <section id="landing" class="page active relative flex flex-col items-center justify-center">
     <div id="three-hero-container"></div>
@@ -216,7 +265,8 @@
     <div class="absolute bottom-8 left-8 text-[10px] opacity-40 uppercase tracking-tighter">
         Aesthetic: Agentic Brutalism 2025<br>
         Backend: LearnFlow (Triage + Concepts + Progress)<br>
-        Status: <span id="backend-status">Checking...</span>
+        Status: <span id="backend-status">Checking...</span><br>
+        <span style="color: #39ff14;">Build: v1.5.0-bigger-tasks</span>
     </div>
 </section>
 
@@ -224,7 +274,7 @@
 <section id="auth" class="page flex items-center justify-center bg-[#010101]">
     <div class="glass-card p-12 w-full max-w-2xl">
         <div class="flex justify-between items-center mb-10">
-            <h2 class="text-2xl font-bold tracking-widest text-white uppercase">Identity Check</h2>
+            <h2 class="text-2xl font-bold tracking-widest text-white uppercase" id="authModeTitle">Identity Check</h2>
             <div class="flex items-center gap-4">
                 <span class="text-[10px] opacity-50">STUDENT</span>
                 <label class="relative inline-flex items-center cursor-pointer">
@@ -236,29 +286,94 @@
         </div>
 
         <div class="space-y-6">
-            <div class="border-b border-teal-900 focus-within:border-teal-400 transition">
-                <label class="block text-[10px] mb-1 opacity-50">ACCESS_KEY</label>
-                <input type="password" placeholder="••••••••••••" class="w-full bg-transparent border-none outline-none text-teal-400 font-mono py-2">
+            <!-- Name field (only for register) -->
+            <div id="nameField" class="border-b border-teal-900 focus-within:border-teal-400 transition">
+                <label class="block text-[10px] mb-1 opacity-50">USER_NAME</label>
+                <input type="text" id="authName" placeholder="Alishba Fatima" class="w-full bg-transparent border-none outline-none text-teal-400 font-mono py-2">
             </div>
 
+            <!-- Email field -->
+            <div class="border-b border-teal-900 focus-within:border-teal-400 transition">
+                <label class="block text-[10px] mb-1 opacity-50">EMAIL_ADDRESS</label>
+                <input type="email" id="authEmail" placeholder="alishbafatima25@gmail.com" class="w-full bg-transparent border-none outline-none text-teal-400 font-mono py-2">
+            </div>
+
+            <!-- Password field -->
+            <div class="border-b border-teal-900 focus-within:border-teal-400 transition">
+                <label class="block text-[10px] mb-1 opacity-50">ACCESS_KEY</label>
+                <div class="flex items-center">
+                    <input type="password" id="authPassword" placeholder="••••••••••••" class="flex-1 bg-transparent border-none outline-none text-teal-400 font-mono py-2">
+                    <button type="button" onclick="togglePasswordVisibility()" id="passwordToggle" class="text-teal-400 hover:text-white transition px-2">
+                        <span id="eyeIcon">👁</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Error message -->
+            <div id="authError" class="text-red-500 text-xs hidden"></div>
+
+            <!-- Handshake logs -->
             <div id="handshakeLogs" class="terminal-scroll p-4 bg-black/40 border border-teal-950 rounded hidden">
                 <!-- Log entries injected here -->
             </div>
 
-            <button onclick="startHandshake()" class="w-full py-4 border border-teal-500 hover:bg-teal-500/10 transition text-sm tracking-[0.5em] font-bold">
+            <!-- Main button -->
+            <button id="authButton" onclick="startHandshake()" class="w-full py-4 border border-teal-500 hover:bg-teal-500/10 transition text-sm tracking-[0.5em] font-bold">
                 ESTABLISH_CONNECTION
             </button>
+
+            <!-- Mode toggle button -->
+            <div class="text-center space-y-2">
+                <button id="toggleAuthMode" onclick="toggleAuthMode()" class="text-[10px] opacity-50 hover:opacity-100 transition">
+                    EXISTING USER? RETURN_TO_LOGIN
+                </button>
+                <div>
+                    <button onclick="clearSession()" class="text-[8px] text-red-400 opacity-50 hover:opacity-100 transition">
+                        [CLEAR SESSION]
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </section>
 
 <!-- PAGE 3: COMMAND & CONTROL DASHBOARD -->
 <section id="dashboard" class="page">
-    <div class="grid grid-cols-12 gap-6 h-[calc(100vh-4rem)]">
+    <!-- FIXED HEADER BAR (hidden initially) -->
+    <div id="dashboard-header" class="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur border-b border-teal-900/50 px-6 py-3 flex justify-between items-center" style="display: none;">
+        <div class="flex items-center gap-4">
+            <span class="text-teal-400 font-bold text-sm tracking-widest">LEARNFLOW</span>
+            <span id="user-role-badge" class="text-[10px] px-2 py-1 bg-teal-900/50 rounded text-white"></span>
+        </div>
+        <div class="flex items-center gap-4">
+            <!-- Notification Bell with Dropdown Container -->
+            <div class="relative">
+                <button onclick="toggleNotifications()" class="relative text-white hover:text-teal-400 transition p-2" title="Notifications">
+                    <span class="text-xl">🔔</span>
+                    <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] rounded-full w-5 h-5 flex items-center justify-center font-bold" style="display:none;">0</span>
+                </button>
+                <!-- Notification Panel Dropdown -->
+                <div id="notification-panel" class="hidden absolute top-12 right-0 w-80 bg-black/95 backdrop-blur border border-teal-900 rounded shadow-lg shadow-teal-900/50 max-h-96 overflow-y-auto z-[100]">
+                    <div class="p-3 border-b border-teal-900">
+                        <div class="text-xs font-bold text-teal-400">NOTIFICATIONS</div>
+                        <div id="notification-user-id" class="text-[8px] text-gray-500 mt-1">Loading...</div>
+                    </div>
+                    <div id="notification-list"></div>
+                </div>
+            </div>
+            <!-- Logout Button -->
+            <button onclick="logout()" class="bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold px-4 py-2 rounded transition" title="Logout">
+                LOGOUT
+            </button>
+        </div>
+    </div>
+    <!-- Main Dashboard Content (with top padding for fixed header) -->
+    <div class="pt-16 grid grid-cols-12 gap-6 h-[calc(100vh-4rem)]">
 
-        <!-- Left: Skill Vault -->
+        <!-- Left: Skill Vault OR Teacher Student List -->
         <div class="col-span-3 flex flex-col gap-6">
-            <div class="glass-card p-6 flex-1">
+            <!-- STUDENT VIEW: Agent Status -->
+            <div id="studentAgentPanel" class="glass-card p-6 flex-1">
                 <h3 class="text-xs font-bold mb-6 tracking-widest border-b border-teal-900 pb-2">LEARNFLOW_AGENTS</h3>
                 <div class="space-y-4">
                     <div class="flex items-center justify-between p-3 border border-teal-900/50 bg-teal-900/10">
@@ -285,41 +400,105 @@
                 </div>
             </div>
 
-            <!-- Teacher Console Alert -->
-            <div id="struggleConsole" class="glass-card p-6 struggle-alert hidden">
-                <h3 class="text-xs font-bold text-amber-500 mb-2">!! STRUGGLE DETECTED !!</h3>
-                <p class="text-[10px] text-white opacity-80 mb-4" id="struggle-message">Analyzing student performance...</p>
-                <button class="w-full py-2 bg-amber-600 text-black text-[10px] font-bold">GENERATE_PRACTICE_SET</button>
-            </div>
-        </div>
-
-        <!-- Center: Neural Sphere HUD -->
-        <div class="col-span-6 glass-card relative overflow-hidden flex items-center justify-center">
-            <div id="three-dashboard-container"></div>
-            <div class="absolute inset-0 pointer-events-none p-8 flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                    <div class="text-[10px] leading-tight">
-                        NODE: ALISHBA_MAIN<br>
-                        ARCH: LEARNFLOW_v1<br>
-                        OS: MYSTERY_SKILLS
-                    </div>
-                    <div class="text-right">
-                        <div class="text-2xl font-black" id="global-mastery">0%</div>
-                        <div class="text-[8px] opacity-50 tracking-widest uppercase">Global Mastery</div>
-                    </div>
+            <!-- TEACHER VIEW: Student List -->
+            <div id="teacherStudentPanel" class="glass-card p-6 flex-1 overflow-y-auto hidden" style="position: relative; z-index: 50;">
+                <div class="flex justify-between items-center mb-6 border-b border-teal-900 pb-2">
+                    <h3 class="text-xs font-bold tracking-widest">ALL_STUDENTS</h3>
+                    <button onclick="refreshTeacherData()" class="text-[8px] bg-teal-900 px-2 py-1 hover:bg-teal-700 transition">↻ REFRESH</button>
                 </div>
-                <div class="flex justify-center gap-2" id="mastery-bars">
-                    <div class="h-1 w-8 bg-gray-700"></div>
-                    <div class="h-1 w-8 bg-gray-700"></div>
-                    <div class="h-1 w-8 bg-gray-700"></div>
-                    <div class="h-1 w-8 bg-gray-700"></div>
+                <div id="student-list" class="space-y-3" style="position: relative; z-index: 51;">
+                    <div class="text-xs text-gray-500">Loading students...</div>
                 </div>
             </div>
         </div>
 
-        <!-- Right: Agent Bridge -->
+        <!-- Center: Neural Sphere HUD (STUDENT VIEW) -->
+        <div id="studentCenterPanel" class="col-span-6 glass-card relative overflow-hidden">
+            <!-- Default View: Mastery Overview -->
+            <div id="student-overview-view" class="absolute inset-0 flex items-center justify-center">
+                <div id="three-dashboard-container"></div>
+                <div class="absolute inset-0 pointer-events-none p-8 flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <div class="text-[10px] leading-tight">
+                            NODE: ALISHBA_MAIN<br>
+                            ARCH: LEARNFLOW_v1<br>
+                            OS: MYSTERY_SKILLS
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-black" id="global-mastery">0%</div>
+                            <div class="text-[8px] opacity-50 tracking-widest uppercase">Global Mastery</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center gap-2" id="mastery-bars">
+                        <div class="h-1 w-8 bg-gray-700"></div>
+                        <div class="h-1 w-8 bg-gray-700"></div>
+                        <div class="h-1 w-8 bg-gray-700"></div>
+                        <div class="h-1 w-8 bg-gray-700"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Practice View: Questions Display -->
+            <div id="student-practice-view" class="absolute inset-0 p-4 hidden flex-col bg-black/90">
+                <div class="flex justify-between items-center mb-4 border-b border-teal-900 pb-3">
+                    <div>
+                        <div class="text-teal-400 font-bold text-xs tracking-widest" id="center-practice-topic">PRACTICE_SESSION</div>
+                        <div class="text-[8px] text-gray-400 mt-1" id="center-practice-subtitle">Answer all questions below</div>
+                    </div>
+                    <button onclick="closeCenterPractice()" class="text-[8px] bg-gray-800 px-3 py-1 text-gray-400 hover:bg-red-900 hover:text-white transition">CLOSE</button>
+                </div>
+                <div id="center-practice-questions" class="flex-1 overflow-y-auto pr-2 space-y-4">
+                    <!-- Questions will be inserted here -->
+                </div>
+                <div class="mt-4 pt-3 border-t border-teal-900">
+                    <button onclick="submitCenterAnswers()" class="w-full bg-green-500 text-black text-sm font-bold py-3 hover:bg-green-400 transition tracking-wider">SUBMIT ANSWERS</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center: Teacher Dashboard (TEACHER VIEW) -->
+        <div id="teacherCenterPanel" class="col-span-6 glass-card p-4 hidden flex flex-col">
+            <!-- STATIC HEADER: Student info, stats, badge - DOES NOT SCROLL -->
+            <div id="center-panel-header" class="mb-4 p-4 border border-teal-900/50 bg-teal-900/10 flex-shrink-0">
+                <div class="flex justify-between items-center mb-3 border-b border-teal-900 pb-2">
+                    <h3 id="center-panel-title" class="text-sm font-bold tracking-widest text-teal-400">CLASS_PROGRESS_OVERVIEW</h3>
+                    <button id="back-to-class-btn" onclick="showClassOverview()" class="text-[10px] bg-gray-800 px-3 py-1.5 text-gray-400 hover:bg-teal-900 hover:text-white transition hidden">← BACK TO CLASS</button>
+                </div>
+                <div id="center-stats-grid" class="grid grid-cols-4 gap-3 text-center">
+                    <div class="p-3 bg-black/50 border border-teal-900/30">
+                        <div class="text-2xl font-black text-teal-400" id="stat-tasks-assigned">0</div>
+                        <div class="text-[10px] text-gray-400 uppercase">Assigned</div>
+                    </div>
+                    <div class="p-3 bg-black/50 border border-green-900/30">
+                        <div class="text-2xl font-black text-green-400" id="stat-tasks-completed">0</div>
+                        <div class="text-[10px] text-gray-400 uppercase">Completed</div>
+                    </div>
+                    <div class="p-3 bg-black/50 border border-amber-900/30">
+                        <div class="text-2xl font-black text-amber-400" id="stat-pending-students">0</div>
+                        <div class="text-[10px] text-gray-400 uppercase">Pending</div>
+                    </div>
+                    <div class="p-3 bg-black/50 border border-blue-900/30">
+                        <div class="text-2xl font-black text-blue-400" id="stat-avg-score">0%</div>
+                        <div class="text-[10px] text-gray-400 uppercase">Avg Score</div>
+                    </div>
+                </div>
+                <!-- Performance Badge (shown for individual student) -->
+                <div id="performance-badge" class="hidden mt-3 p-3 text-center"></div>
+            </div>
+
+            <!-- SCROLLABLE CONTENT: Task details - THIS PART SCROLLS -->
+            <div class="flex-1 p-4 border border-teal-900/50 bg-teal-900/10 overflow-y-auto">
+                <h3 id="content-section-title" class="text-sm font-bold mb-4 tracking-widest text-teal-400 border-b border-teal-900 pb-2">RECENT_SUBMISSIONS</h3>
+                <div id="recent-submissions-list" class="space-y-3">
+                    <div class="text-xs text-gray-500">Loading submissions...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Agent Bridge (STUDENT) OR Teacher Actions (TEACHER) -->
         <div class="col-span-3 flex flex-col gap-6">
-            <div class="glass-card p-4 flex-1 flex flex-col">
+            <!-- STUDENT VIEW: Agent Chat -->
+            <div id="studentChatPanel" class="glass-card p-4 flex-1 flex flex-col">
                 <h3 class="text-xs font-bold mb-4 tracking-widest">AGENT_BRIDGE_TRIAGE</h3>
                 <div id="agent-logs" class="flex-1 overflow-y-auto font-mono text-[10px] space-y-2 pr-2">
                     <div class="text-teal-500">triage@alishba-k:~$ <span class="text-white">initializing...</span></div>
@@ -329,14 +508,54 @@
                     <input type="text" id="agent-input" class="bg-transparent border-none outline-none w-full text-[10px] text-white" placeholder="Ask Triage Agent...">
                 </div>
             </div>
+
+            <!-- TEACHER VIEW: Teacher Actions -->
+            <div id="teacherActionsPanel" class="glass-card p-4 flex-1 flex-col hidden">
+                <h3 class="text-xs font-bold mb-4 tracking-widest border-b border-teal-900 pb-2">TEACHER_ACTIONS</h3>
+
+                <!-- Create Practice Test -->
+                <div class="mb-4 p-3 border border-teal-900/50 bg-teal-900/10">
+                    <div class="text-[10px] font-bold mb-2 text-teal-400">CREATE PRACTICE TEST</div>
+                    <select id="practice-topic" class="w-full bg-black border border-teal-900 text-white text-[9px] p-1 mb-2">
+                        <option value="python-basics">Python Basics</option>
+                        <option value="variables-and-data-types">Variables & Data Types</option>
+                        <option value="control-flow">Control Flow</option>
+                        <option value="data-structures">Data Structures</option>
+                        <option value="functions">Functions</option>
+                    </select>
+                    <select id="practice-difficulty" class="w-full bg-black border border-teal-900 text-white text-[9px] p-1 mb-2">
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                    <input type="number" id="practice-count" value="3" min="1" max="10" class="w-full bg-black border border-teal-900 text-white text-[9px] p-1 mb-2" placeholder="Number of questions">
+                    <button onclick="teacherGeneratePractice()" class="w-full bg-blue-500 text-black text-[9px] font-bold py-2 hover:bg-white transition">GENERATE TEST</button>
+                </div>
+
+                <!-- Assign to Student -->
+                <div class="mb-4 p-3 border border-teal-900/50 bg-teal-900/10">
+                    <div class="text-[10px] font-bold mb-2 text-teal-400">ASSIGN TO STUDENT</div>
+                    <div id="assign-student-list" class="max-h-32 overflow-y-auto mb-2 text-[9px]">
+                        <div class="text-gray-500">Select students...</div>
+                    </div>
+                    <button onclick="assignPracticeToSelected()" class="w-full bg-amber-500 text-black text-[9px] font-bold py-2 hover:bg-white transition">ASSIGN TO SELECTED</button>
+                </div>
+
+                <!-- Struggle Alert -->
+                <div id="struggle-alert" class="p-3 border border-red-900/50 bg-red-900/10 hidden">
+                    <div class="text-[10px] font-bold mb-2 text-red-400">⚠ STRUGGLING STUDENTS</div>
+                    <div id="struggle-students" class="text-[9px] text-white mb-2"></div>
+                    <button onclick="autoAssignPractice()" class="w-full bg-red-500 text-black text-[9px] font-bold py-2 hover:bg-white transition">AUTO-ASSIGN PRACTICE</button>
+                </div>
+            </div>
         </div>
 
-        <!-- Bottom: Code Editor -->
-        <div class="col-span-12 glass-card p-4 h-[300px] flex gap-4">
+        <!-- Bottom: Code Editor + Practice Panel - BIGGER HEIGHT -->
+        <div class="col-span-12 glass-card p-4 h-[220px] flex gap-4">
             <div class="flex-1 flex flex-col">
                 <div class="flex justify-between items-center mb-2 px-2">
-                    <span class="text-[10px] opacity-50">main.py - LearnFlow Agent Integration</span>
-                    <button class="bg-teal-500 text-black px-4 py-1 text-[10px] font-bold hover:bg-white transition">TEST AGENTS</button>
+                    <span class="text-xs opacity-50">main.py - LearnFlow Agent Integration</span>
+                    <button onclick="testAllAgents()" class="bg-teal-500 text-black px-4 py-2 text-xs font-bold hover:bg-white transition rounded">TEST AGENTS</button>
                 </div>
                 <div class="flex-1 bg-black/60 p-4 rounded border border-teal-900/30 font-mono text-xs overflow-hidden">
                     <div class="text-blue-400">import</div> <div class="inline text-white">requests</div><br>
@@ -351,30 +570,127 @@
                     <div class="text-white">print(<span class="text-green-400">f"Mastery: {r.json()}"</span>)</div>
                 </div>
             </div>
-            <div class="w-1/3 bg-black p-4 font-mono text-[9px] text-green-500 overflow-y-auto border border-white/5" id="console-output">
-                <div class="opacity-50 mb-2">CONSOLE: [OUTPUT]</div>
-                <div>Waiting for backend connection...</div>
+            <!-- STUDENT VIEW: Practice Panel - BIGGER -->
+            <div id="studentConsole" class="w-2/5 bg-black/90 p-4 font-mono text-white overflow-y-auto border-2 border-teal-900 rounded flex flex-col">
+                <div class="flex justify-between items-center mb-3 border-b border-teal-900 pb-3">
+                    <div class="text-teal-400 text-sm font-bold tracking-wider">PRACTICE TOPICS</div>
+                    <button onclick="showTopicsList()" class="text-xs bg-teal-900 px-3 py-1.5 rounded hover:bg-teal-700 transition">REFRESH</button>
+                </div>
+
+                <!-- Topics List View (default) - BIGGER FONTS -->
+                <div id="topics-view" class="flex-1 flex flex-col">
+                    <input type="text" id="topic-search" placeholder="Search topics..." class="bg-gray-900 border border-teal-900 text-white text-sm px-3 py-2 mb-3 rounded">
+                    <div class="flex-1 overflow-y-auto space-y-2" id="topics-list">
+                        <div class="text-gray-400 text-sm">Loading topics...</div>
+                    </div>
+                </div>
+
+                <!-- Practice Questions View (hidden - now shown in CENTER panel) -->
+                <div id="practice-view" class="flex-1 flex-col hidden">
+                    <div class="text-cyan-400 font-bold text-sm mb-2" id="practice-topic-title">PRACTICE: TOPIC</div>
+                    <div class="flex-1 overflow-y-auto" id="practice-questions"></div>
+                    <button onclick="submitAnswers()" class="w-full bg-green-500 text-black text-sm font-bold py-2 mt-2 hover:bg-white transition rounded">SUBMIT ANSWERS</button>
+                </div>
+            </div>
+
+            <!-- TEACHER VIEW: Console Output -->
+            <div id="teacherConsole" class="w-2/5 bg-black/90 p-4 font-mono text-white overflow-y-auto border-2 border-teal-900 rounded flex-col hidden">
+                <div class="text-teal-400 text-sm font-bold mb-3 tracking-wider">STUDENT_DETAILS</div>
+                <div class="flex-1 overflow-y-auto" id="console-content">
+                    <div class="text-gray-400 text-sm">Select a student to view details...</div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
 <script>
+    // ═══════════════════════════════════════════════════════════════
+    // CONFIGURATION - EDIT THIS FOR DEPLOYMENT
+    // ═══════════════════════════════════════════════════════════════
+    const API_CONFIG = {
+        // For local development: use localhost
+        // For production: replace with your deployed backend URL
+        BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost'
+            : 'https://your-backend-domain.com', // CHANGE THIS FOR PRODUCTION
+
+        TRIAGE_PORT: '8001',
+        CONCEPTS_PORT: '8002',
+        CODE_REVIEW_PORT: '8003',
+        DEBUG_PORT: '8004',
+        EXERCISE_PORT: '8005',
+        PROGRESS_PORT: '8006'
+    };
+
+    // Helper to build agent URLs
+    function getAgentURL(port, path = '') {
+        return `${API_CONFIG.BASE_URL}:${port}${path}`;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // TOAST NOTIFICATION SYSTEM (replaces browser alerts)
+    // ═══════════════════════════════════════════════════════════════
+    function showToast(title, message, type = 'info', duration = 4000) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+            <div class="toast-title">${type === 'success' ? '✅ ' : type === 'error' ? '❌ ' : 'ℹ️ '}${title}</div>
+            <div class="toast-message">${message}</div>
+        `;
+        container.appendChild(toast);
+
+        // Auto remove after duration
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease-in forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+
     // Navigation Logic
     function showPage(pageId) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(pageId).classList.add('active');
+        // Hide all pages
+        document.querySelectorAll('.page').forEach(p => {
+            p.classList.remove('active');
+            p.scrollTop = 0;  // Reset scroll position
+        });
+
+        // Show target page
+        const targetPage = document.getElementById(pageId);
+        targetPage.classList.add('active');
+        targetPage.scrollTop = 0;  // Ensure starts at top
+
+        // Also scroll window to top
+        window.scrollTo(0, 0);
+
+        // Show/hide dashboard header
+        const header = document.getElementById('dashboard-header');
+        if (header) {
+            header.style.display = pageId === 'dashboard' ? 'flex' : 'none';
+        }
+
         if (pageId === 'dashboard') {
             initDashboardThree();
             fetchMasteryData();
             startAgentLogStream();
+            updateHeaderBadge();
+            loadNotifications();
+            loadStudentAssignments();
+            startNotificationPolling();  // Start auto-refresh for notifications
+        } else {
+            stopNotificationPolling();  // Stop polling when leaving dashboard
         }
     }
+    // Make showPage globally accessible for onclick handlers
+    window.showPage = showPage;
 
     // Backend Health Check
     async function checkBackendHealth() {
         try {
-            const response = await fetch('http://localhost:8006/health');
+            const response = await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, '/health'));
             if (response.ok) {
                 document.getElementById('backend-status').textContent = 'OPERATIONAL';
                 document.getElementById('backend-status').style.color = 'var(--neon-green)';
@@ -387,20 +703,121 @@
         return false;
     }
 
-    // Fetch Mastery Data from Progress Agent
+    // Global variable to store selected student for teacher view
+    let selectedStudentId = null;
+
+    // Fetch Mastery Data from Progress Agent (role-aware)
     async function fetchMasteryData() {
         try {
-            const response = await fetch('http://localhost:8006/api/v1/mastery/demo-student-001');
-            const data = await response.json();
+            // Get current user from localStorage
+            const userStr = localStorage.getItem('learnflow_user');
+            if (!userStr) {
+                document.getElementById('console-output').innerHTML = '<div class="text-yellow-400">No user logged in</div>';
+                return;
+            }
 
-            // Update global mastery
-            const overall = Math.round(data.overall_mastery * 100);
-            document.getElementById('global-mastery').textContent = overall + '%';
+            const user = JSON.parse(userStr);
 
-            // Update mastery bars
-            const barsContainer = document.getElementById('mastery-bars');
-            barsContainer.innerHTML = '';
+            // STUDENT VIEW: Fetch only their own data
+            if (user.role === 'student') {
+                console.log('LOADING STUDENT DASHBOARD for', user.email);
+                const studentId = user.studentId || 'demo-student-001';
 
+                // Show student panels FIRST, hide teacher panels
+                const studentAgentPanel = document.getElementById('studentAgentPanel');
+                const studentChatPanel = document.getElementById('studentChatPanel');
+                const studentConsole = document.getElementById('studentConsole');
+                const studentCenterPanel = document.getElementById('studentCenterPanel');
+                const teacherStudentPanel = document.getElementById('teacherStudentPanel');
+                const teacherActionsPanel = document.getElementById('teacherActionsPanel');
+                const teacherConsole = document.getElementById('teacherConsole');
+                const teacherCenterPanel = document.getElementById('teacherCenterPanel');
+
+                if (studentAgentPanel) studentAgentPanel.classList.remove('hidden');
+                if (studentChatPanel) studentChatPanel.classList.remove('hidden');
+                if (studentConsole) studentConsole.classList.remove('hidden');
+                if (studentCenterPanel) studentCenterPanel.classList.remove('hidden');
+                if (teacherStudentPanel) teacherStudentPanel.classList.add('hidden');
+                if (teacherCenterPanel) teacherCenterPanel.classList.add('hidden');
+                if (teacherActionsPanel) {
+                    teacherActionsPanel.classList.add('hidden');
+                    teacherActionsPanel.style.display = 'none';
+                }
+                if (teacherConsole) {
+                    teacherConsole.classList.add('hidden');
+                    teacherConsole.style.display = 'none';
+                }
+
+                // Then load data
+                await displayStudentMastery(studentId, user);
+
+                // Load student assignments from database
+                loadStudentAssignments();
+            }
+            // TEACHER VIEW: Fetch all students
+            else if (user.role === 'teacher') {
+                console.log('LOADING TEACHER DASHBOARD for', user.email);
+
+                // Show teacher panels FIRST, hide student panels
+                const studentAgentPanel = document.getElementById('studentAgentPanel');
+                const studentChatPanel = document.getElementById('studentChatPanel');
+                const studentConsole = document.getElementById('studentConsole');
+                const studentCenterPanel = document.getElementById('studentCenterPanel');
+                const teacherStudentPanel = document.getElementById('teacherStudentPanel');
+                const teacherActionsPanel = document.getElementById('teacherActionsPanel');
+                const teacherConsole = document.getElementById('teacherConsole');
+                const teacherCenterPanel = document.getElementById('teacherCenterPanel');
+
+                if (studentAgentPanel) studentAgentPanel.classList.add('hidden');
+                if (studentChatPanel) studentChatPanel.classList.add('hidden');
+                if (studentCenterPanel) studentCenterPanel.classList.add('hidden');
+                if (studentConsole) {
+                    studentConsole.classList.add('hidden');
+                    studentConsole.style.display = 'none';
+                }
+                // REMOVE student assignments panel entirely for teachers (dynamically created)
+                const studentAssignmentsPanel = document.getElementById('student-assignments-panel');
+                if (studentAssignmentsPanel) {
+                    studentAssignmentsPanel.remove();  // Remove completely, not just hide
+                }
+                if (teacherStudentPanel) teacherStudentPanel.classList.remove('hidden');
+                if (teacherCenterPanel) teacherCenterPanel.classList.remove('hidden');
+                if (teacherActionsPanel) {
+                    teacherActionsPanel.classList.remove('hidden');
+                    teacherActionsPanel.style.display = 'flex';
+                }
+                if (teacherConsole) {
+                    teacherConsole.classList.remove('hidden');
+                    teacherConsole.style.display = 'flex';
+                }
+
+                // Then load data
+                await loadTeacherDashboard(user);
+
+                // Load teacher stats and recent submissions
+                loadTeacherStats();
+            }
+
+        } catch (error) {
+            console.error('Failed to fetch mastery data:', error);
+            document.getElementById('console-output').innerHTML = '<div class="text-red-500">Backend connection failed</div>';
+        }
+    }
+
+    // Display mastery data for a single student
+    async function displayStudentMastery(studentId, user) {
+        const response = await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/api/v1/mastery/${studentId}`));
+        const data = await response.json();
+
+        // Update global mastery (CAP AT 100%)
+        const overall = Math.min(100, Math.round(data.overall_mastery * 100));
+        document.getElementById('global-mastery').textContent = overall + '%';
+
+        // Update mastery bars
+        const barsContainer = document.getElementById('mastery-bars');
+        barsContainer.innerHTML = '';
+
+        if (data.topic_mastery && data.topic_mastery.length > 0) {
             data.topic_mastery.slice(0, 4).forEach(topic => {
                 const percent = topic.mastery_percentage;
                 const color = percent >= 70 ? '#39ff14' : percent >= 40 ? '#ffaa00' : '#ff3131';
@@ -409,31 +826,709 @@
                 bar.style.backgroundColor = color;
                 barsContainer.appendChild(bar);
             });
+        }
 
-            // Log to console
-            const consoleOutput = document.getElementById('console-output');
-            consoleOutput.innerHTML = `<div class="opacity-50 mb-2">CONSOLE: [OUTPUT]</div>`;
+        // Populate topics list for student (clickable topics in sequence)
+        const topicsList = document.getElementById('topics-list');
+        if (!topicsList) return;
+
+        topicsList.innerHTML = '';
+
+        // Define topic sequence (learning path)
+        const topicSequence = [
+            { id: 'python-basics', name: 'Python Basics', level: 1 },
+            { id: 'variables-and-data-types', name: 'Variables & Data Types', level: 2 },
+            { id: 'control-flow', name: 'Control Flow (if/else, loops)', level: 3 },
+            { id: 'functions', name: 'Functions', level: 4 },
+            { id: 'data-structures', name: 'Data Structures (lists, dicts)', level: 5 }
+        ];
+
+        if (data.topic_mastery && data.topic_mastery.length > 0) {
+            // Create a map of actual mastery data
+            const masteryMap = {};
             data.topic_mastery.forEach(topic => {
-                const percent = Math.round(topic.mastery_percentage);
-                const color = percent >= 70 ? '#39ff14' : percent >= 40 ? '#ffaa00' : '#ff3131';
-                const line = document.createElement('div');
-                line.className = 'mb-1';
-                line.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <span class="text-teal-400">${topic.topic_name.toUpperCase().replace(/-/g, ' ')}</span>
-                        <span style="color: ${color}" class="font-bold">${percent}%</span>
-                    </div>
-                    <div class="w-full bg-gray-800 h-1 mt-1">
-                        <div style="width: ${percent}%; background-color: ${color}" class="h-1"></div>
-                    </div>
-                `;
-                consoleOutput.appendChild(line);
+                masteryMap[topic.topic_name] = topic.mastery_percentage;
             });
 
-        } catch (error) {
-            console.error('Failed to fetch mastery data:', error);
-            document.getElementById('console-output').innerHTML = '<div class="text-red-500">Backend connection failed</div>';
+            topicSequence.forEach(topic => {
+                const percent = Math.min(100, Math.round((masteryMap[topic.id] || 0) * 100));
+                const color = percent >= 70 ? '#39ff14' : percent >= 40 ? '#ffaa00' : '#ff3131';
+                const status = percent >= 70 ? '✓' : percent >= 40 ? '⚠' : '○';
+
+                const topicDiv = document.createElement('div');
+                topicDiv.className = 'mb-3 p-2 border border-teal-900/50 hover:bg-teal-900/20 cursor-pointer transition';
+                topicDiv.onclick = () => startPractice(topic.id, topic.name);
+                topicDiv.innerHTML = `
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2">
+                            <span style="color: ${color}">${status}</span>
+                            <span class="text-white text-[9px]">Level ${topic.level}</span>
+                        </div>
+                        <span style="color: ${color}" class="font-bold text-[10px]">${percent}%</span>
+                    </div>
+                    <div class="text-teal-400 text-[9px] font-bold mb-1">${topic.name}</div>
+                    <div class="w-full bg-gray-800 h-1">
+                        <div style="width: ${percent}%; background-color: ${color}" class="h-1"></div>
+                    </div>
+                    <div class="text-[7px] text-gray-500 mt-1">Click to practice →</div>
+                `;
+                topicsList.appendChild(topicDiv);
+            });
+        } else {
+            topicsList.innerHTML = `<div class="text-yellow-400 text-[8px]">No mastery data yet. Start by clicking a topic!</div>`;
+            // Show default topics even without data
+            topicSequence.forEach(topic => {
+                const topicDiv = document.createElement('div');
+                topicDiv.className = 'mb-3 p-2 border border-teal-900/50 hover:bg-teal-900/20 cursor-pointer transition';
+                topicDiv.onclick = () => startPractice(topic.id, topic.name);
+                topicDiv.innerHTML = `
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-500">○</span>
+                            <span class="text-white text-[9px]">Level ${topic.level}</span>
+                        </div>
+                        <span class="text-gray-500 font-bold text-[10px]">0%</span>
+                    </div>
+                    <div class="text-teal-400 text-[9px] font-bold mb-1">${topic.name}</div>
+                    <div class="w-full bg-gray-800 h-1">
+                        <div style="width: 0%; background-color: #gray" class="h-1"></div>
+                    </div>
+                    <div class="text-[7px] text-gray-500 mt-1">Click to start learning →</div>
+                `;
+                topicsList.appendChild(topicDiv);
+            });
         }
+    }
+
+    // Manual refresh for teacher
+    async function refreshTeacherData() {
+        const userStr = localStorage.getItem('learnflow_user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+
+        showToast('Refreshing', 'Loading latest student data...', 'info', 2000);
+
+        try {
+            await loadTeacherDashboard(user);
+            await loadTeacherStats();
+            loadStudentsForAssignment();
+            showToast('Updated', 'Student list refreshed!', 'success', 2000);
+        } catch (err) {
+            console.error('Refresh error:', err);
+            showToast('Error', 'Failed to refresh: ' + err.message, 'error');
+        }
+    }
+
+    // Load teacher dashboard with all students
+    async function loadTeacherDashboard(user) {
+        // Fetch all students
+        const studentsResponse = await fetch('/api/auth/students');
+        const studentsData = await studentsResponse.json();
+
+        if (!studentsData.success || !studentsData.students) {
+            document.getElementById('student-list').innerHTML = '<div class="text-red-500 text-xs">Failed to load students</div>';
+            return;
+        }
+
+        const students = studentsData.students;
+
+        // Fetch mastery data for each student
+        const studentListContainer = document.getElementById('student-list');
+        studentListContainer.innerHTML = '';
+
+        if (students.length === 0) {
+            studentListContainer.innerHTML = '<div class="text-gray-500 text-xs">No students registered yet</div>';
+            document.getElementById('console-output').innerHTML = '<div class="text-gray-500 text-xs">No students to display</div>';
+            return;
+        }
+
+        // Fetch mastery for all students in parallel
+        const masteryPromises = students.map(student =>
+            fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/api/v1/mastery/${student.studentId}`))
+                .then(res => res.json())
+                .catch(() => ({ overall_mastery: 0, topic_mastery: [] }))
+        );
+
+        const masteryResults = await Promise.all(masteryPromises);
+
+        // Create student cards with color coding
+        students.forEach((student, index) => {
+            const mastery = masteryResults[index];
+            const overall = Math.min(100, Math.round(mastery.overall_mastery * 100));
+
+            // Color coding: Green (>70%), Yellow (40-70%), Red (<40%)
+            let borderColor, bgColor, textColor;
+            if (overall >= 70) {
+                borderColor = '#39ff14';
+                bgColor = 'rgba(57, 255, 20, 0.1)';
+                textColor = '#39ff14';
+            } else if (overall >= 40) {
+                borderColor = '#ffaa00';
+                bgColor = 'rgba(255, 170, 0, 0.1)';
+                textColor = '#ffaa00';
+            } else {
+                borderColor = '#ff3131';
+                bgColor = 'rgba(255, 49, 49, 0.1)';
+                textColor = '#ff3131';
+            }
+
+            // Find struggling topics
+            const strugglingTopics = mastery.topic_mastery
+                ? mastery.topic_mastery.filter(t => t.mastery_percentage < 40).map(t => t.topic_name)
+                : [];
+
+            // Store mastery data globally for click handler
+            window.studentMasteryData = window.studentMasteryData || {};
+            window.studentMasteryData[student.studentId] = mastery;
+
+            const card = document.createElement('div');
+            card.className = 'student-card w-full text-left p-3 border cursor-pointer transition hover:scale-105 hover:border-white';
+            card.style.cssText = `border-color: ${borderColor}; background-color: ${bgColor}; position: relative; z-index: 10;`;
+            card.setAttribute('data-student-id', student.studentId);
+            card.setAttribute('data-student-name', student.name);
+
+            card.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-white">${student.name}</span>
+                    <span class="text-sm font-black" style="color: ${textColor}">${overall}%</span>
+                </div>
+                <div class="text-[9px] opacity-70 mb-1">${student.studentId}</div>
+                ${strugglingTopics.length > 0
+                    ? `<div class="text-[8px] text-red-400 mt-1">Struggling: ${strugglingTopics.slice(0, 2).join(', ')}</div>`
+                    : '<div class="text-[8px] text-green-400 mt-1">On track</div>'}
+                <div class="text-[7px] text-teal-400 mt-2 text-center border-t border-teal-900 pt-1">[ CLICK TO VIEW DETAILS ]</div>
+            `;
+
+            // Add click handler directly to element
+            card.onclick = function(e) {
+                e.stopPropagation();
+                const sid = this.getAttribute('data-student-id');
+                const sname = this.getAttribute('data-student-name');
+                const mdata = window.studentMasteryData[sid] || { overall_mastery: 0, topic_mastery: [] };
+                selectStudent(sid, sname, mdata);
+            };
+
+            studentListContainer.appendChild(card);
+        });
+
+        // Detect struggling students (<40% overall mastery)
+        const strugglingStudents = students.filter((student, index) => {
+            const overall = Math.min(100, Math.round(masteryResults[index].overall_mastery * 100));
+            return overall < 40;
+        });
+
+        // Show struggle alert if struggling students detected
+        const struggleAlert = document.getElementById('struggle-alert');
+        if (strugglingStudents.length > 0) {
+            struggleAlert.classList.remove('hidden');
+            const struggleStudentsDiv = document.getElementById('struggle-students');
+            struggleStudentsDiv.innerHTML = '';
+            strugglingStudents.forEach(student => {
+                const div = document.createElement('div');
+                div.className = 'mb-1';
+                div.textContent = `• ${student.name}`;
+                struggleStudentsDiv.appendChild(div);
+            });
+        } else {
+            struggleAlert.classList.add('hidden');
+        }
+
+        // Don't auto-select - let teacher click to view individual student
+    }
+
+    // Handle student card click - wrapper for selectStudent (must be global)
+    window.handleStudentClick = function(studentId, studentName) {
+        console.log('handleStudentClick:', studentId, studentName);
+        const masteryData = window.studentMasteryData[studentId] || { overall_mastery: 0, topic_mastery: [] };
+        selectStudent(studentId, studentName, masteryData);
+    };
+
+    // Select a student to view details (teacher view)
+    async function selectStudent(studentId, studentName, masteryData) {
+        console.log('selectStudent called:', studentId, studentName);
+
+        try {
+            selectedStudentId = studentId;
+
+            // Update side panel elements (if they exist)
+            const globalMastery = document.getElementById('global-mastery');
+            if (globalMastery) {
+                const overall = Math.min(100, Math.round(masteryData.overall_mastery * 100));
+                globalMastery.textContent = overall + '%';
+            }
+
+            const barsContainer = document.getElementById('mastery-bars');
+            if (barsContainer) {
+                barsContainer.innerHTML = '';
+                if (masteryData.topic_mastery && masteryData.topic_mastery.length > 0) {
+                    masteryData.topic_mastery.slice(0, 4).forEach(topic => {
+                        const percent = topic.mastery_percentage;
+                        const color = percent >= 70 ? '#39ff14' : percent >= 40 ? '#ffaa00' : '#ff3131';
+                        const bar = document.createElement('div');
+                        bar.className = 'h-1 w-8';
+                        bar.style.backgroundColor = color;
+                        barsContainer.appendChild(bar);
+                    });
+                }
+            }
+
+            // Update console output (if exists)
+            const consoleOutput = document.getElementById('console-output');
+            if (consoleOutput) {
+                consoleOutput.innerHTML = `<div class="opacity-50 mb-2">CONSOLE: [TEACHER_VIEW - ${studentName.toUpperCase()}]</div>`;
+                if (masteryData.topic_mastery && masteryData.topic_mastery.length > 0) {
+                    masteryData.topic_mastery.forEach(topic => {
+                        const percent = Math.min(100, Math.round(topic.mastery_percentage));
+                        const color = percent >= 70 ? '#39ff14' : percent >= 40 ? '#ffaa00' : '#ff3131';
+                        const line = document.createElement('div');
+                        line.className = 'mb-1';
+                        line.innerHTML = `
+                            <div class="flex items-center justify-between">
+                                <span class="text-teal-400">${topic.topic_name.toUpperCase().replace(/-/g, ' ')}</span>
+                                <span style="color: ${color}" class="font-bold">${percent}%</span>
+                            </div>
+                            <div class="w-full bg-gray-800 h-1 mt-1">
+                                <div style="width: ${percent}%; background-color: ${color}" class="h-1"></div>
+                            </div>
+                        `;
+                        consoleOutput.appendChild(line);
+                    });
+                } else {
+                    consoleOutput.innerHTML += `<div class="text-yellow-400 text-xs">No mastery data yet</div>`;
+                }
+            }
+
+            // Show struggling topics alert (if element exists)
+            const struggleConsole = document.getElementById('struggleConsole');
+            if (struggleConsole) {
+                if (masteryData.struggling_topics && masteryData.struggling_topics.length > 0) {
+                    struggleConsole.classList.remove('hidden');
+                    const struggleMsg = document.getElementById('struggle-message');
+                    if (struggleMsg) struggleMsg.textContent = `${studentName} struggling with: ${masteryData.struggling_topics.join(', ')}`;
+                } else {
+                    struggleConsole.classList.add('hidden');
+                }
+            }
+
+            // CRITICAL: Update center panel to show selected student's assignments
+            console.log('Calling loadSelectedStudentData...');
+            await loadSelectedStudentData(studentId, studentName, masteryData);
+            console.log('loadSelectedStudentData completed');
+
+        } catch (err) {
+            console.error('selectStudent error:', err);
+            alert('Error in selectStudent: ' + err.message);
+        }
+    }
+
+    // Load selected student's data in center panel
+    // Show class overview (back from individual student view)
+    window.showClassOverview = function() {
+        selectedStudentId = null;  // Clear selected student
+        document.getElementById('center-panel-title').textContent = 'CLASS_PROGRESS_OVERVIEW';
+        document.getElementById('content-section-title').textContent = 'RECENT_SUBMISSIONS';
+        document.getElementById('back-to-class-btn').classList.add('hidden');
+        document.getElementById('performance-badge').classList.add('hidden');
+        loadTeacherStats();
+    };
+
+    // Get performance analysis based on scores
+    function getPerformanceAnalysis(avgScore, completionRate) {
+        if (avgScore >= 90 && completionRate >= 80) {
+            return { label: 'EXCELLENT', color: '#39ff14', bg: 'bg-green-900/30', border: 'border-green-500', emoji: '🏆', message: 'Outstanding performance! Keep it up!' };
+        } else if (avgScore >= 70 && completionRate >= 60) {
+            return { label: 'GOOD', color: '#00ffcc', bg: 'bg-teal-900/30', border: 'border-teal-500', emoji: '⭐', message: 'Good progress. Room for improvement.' };
+        } else if (avgScore >= 50 || completionRate >= 40) {
+            return { label: 'NEEDS IMPROVEMENT', color: '#ffaa00', bg: 'bg-amber-900/30', border: 'border-amber-500', emoji: '📚', message: 'Requires more practice and attention.' };
+        } else {
+            return { label: 'STRUGGLING', color: '#ff3131', bg: 'bg-red-900/30', border: 'border-red-500', emoji: '🆘', message: 'Needs immediate support and intervention.' };
+        }
+    }
+
+    async function loadSelectedStudentData(studentId, studentName, masteryData) {
+        const userStr = localStorage.getItem('learnflow_user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+
+        try {
+            const teacherId = user.teacherId || 'teacher-1';
+            const response = await fetch(`/api/assignments/teacher/${teacherId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                const studentAssignments = data.assignments.filter(a => a.studentId === studentId);
+                const completed = studentAssignments.filter(a => a.completed);
+                const pending = studentAssignments.filter(a => !a.completed);
+                const overall = Math.min(100, Math.round(masteryData.overall_mastery * 100));
+
+                // Calculate average score
+                const avgScore = completed.length > 0
+                    ? Math.round(completed.reduce((sum, a) => sum + (a.score || 0), 0) / completed.length)
+                    : 0;
+                const completionRate = studentAssignments.length > 0
+                    ? Math.round((completed.length / studentAssignments.length) * 100)
+                    : 0;
+
+                // Get performance analysis
+                const performance = getPerformanceAnalysis(avgScore, completionRate);
+
+                // Update header title
+                document.getElementById('center-panel-title').textContent = 'STUDENT: ' + studentName.toUpperCase();
+                document.getElementById('back-to-class-btn').classList.remove('hidden');
+                document.getElementById('content-section-title').textContent = 'TASK_DETAILS';
+
+                // Show toast to confirm view loaded
+                showToast('Student Selected', 'Viewing ' + studentName + ' - ' + completed.length + ' completed, ' + pending.length + ' pending', 'info');
+
+                // Update stats grid for this student
+                document.getElementById('stat-tasks-assigned').textContent = studentAssignments.length;
+                document.getElementById('stat-tasks-completed').textContent = completed.length;
+                document.getElementById('stat-pending-students').textContent = pending.length;
+                document.getElementById('stat-avg-score').textContent = avgScore + '%';
+
+                // Show performance badge
+                const badgeEl = document.getElementById('performance-badge');
+                badgeEl.classList.remove('hidden');
+                badgeEl.className = `mt-3 p-3 text-center border ${performance.border} ${performance.bg}`;
+                badgeEl.innerHTML = `
+                    <div class="text-2xl mb-1">${performance.emoji}</div>
+                    <div class="text-sm font-black" style="color: ${performance.color}">${performance.label}</div>
+                    <div class="text-[9px] text-gray-400 mt-1">${performance.message}</div>
+                    <div class="text-[8px] text-gray-500 mt-2">Mastery: ${overall}% | Completion: ${completionRate}%</div>
+                `;
+
+                // Update content area with tasks - LARGER AND MORE READABLE
+                const submissionsList = document.getElementById('recent-submissions-list');
+                submissionsList.innerHTML = `
+                    ${completed.length > 0 ? `
+                        <div class="text-sm text-green-400 font-bold mb-3 flex items-center gap-2">
+                            <span>COMPLETED TASKS</span>
+                            <span class="bg-green-900 px-3 py-1 rounded text-xs">${completed.length}</span>
+                        </div>
+                        ${completed.map(a => {
+                            const scoreColor = a.score >= 90 ? 'text-green-400' : a.score >= 70 ? 'text-teal-400' : a.score >= 50 ? 'text-amber-400' : 'text-red-400';
+                            const isPerfect = a.score === 100;
+                            const isExcellent = a.score >= 90;
+                            const needsRetry = a.score < 70;
+                            const borderClass = isPerfect ? 'border-green-500 bg-green-900/20' : needsRetry ? 'border-red-500 bg-red-900/20' : 'border-green-900/50 bg-green-900/10';
+                            let html = '<div class="p-4 mb-3 border-2 rounded ' + borderClass + '">';
+                            html += '<div class="flex justify-between items-center">';
+                            html += '<span class="text-sm text-white font-bold">' + a.topic.replace(/-/g, ' ').toUpperCase() + '</span>';
+                            html += '<span class="text-lg font-black ' + scoreColor + '">' + a.score + '%' + (isPerfect ? ' 🏆' : '') + '</span>';
+                            html += '</div>';
+                            html += '<div class="text-xs text-gray-400 mt-2">' + new Date(a.completedAt).toLocaleString() + '</div>';
+                            html += '<div class="flex gap-2 mt-3">';
+                            if (isExcellent) {
+                                html += '<button onclick="sendAppreciation(\'' + studentId + '\', \'' + studentName + '\', \'' + a.topic + '\', ' + a.score + ')" class="flex-1 bg-green-600 text-white text-xs font-bold py-2 px-3 rounded hover:bg-green-500 transition">🎉 APPRECIATION</button>';
+                            } else {
+                                html += '<button onclick="sendEncouragement(\'' + studentId + '\', \'' + studentName + '\', \'' + a.topic + '\', ' + a.score + ')" class="flex-1 bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded hover:bg-blue-500 transition">💬 SEND NOTE</button>';
+                            }
+                            if (needsRetry) {
+                                html += '<button onclick="regenerateTestForStudent(\'' + studentId + '\', \'' + studentName + '\', \'' + a.topic + '\')" class="flex-1 bg-red-600 text-white text-xs font-bold py-2 px-3 rounded hover:bg-red-500 transition">🔄 REGENERATE</button>';
+                            }
+                            html += '</div>';
+                            html += '</div>';
+                            return html;
+                        }).join('')}
+                    ` : '<div class="text-sm text-gray-500 mb-4 p-4 border border-gray-800 rounded">No completed tasks yet</div>'}
+
+                    ${pending.length > 0 ? `
+                        <div class="text-sm text-amber-400 font-bold mb-3 mt-6 flex items-center gap-2">
+                            <span>PENDING TASKS</span>
+                            <span class="bg-amber-900 px-3 py-1 rounded text-xs">${pending.length}</span>
+                        </div>
+                        ${pending.map(a => {
+                            let html = '<div class="p-4 mb-3 border-2 border-amber-900/50 bg-amber-900/10 rounded">';
+                            html += '<div class="flex justify-between items-center mb-3">';
+                            html += '<span class="text-sm text-white font-bold">' + a.topic.replace(/-/g, ' ').toUpperCase() + '</span>';
+                            html += '<span class="text-xs bg-amber-500 text-black px-3 py-1 font-bold rounded">PENDING</span>';
+                            html += '</div>';
+                            html += '<div class="text-xs text-gray-400 mb-3">Assigned: ' + new Date(a.createdAt).toLocaleDateString() + '</div>';
+                            html += '<div class="p-3 bg-black/50 border border-amber-900/30 rounded">';
+                            html += '<div class="flex items-center gap-3 mb-3">';
+                            html += '<span class="text-xs text-amber-400 font-bold">📅 Set Due Date:</span>';
+                            html += '<input type="date" id="due-' + a.id + '" class="bg-black border-2 border-amber-500 text-sm text-white px-4 py-2 flex-1 cursor-pointer hover:border-amber-300 rounded" style="color-scheme: dark;">';
+                            html += '</div>';
+                            html += '<button onclick="sendTaskReminder(\'' + a.id + '\', \'' + studentId + '\', \'' + studentName + '\', \'' + a.topic + '\')" class="w-full bg-amber-500 text-black text-sm font-bold py-3 px-4 hover:bg-amber-400 transition rounded">📧 SEND REMINDER</button>';
+                            html += '</div>';
+                            html += '</div>';
+                            return html;
+                        }).join('')}
+                    ` : ''}
+
+                    ${studentAssignments.length === 0 ? `
+                        <div class="text-center p-6 border border-gray-800 bg-gray-900/20">
+                            <div class="text-2xl mb-2">📋</div>
+                            <div class="text-[10px] text-gray-400">No assignments for ${studentName} yet</div>
+                            <div class="text-[9px] text-teal-400 mt-2">Assign a practice task from the right panel</div>
+                        </div>
+                    ` : ''}
+                `;
+            }
+        } catch (err) {
+            console.error('Load student data error:', err);
+        }
+    }
+
+    // Send task reminder to student
+    window.sendTaskReminder = async function(assignmentId, studentId, studentName, topic) {
+        const dueDateInput = document.getElementById(`due-${assignmentId}`);
+        const dueDate = dueDateInput ? dueDateInput.value : null;
+
+        // Require date selection
+        if (!dueDate) {
+            showToast('⚠️ Date Required', 'Please select a due date before sending the reminder.', 'error', 3000);
+            // Highlight the date input
+            if (dueDateInput) {
+                dueDateInput.style.borderColor = '#ff3131';
+                dueDateInput.focus();
+                setTimeout(() => {
+                    dueDateInput.style.borderColor = '';
+                }, 2000);
+            }
+            return;
+        }
+
+        const dueDateText = `Due: ${new Date(dueDate).toLocaleDateString()}`;
+
+        try {
+            const response = await fetch('/api/notifications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: studentId,
+                    type: 'reminder',
+                    title: 'Complete Pending Task',
+                    message: `Your teacher wants you to complete "${topic}" ${dueDateText}. Please finish it soon!`,
+                    metadata: JSON.stringify({ assignmentId, topic, dueDate })
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast('Reminder Sent', `${studentName} will be notified to complete ${topic}`, 'success');
+            } else {
+                showToast('Error', 'Failed to send reminder: ' + data.error, 'error');
+            }
+        } catch (err) {
+            console.error('Send reminder error:', err);
+            showToast('Error', 'Failed to send reminder', 'error');
+        }
+    }
+
+    // Send appreciation to student who scored 90%+
+    window.sendAppreciation = async function(studentId, studentName, topic, score) {
+        const userStr = localStorage.getItem('learnflow_user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+        const teacherId = user.teacherId || user.id;
+        const teacherName = user.name || 'Your Teacher';
+
+        try {
+            const response = await fetch('/api/notifications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: studentId,
+                    type: 'appreciation',
+                    title: score === 100 ? '🏆 Perfect Score Recognition!' : '🎉 Excellent Work!',
+                    message: score === 100
+                        ? `${teacherName} is amazed by your perfect score on ${topic.replace(/-/g, ' ')}! You're a star student! Keep shining! ⭐`
+                        : `${teacherName} appreciates your excellent performance (${score}%) on ${topic.replace(/-/g, ' ')}! Keep up the great work!`,
+                    metadata: JSON.stringify({ topic, score, teacherId, teacherName })
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast('Appreciation Sent! 🎉', `${studentName} will receive your appreciation for their ${score}% score!`, 'success');
+            } else {
+                showToast('Error', 'Failed to send appreciation: ' + data.error, 'error');
+            }
+        } catch (err) {
+            console.error('Send appreciation error:', err);
+            showToast('Error', 'Failed to send appreciation', 'error');
+        }
+    }
+
+    // Send encouragement note to student (for any score)
+    window.sendEncouragement = async function(studentId, studentName, topic, score) {
+        console.log('[SEND NOTE] Sending to student:', studentId, studentName);
+
+        const userStr = localStorage.getItem('learnflow_user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+        const teacherName = user.name || 'Your Teacher';
+
+        // Customize message based on score
+        let message;
+        if (score >= 70) {
+            message = `Good job on ${topic.replace(/-/g, ' ')}! You scored ${score}%. Keep practicing to reach excellence!`;
+        } else {
+            message = `${teacherName} believes in you! Your ${score}% on ${topic.replace(/-/g, ' ')} is a step forward. Keep trying!`;
+        }
+
+        try {
+            const notifData = {
+                userId: studentId,
+                type: 'encouragement',
+                title: '💬 Message from Your Teacher',
+                message: message,
+                metadata: JSON.stringify({ topic, score, teacherName })
+            };
+            console.log('[SEND NOTE] Creating notification:', notifData);
+
+            const response = await fetch('/api/notifications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(notifData)
+            });
+
+            const data = await response.json();
+            console.log('[SEND NOTE] Response:', data);
+
+            if (data.success) {
+                showToast('Note Sent! 💬', `${studentName} will receive your encouragement message!`, 'success');
+            } else {
+                showToast('Error', 'Failed to send note: ' + data.error, 'error');
+            }
+        } catch (err) {
+            console.error('Send encouragement error:', err);
+            showToast('Error', 'Failed to send note', 'error');
+        }
+    }
+
+    // Regenerate test for student who scored below 70%
+    window.regenerateTestForStudent = async function(studentId, studentName, topic) {
+        const userStr = localStorage.getItem('learnflow_user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+        const teacherId = user.teacherId || user.id;
+
+        showToast('Generating...', `Creating new practice test on ${topic} for ${studentName}`, 'info');
+
+        try {
+            // Generate new questions via exercise agent (port 8005)
+            const exerciseResponse = await fetch(getAgentURL(API_CONFIG.EXERCISE_PORT, '/api/v1/generate'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query_id: `regen-${Date.now()}`,
+                    student_id: studentId,
+                    topic: topic,
+                    difficulty_level: 'beginner',
+                    count: 5
+                })
+            });
+
+            const exerciseData = await exerciseResponse.json();
+
+            // Exercise agent returns 'exercises' array
+            if (exerciseData.exercises && exerciseData.exercises.length > 0) {
+                // Create new assignment
+                const assignResponse = await fetch('/api/assignments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        teacherId: teacherId,
+                        studentId: studentId,
+                        studentName: studentName,
+                        topic: topic,
+                        level: 'beginner',
+                        questions: exerciseData.exercises
+                    })
+                });
+
+                const assignData = await assignResponse.json();
+
+                if (assignData.success) {
+                    showToast('Test Regenerated! 🔄', `New ${topic} practice sent to ${studentName}. They will be notified!`, 'success');
+
+                    // Refresh the student view
+                    const masteryResponse = await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/api/v1/mastery/${studentId}`));
+                    const masteryData = await masteryResponse.json();
+                    loadSelectedStudentData(studentId, studentName, masteryData);
+                } else {
+                    showToast('Error', 'Failed to create assignment: ' + assignData.error, 'error');
+                }
+            } else {
+                showToast('Error', 'Failed to generate exercises from agent', 'error');
+            }
+        } catch (err) {
+            console.error('Regenerate test error:', err);
+            showToast('Error', 'Failed to regenerate test: ' + err.message, 'error');
+        }
+    }
+
+    // Load teacher stats and recent submissions for center panel
+    async function loadTeacherStats() {
+        const userStr = localStorage.getItem('learnflow_user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+        const teacherId = user.teacherId || user.id;
+
+        try {
+            const response = await fetch(`/api/assignments/teacher/${teacherId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                // Only update stats if in class overview mode (no student selected)
+                // This prevents overwriting the individual student view
+                if (!selectedStudentId) {
+                    // Update stats
+                    document.getElementById('stat-tasks-assigned').textContent = data.stats.totalAssigned;
+                    document.getElementById('stat-tasks-completed').textContent = data.stats.totalCompleted;
+                    document.getElementById('stat-pending-students').textContent = data.stats.totalPending;
+                    document.getElementById('stat-avg-score').textContent = data.stats.avgScore + '%';
+
+                    // Update recent submissions
+                    const submissionsList = document.getElementById('recent-submissions-list');
+                    if (data.recentSubmissions.length === 0) {
+                        submissionsList.innerHTML = '<div class="text-[10px] text-gray-500">No submissions yet</div>';
+                    } else {
+                        submissionsList.innerHTML = data.recentSubmissions.map(s => `
+                            <div class="p-2 border border-gray-800 bg-black/50 hover:bg-teal-900/10 transition">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] font-bold text-white">${s.studentName}</span>
+                                    <span class="text-[9px] ${s.score >= 70 ? 'text-green-400' : s.score >= 50 ? 'text-amber-400' : 'text-red-400'}">${s.score}%</span>
+                                </div>
+                                <div class="text-[9px] text-teal-400 mt-1">${s.topic}</div>
+                                <div class="text-[8px] text-gray-500 mt-1">${new Date(s.completedAt).toLocaleString()}</div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Load teacher stats error:', err);
+        }
+    }
+
+    // Generate practice set for struggling student (teacher action)
+    function generatePracticeSet() {
+        if (!selectedStudentId) {
+            showToast('Error', 'No student selected', 'error');
+            return;
+        }
+
+        // This would call the exercise generation agent
+        const logsContainer = document.getElementById('agent-logs');
+        const msg = document.createElement('div');
+        msg.className = 'text-amber-400';
+        msg.textContent = `[TEACHER ACTION] Generating practice set for student ${selectedStudentId}...`;
+        logsContainer.appendChild(msg);
+        logsContainer.scrollTop = logsContainer.scrollHeight;
+
+        // TODO: Call exercise generation agent
+        setTimeout(() => {
+            const successMsg = document.createElement('div');
+            successMsg.className = 'text-green-400';
+            successMsg.textContent = '[SUCCESS] Practice set generated and sent to student';
+            logsContainer.appendChild(successMsg);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }, 1500);
     }
 
     // Stream Agent Logs
@@ -462,36 +1557,164 @@
         });
     }
 
-    // Handshake Animation
-    function startHandshake() {
-        const logs = document.getElementById('handshakeLogs');
-        const role = document.getElementById('roleToggle').checked ? 'TEACHER' : 'STUDENT';
-        logs.classList.remove('hidden');
-        const lines = [
-            "[SUCCESS] Connecting to LearnFlow Backend...",
-            "[SUCCESS] Triage Agent: HEALTHY (port 8001)",
-            "[SUCCESS] Concepts Agent: HEALTHY (port 8002)",
-            "[SUCCESS] Progress Tracker: HEALTHY (port 8006)",
-            `[SUCCESS] Identity Verified: ${role}_NODE_PRIMARY`,
-            "Handshake Complete. Loading HUD..."
-        ];
+    // Auth mode state
+    let isRegisterMode = true;
 
-        lines.forEach((line, i) => {
-            setTimeout(() => {
-                const div = document.createElement('div');
-                div.textContent = line;
-                logs.appendChild(div);
-                logs.scrollTop = logs.scrollHeight;
-                if (i === lines.length - 1) {
-                    setTimeout(() => {
-                        showPage('dashboard');
-                        if (role === 'TEACHER') {
-                            document.getElementById('struggleConsole').classList.remove('hidden');
-                        }
-                    }, 1000);
+    // Toggle password visibility
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('authPassword');
+        const eyeIcon = document.getElementById('eyeIcon');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.textContent = '🙈';
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.textContent = '👁';
+        }
+    }
+
+    function toggleAuthMode() {
+        isRegisterMode = !isRegisterMode;
+        const nameField = document.getElementById('nameField');
+        const toggleButton = document.getElementById('toggleAuthMode');
+        const titleEl = document.getElementById('authModeTitle');
+        const mainButton = document.getElementById('authButton');
+
+        if (isRegisterMode) {
+            nameField.style.display = 'block';
+            toggleButton.textContent = 'EXISTING USER? RETURN_TO_LOGIN';
+            titleEl.textContent = 'REGISTRATION';
+            mainButton.textContent = 'REGISTER_IDENTITY';
+        } else {
+            nameField.style.display = 'none';
+            toggleButton.textContent = 'NEW USER? INITIATE_REGISTRATION';
+            titleEl.textContent = 'Identity Check';
+            mainButton.textContent = 'ESTABLISH_CONNECTION';
+        }
+        // Clear error
+        document.getElementById('authError').classList.add('hidden');
+    }
+
+    // Real authentication function
+    async function startHandshake() {
+        const email = document.getElementById('authEmail').value;
+        const password = document.getElementById('authPassword').value;
+        const name = document.getElementById('authName').value;
+        const role = document.getElementById('roleToggle').checked ? 'teacher' : 'student';
+        const errorEl = document.getElementById('authError');
+        const button = document.getElementById('authButton');
+
+        // Validation
+        if (!email || !password) {
+            errorEl.textContent = '[ERROR] Email and password required';
+            errorEl.classList.remove('hidden');
+            return;
+        }
+
+        if (isRegisterMode && !name) {
+            errorEl.textContent = '[ERROR] Name required for registration';
+            errorEl.classList.remove('hidden');
+            return;
+        }
+
+        // Disable button
+        button.disabled = true;
+        button.textContent = 'AUTHENTICATING...';
+        errorEl.classList.add('hidden');
+
+        try {
+            // Call appropriate API
+            const endpoint = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
+            const body = isRegisterMode
+                ? { name, email, password, role }
+                : { email, password, role };  // CRITICAL: Send role for validation
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            const data = await response.json();
+
+            // Handle role mismatch error specially
+            if (!response.ok && data.registeredRole) {
+                errorEl.innerHTML = `<div class="text-red-400">[ERROR] ${data.error}</div>
+                    <div class="text-yellow-400 text-[9px] mt-2">Toggle switch to ${data.registeredRole.toUpperCase()} and try again.</div>`;
+                errorEl.classList.remove('hidden');
+
+                // Auto-switch toggle to correct role
+                const toggle = document.getElementById('roleToggle');
+                toggle.checked = (data.registeredRole === 'teacher');
+
+                button.disabled = false;
+                button.textContent = 'ESTABLISH_CONNECTION';
+                return;
+            }
+
+            if (response.ok && data.success) {
+                // Store user info
+                localStorage.setItem('learnflow_user', JSON.stringify(data.user));
+
+                // Show handshake animation
+                const logs = document.getElementById('handshakeLogs');
+                logs.classList.remove('hidden');
+                logs.innerHTML = '';
+
+                const roleLabel = role.toUpperCase();
+                const lines = [
+                    "[SUCCESS] Connecting to LearnFlow Backend...",
+                    "[SUCCESS] Triage Agent: HEALTHY (port 8001)",
+                    "[SUCCESS] Concepts Agent: HEALTHY (port 8002)",
+                    "[SUCCESS] Progress Tracker: HEALTHY (port 8006)",
+                    `[SUCCESS] Identity Verified: ${roleLabel}_NODE_${data.user.id.substring(0, 8)}`,
+                    `[SUCCESS] Session Token: ${generateFakeToken()}`,
+                    "Handshake Complete. Loading HUD..."
+                ];
+
+                for (let i = 0; i < lines.length; i++) {
+                    await new Promise(resolve => setTimeout(resolve, 400));
+                    const div = document.createElement('div');
+                    div.className = 'text-green-400 text-xs';
+                    div.textContent = lines[i];
+                    logs.appendChild(div);
+                    logs.scrollTop = logs.scrollHeight;
                 }
-            }, i * 400);
-        });
+
+                // Go to dashboard
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                showPage('dashboard');
+
+                if (role === 'teacher') {
+                    document.getElementById('struggleConsole').classList.remove('hidden');
+                }
+
+                // Fetch and display mastery data
+                await fetchMasteryData();
+
+            } else {
+                // Auth failed
+                errorEl.textContent = '[ERROR] ' + (data.error || 'Authentication failed');
+                errorEl.classList.remove('hidden');
+                button.disabled = false;
+                button.textContent = isRegisterMode ? 'REGISTER_IDENTITY' : 'ESTABLISH_CONNECTION';
+            }
+
+        } catch (error) {
+            errorEl.textContent = '[ERROR] Connection failed: ' + error.message;
+            errorEl.classList.remove('hidden');
+            button.disabled = false;
+            button.textContent = isRegisterMode ? 'REGISTER_IDENTITY' : 'ESTABLISH_CONNECTION';
+        }
+    }
+
+    function generateFakeToken() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let token = '';
+        for (let i = 0; i < 16; i++) {
+            token += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return token;
     }
 
     // THREE.JS IMPLEMENTATIONS
@@ -589,6 +1812,1342 @@
         }
     `;
     document.head.appendChild(style);
+
+    // Agent Chat System - CONNECT TO BACKEND!
+    async function sendToAgent(query) {
+        const logsContainer = document.getElementById('agent-logs');
+        const inputField = document.getElementById('agent-input');
+
+        if (!query || query.trim() === '') return;
+
+        // Clear input
+        inputField.value = '';
+
+        // Get user info
+        const userStr = localStorage.getItem('learnflow_user');
+        const user = userStr ? JSON.parse(userStr) : { id: 'demo-user', studentId: 'demo-student-001' };
+
+        // Add user message to logs
+        const userMsg = document.createElement('div');
+        userMsg.className = 'text-teal-500';
+        userMsg.innerHTML = `you@learnflow:~$ <span class="text-white">${query}</span>`;
+        logsContainer.appendChild(userMsg);
+        logsContainer.scrollTop = logsContainer.scrollHeight;
+
+        // Show loading
+        const loadingMsg = document.createElement('div');
+        loadingMsg.className = 'text-yellow-400';
+        loadingMsg.textContent = '[PROCESSING] Sending to Triage Agent...';
+        logsContainer.appendChild(loadingMsg);
+        logsContainer.scrollTop = logsContainer.scrollHeight;
+
+        try {
+            // Call Triage Agent to analyze and route
+            const triageResponse = await fetch(getAgentURL(API_CONFIG.TRIAGE_PORT, '/api/v1/analyze'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query_id: `query-${Date.now()}`,
+                    student_id: user.studentId || 'demo-student-001',
+                    query_text: query
+                })
+            });
+
+            const triageData = await triageResponse.json();
+
+            // Remove loading
+            loadingMsg.remove();
+
+            // Show triage result (backend returns detected_intent and routed_to_agent)
+            const intent = triageData.detected_intent || triageData.intent;
+            const targetAgent = triageData.routed_to_agent || triageData.target_agent;
+
+            const triageMsg = document.createElement('div');
+            triageMsg.className = 'text-green-400';
+            triageMsg.textContent = `[SUCCESS] Intent: ${intent} | Routing to: ${targetAgent}`;
+            logsContainer.appendChild(triageMsg);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+
+            // Now call the appropriate agent based on routing
+            let agentUrl = '';
+            let agentName = '';
+
+            if (targetAgent === 'concepts' || targetAgent === 'concepts-agent') {
+                agentUrl = getAgentURL(API_CONFIG.CONCEPTS_PORT, '/api/v1/explain');
+                agentName = 'Concepts Agent';
+            } else if (targetAgent === 'exercise' || targetAgent === 'exercise-agent') {
+                agentUrl = getAgentURL(API_CONFIG.EXERCISE_PORT, '/api/v1/generate');
+                agentName = 'Exercise Agent';
+            } else if (targetAgent === 'code_review' || targetAgent === 'code-review-agent') {
+                agentUrl = getAgentURL(API_CONFIG.CODE_REVIEW_PORT, '/api/v1/review');
+                agentName = 'Code Review Agent';
+            } else if (targetAgent === 'debug' || targetAgent === 'debug-agent') {
+                agentUrl = getAgentURL(API_CONFIG.DEBUG_PORT, '/api/v1/debug');
+                agentName = 'Debug Agent';
+            }
+
+            if (agentUrl) {
+                const agentLoadingMsg = document.createElement('div');
+                agentLoadingMsg.className = 'text-yellow-400';
+                agentLoadingMsg.textContent = `[PROCESSING] ${agentName} thinking...`;
+                logsContainer.appendChild(agentLoadingMsg);
+                logsContainer.scrollTop = logsContainer.scrollHeight;
+
+                // Call the agent (concepts agent for explanation)
+                if (targetAgent === 'concepts' || targetAgent === 'concepts-agent') {
+                    try {
+                        // Add 30 second timeout for Claude API
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+                        const conceptResponse = await fetch(agentUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                query_id: `query-${Date.now()}`,
+                                student_id: user.studentId || 'demo-student-001',
+                                topic: triageData.extracted_entities?.topic || 'python-basics',
+                                concept: query,
+                                context: []
+                            }),
+                            signal: controller.signal
+                        });
+
+                        clearTimeout(timeoutId);
+                        const conceptData = await conceptResponse.json();
+
+                        agentLoadingMsg.remove();
+
+                        // Show agent response
+                        const responseMsg = document.createElement('div');
+                        responseMsg.className = 'text-blue-400 text-xs my-2 p-2 border border-blue-900 rounded';
+                        responseMsg.innerHTML = `<strong>${agentName}:</strong><br>${conceptData.explanation || conceptData.message || JSON.stringify(conceptData)}`;
+                        logsContainer.appendChild(responseMsg);
+                        logsContainer.scrollTop = logsContainer.scrollHeight;
+
+                        // Update mastery after interaction
+                        await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/api/v1/mastery/${user.studentId || 'demo-student-001'}`), {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                student_id: user.studentId || 'demo-student-001',
+                                topic: triageData.extracted_entities?.topic || 'python-basics',
+                                interaction_type: 'concept_query',
+                                success: true
+                            })
+                        }).catch(err => console.error('Failed to update mastery:', err));
+
+                        // Refresh mastery display
+                        await fetchMasteryData();
+
+                    } catch (agentError) {
+                        agentLoadingMsg.remove();
+                        const errorMsg = document.createElement('div');
+                        errorMsg.className = 'text-red-500 text-xs';
+                        errorMsg.textContent = `[ERROR] ${agentName} failed: ${agentError.name === 'AbortError' ? 'Timeout (30s) - Agent is slow, try again' : agentError.message}`;
+                        logsContainer.appendChild(errorMsg);
+                        logsContainer.scrollTop = logsContainer.scrollHeight;
+                    }
+                }
+            }
+
+        } catch (error) {
+            loadingMsg.remove();
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'text-red-500';
+            errorMsg.textContent = '[ERROR] Failed to contact agent: ' + error.message;
+            logsContainer.appendChild(errorMsg);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+    }
+
+    // Test all agents health endpoints
+    async function testAllAgents() {
+        const logsContainer = document.getElementById('agent-logs');
+        if (!logsContainer) {
+            showToast('Error', 'Please go to dashboard first', 'error');
+            return;
+        }
+
+        // Clear logs and add header
+        logsContainer.innerHTML = '';
+        const header = document.createElement('div');
+        header.className = 'text-cyan-400 font-bold mb-2';
+        header.textContent = '=== TESTING ALL LEARNFLOW AGENTS ===';
+        logsContainer.appendChild(header);
+
+        const agents = [
+            { name: 'Triage Agent', url: getAgentURL(API_CONFIG.TRIAGE_PORT, '/health') },
+            { name: 'Concepts Agent', url: getAgentURL(API_CONFIG.CONCEPTS_PORT, '/health') },
+            { name: 'Code Review Agent', url: getAgentURL(API_CONFIG.CODE_REVIEW_PORT, '/health') },
+            { name: 'Debug Agent', url: getAgentURL(API_CONFIG.DEBUG_PORT, '/health') },
+            { name: 'Exercise Agent', url: getAgentURL(API_CONFIG.EXERCISE_PORT, '/health') },
+            { name: 'Progress Tracker', url: getAgentURL(API_CONFIG.PROGRESS_PORT, '/health') }
+        ];
+
+        for (const agent of agents) {
+            const msg = document.createElement('div');
+            try {
+                const response = await fetch(agent.url, { timeout: 5000 });
+                const data = await response.json();
+                if (response.ok && data.status === 'healthy') {
+                    msg.className = 'text-green-400 text-xs';
+                    msg.textContent = `✓ ${agent.name}: HEALTHY`;
+                    console.log(`✓ ${agent.name}: HEALTHY`);
+                } else {
+                    msg.className = 'text-yellow-400 text-xs';
+                    msg.textContent = `⚠ ${agent.name}: UNHEALTHY - ${JSON.stringify(data)}`;
+                    console.log(`✗ ${agent.name}: UNHEALTHY`);
+                }
+            } catch (error) {
+                msg.className = 'text-red-400 text-xs';
+                msg.textContent = `✗ ${agent.name}: OFFLINE - ${error.message}`;
+                console.log(`✗ ${agent.name}: OFFLINE - ${error.message}`);
+            }
+            logsContainer.appendChild(msg);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        const footer = document.createElement('div');
+        footer.className = 'text-cyan-400 font-bold mt-2';
+        footer.textContent = '=== TEST COMPLETE ===';
+        logsContainer.appendChild(footer);
+        console.log('=== TEST COMPLETE ===');
+    }
+
+    // Storage for current practice session (used by MCQ system)
+    let currentPracticeSession = null;
+
+    // Global variable for generated test (used by MCQ system)
+    let generatedTest = null;
+
+    // ═══════════════════════════════════════════════════════════════
+    // MCQ PRACTICE SYSTEM - EMBEDDED (PRODUCTION FIX)
+    // ═══════════════════════════════════════════════════════════════
+
+    let assignedTests = [];
+
+    // MCQ Database
+    const mcqDatabase = {
+        'python-basics': [
+            {question: "What is Python?", options: ["A snake", "A programming language", "A database", "An operating system"], correct: 1},
+            {question: "Which symbol is used for comments in Python?", options: ["//", "/* */", "#", "<!--"], correct: 2},
+            {question: "What is the output of: print(2 + 2)?", options: ["22", "4", "Error", "2+2"], correct: 1}
+        ],
+        'variables-and-data-types': [
+            {question: "Which is NOT a valid variable name in Python?", options: ["my_var", "2nd_var", "_var", "var2"], correct: 1},
+            {question: "What type is the value: 3.14?", options: ["int", "float", "string", "boolean"], correct: 1},
+            {question: "How do you create a string in Python?", options: ["'text'", "[text]", "{text}", "(text)"], correct: 0}
+        ],
+        'control-flow': [
+            {question: "Which keyword starts a conditional statement?", options: ["while", "for", "if", "def"], correct: 2},
+            {question: "What does 'break' do in a loop?", options: ["Pauses the loop", "Exits the loop", "Continues to next iteration", "Crashes the program"], correct: 1},
+            {question: "Which loop runs at least once?", options: ["for loop", "while loop", "do-while loop", "if statement"], correct: 2}
+        ],
+        'functions': [
+            {question: "How do you define a function in Python?", options: ["function myFunc()", "def myFunc():", "func myFunc()", "define myFunc()"], correct: 1},
+            {question: "What does 'return' do in a function?", options: ["Prints a value", "Exits and sends back a value", "Deletes a variable", "Creates a loop"], correct: 1},
+            {question: "Can a function have multiple return statements?", options: ["Yes", "No", "Only in classes", "Only with recursion"], correct: 0}
+        ],
+        'data-structures': [
+            {question: "How do you create an empty list in Python?", options: ["{}", "[]", "()", "<>"], correct: 1},
+            {question: "What method adds an item to the end of a list?", options: ["add()", "append()", "insert()", "push()"], correct: 1},
+            {question: "What is a tuple in Python?", options: ["Mutable list", "Immutable list", "Dictionary", "Set"], correct: 1}
+        ]
+    };
+
+    function generateMCQs(topicId, topicName) {
+        return mcqDatabase[topicId] || [
+            {question: `What is ${topicName}?`, options: ["Option A", "Option B", "Option C", "Option D"], correct: 0},
+            {question: `How do you use ${topicName}?`, options: ["Method 1", "Method 2", "Method 3", "Method 4"], correct: 1},
+            {question: `Why is ${topicName} important?`, options: ["Reason 1", "Reason 2", "Reason 3", "Reason 4"], correct: 2}
+        ];
+    }
+
+    function showTopicsList() {
+        const topicsView = document.getElementById('topics-view');
+        const practiceView = document.getElementById('practice-view');
+        if (topicsView && practiceView) {
+            topicsView.classList.remove('hidden');
+            topicsView.style.display = 'flex';
+            practiceView.classList.add('hidden');
+            practiceView.style.display = 'none';
+        }
+    }
+
+    async function startPractice(topicId, topicName) {
+        console.log('startPractice called:', topicId, topicName);
+        const userStr = localStorage.getItem('learnflow_user');
+        const user = userStr ? JSON.parse(userStr) : { studentId: 'demo-student-001' };
+
+        // Use CENTER PANEL for practice (more space)
+        const overviewView = document.getElementById('student-overview-view');
+        const practiceView = document.getElementById('student-practice-view');
+        const titleEl = document.getElementById('center-practice-topic');
+        const subtitleEl = document.getElementById('center-practice-subtitle');
+        const questionsContainer = document.getElementById('center-practice-questions');
+
+        if (!practiceView || !questionsContainer) {
+            console.error('Center practice elements not found');
+            return;
+        }
+
+        // Hide overview, show practice view in CENTER
+        if (overviewView) overviewView.classList.add('hidden');
+        practiceView.classList.remove('hidden');
+        practiceView.style.display = 'flex';
+
+        if (titleEl) titleEl.textContent = `PRACTICE: ${topicName.toUpperCase()}`;
+        if (subtitleEl) subtitleEl.textContent = 'Answer all questions below. Select one option per question.';
+
+        const mcqs = generateMCQs(topicId, topicName);
+        currentPracticeSession = {topicId, topicName, questions: mcqs, answers: {}};
+
+        // Render questions in CENTER panel with better sizing
+        questionsContainer.innerHTML = '';
+        mcqs.forEach((mcq, index) => {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'p-4 bg-gray-900/50 border border-teal-900/30 rounded';
+            let optionsHTML = '';
+            mcq.options.forEach((option, optionIndex) => {
+                optionsHTML += `
+                    <label class="flex items-start gap-3 mb-2 p-2 cursor-pointer hover:bg-teal-900/20 rounded transition">
+                        <input type="radio" name="center-question-${index}" value="${optionIndex}" class="mt-1 text-teal-500">
+                        <span class="text-sm text-white">${String.fromCharCode(65 + optionIndex)}. ${option}</span>
+                    </label>
+                `;
+            });
+            questionDiv.innerHTML = `
+                <div class="text-teal-400 font-bold text-sm mb-3">Question ${index + 1}:</div>
+                <div class="text-white text-sm mb-4 leading-relaxed">${mcq.question}</div>
+                <div class="ml-2">${optionsHTML}</div>
+            `;
+            questionsContainer.appendChild(questionDiv);
+        });
+    }
+
+    async function submitAnswers() {
+        if (!currentPracticeSession) {
+            showToast('Error', 'No active practice session', 'error');
+            return;
+        }
+        const userStr = localStorage.getItem('learnflow_user');
+        const user = userStr ? JSON.parse(userStr) : { studentId: 'demo-student-001' };
+
+        let correctCount = 0;
+        const totalQuestions = currentPracticeSession.questions.length;
+
+        // Check center panel radio buttons (center-question-X)
+        for (let i = 0; i < totalQuestions; i++) {
+            const selected = document.querySelector(`input[name="center-question-${i}"]:checked`);
+            if (selected && parseInt(selected.value) === currentPracticeSession.questions[i].correct) {
+                correctCount++;
+            }
+        }
+
+        const score = Math.round((correctCount / totalQuestions) * 100);
+        const passed = correctCount >= (totalQuestions / 2);
+
+        try {
+            // Send score directly to backend
+            await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/api/v1/mastery/${user.studentId}`), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    student_id: user.studentId,
+                    topic: currentPracticeSession.topicId,
+                    interaction_type: 'success',
+                    success: true,
+                    score: score
+                })
+            });
+
+            showToast('Practice Complete!', `Score: ${correctCount}/${totalQuestions} (${score}%) - Your mastery has been updated!`, 'success', 5000);
+
+            // Close center practice view and show overview
+            closeCenterPractice();
+            await fetchMasteryData();
+        } catch (error) {
+            showToast('Error', 'Failed to update mastery: ' + error.message, 'error');
+        }
+    }
+
+    async function teacherGeneratePractice() {
+        console.log('teacherGeneratePractice called');
+        const topic = document.getElementById('practice-topic');
+        const difficulty = document.getElementById('practice-difficulty');
+        const count = document.getElementById('practice-count');
+        const consoleContent = document.getElementById('console-content');
+
+        if (!topic || !difficulty || !count || !consoleContent) {
+            showToast('Error', 'Form elements not found', 'error');
+            return;
+        }
+
+        const topicValue = topic.value;
+        const difficultyValue = difficulty.value;
+        const countValue = parseInt(count.value);
+
+        consoleContent.innerHTML = '<div class="text-yellow-400 text-[9px]">[GENERATING] Creating practice test...</div>';
+
+        const mcqs = generateMCQs(topicValue, topicValue.replace(/-/g, ' '));
+        generatedTest = {topic: topicValue, difficulty: difficultyValue, questions: mcqs.slice(0, countValue)};
+
+        consoleContent.innerHTML = '';
+        const header = document.createElement('div');
+        header.className = 'text-cyan-400 font-bold text-[9px] mb-2';
+        header.textContent = `✅ GENERATED TEST: ${topicValue.toUpperCase()}`;
+        consoleContent.appendChild(header);
+
+        generatedTest.questions.forEach((q, index) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = 'mb-2 pb-2 border-b border-gray-800 text-[8px]';
+            qDiv.innerHTML = `
+                <div class="text-green-400 font-bold">Q${index + 1}: ${q.question}</div>
+                ${q.options.map((opt, i) => `<div class="text-gray-400 ml-2">${String.fromCharCode(65 + i)}. ${opt}</div>`).join('')}
+                <div class="text-yellow-400 text-[7px] mt-1">Correct: ${String.fromCharCode(65 + q.correct)}</div>
+            `;
+            consoleContent.appendChild(qDiv);
+        });
+
+        await loadStudentsForAssignment();
+
+        const readyMsg = document.createElement('div');
+        readyMsg.className = 'text-green-400 text-[8px] mt-2 font-bold border border-green-900 p-2';
+        readyMsg.textContent = '✓ Ready to assign! Select students below.';
+        consoleContent.appendChild(readyMsg);
+    }
+
+    // Load students into assignment list
+    async function loadStudentsForAssignment() {
+        try {
+            const response = await fetch('/api/auth/students');
+            const data = await response.json();
+
+            const assignList = document.getElementById('assign-student-list');
+            if (!assignList) return;
+
+            assignList.innerHTML = '';
+
+            if (data.success && data.students && data.students.length > 0) {
+                data.students.forEach(student => {
+                    const checkbox = document.createElement('div');
+                    checkbox.className = 'mb-1 text-white';
+                    checkbox.innerHTML = `
+                        <label class="flex items-center gap-2 cursor-pointer hover:text-teal-400 transition">
+                            <input type="checkbox" class="assign-checkbox" value="${student.studentId}" data-name="${student.name}">
+                            <span class="text-[9px]">${student.name}</span>
+                        </label>
+                    `;
+                    assignList.appendChild(checkbox);
+                });
+            }
+        } catch (error) {
+            console.error('Failed to load students:', error);
+        }
+    }
+
+    async function assignPracticeToSelected() {
+        if (!generatedTest) {
+            showToast('Error', 'Please generate a practice test first', 'error');
+            return;
+        }
+        const checkboxes = document.querySelectorAll('.assign-checkbox:checked');
+        if (checkboxes.length === 0) {
+            showToast('Error', 'Please select at least one student', 'error');
+            return;
+        }
+
+        const userStr = localStorage.getItem('learnflow_user');
+        const teacher = userStr ? JSON.parse(userStr) : { name: 'Teacher' };
+        const consoleContent = document.getElementById('console-content');
+        const assigned = [];
+        let successCount = 0;
+
+        // Create assignments in database via API
+        for (const cb of checkboxes) {
+            try {
+                const response = await fetch('/api/assignments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        teacherId: teacher.teacherId || teacher.id,
+                        studentId: cb.value,
+                        studentName: cb.dataset.name,
+                        topic: generatedTest.topic,
+                        level: generatedTest.difficulty,
+                        questions: generatedTest.questions
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    assigned.push(cb.dataset.name);
+                    successCount++;
+                } else {
+                    console.error('Failed to assign to', cb.dataset.name, data.error);
+                }
+            } catch (err) {
+                console.error('API error assigning to', cb.dataset.name, err);
+            }
+        }
+
+        if (successCount > 0) {
+            const successMsg = document.createElement('div');
+            successMsg.className = 'text-green-400 font-bold text-[9px] mt-3 p-2 border border-green-900';
+            successMsg.innerHTML = `
+                <div>✅ Test Assigned Successfully!</div>
+                <div class="text-white font-normal mt-1">Assigned to: ${assigned.join(', ')}</div>
+                <div class="text-[7px] text-gray-400 mt-1">Students will see notification and task when they login</div>
+            `;
+            consoleContent.appendChild(successMsg);
+            showToast('Test Assigned', `Assigned to: ${assigned.join(', ')}`, 'success', 5000);
+        } else {
+            showToast('Error', 'Failed to assign test. Check console for errors.', 'error');
+        }
+    }
+
+    async function autoAssignPractice() {
+        console.log('autoAssignPractice called');
+        const studentsResponse = await fetch('/api/auth/students');
+        const studentsData = await studentsResponse.json();
+        if (!studentsData.success) return;
+
+        const strugglingStudents = [];
+        for (const student of studentsData.students) {
+            try {
+                const masteryResponse = await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/api/v1/mastery/${student.studentId}`));
+                const masteryData = await masteryResponse.json();
+                if (masteryData.overall_mastery < 0.4) {
+                    strugglingStudents.push(student);
+                }
+            } catch (err) {
+                console.error('Error checking student:', err);
+            }
+        }
+
+        if (strugglingStudents.length === 0) {
+            showToast('Info', 'No struggling students found!', 'info');
+            return;
+        }
+
+        const topic = 'python-basics';
+        const mcqs = generateMCQs(topic, 'Python Basics');
+        const test = {topic, difficulty: 'easy', questions: mcqs};
+
+        const userStr = localStorage.getItem('learnflow_user');
+        const teacher = userStr ? JSON.parse(userStr) : { name: 'Teacher' };
+        const assigned = [];
+
+        // Create assignments in database via API
+        for (const student of strugglingStudents) {
+            try {
+                const response = await fetch('/api/assignments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        teacherId: teacher.teacherId || teacher.id,
+                        studentId: student.studentId,
+                        studentName: student.name,
+                        topic: topic,
+                        level: 'easy',
+                        questions: mcqs
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    assigned.push(student.name);
+                }
+            } catch (err) {
+                console.error('Error assigning to', student.name, err);
+            }
+        }
+
+        const names = assigned.join(', ');
+        if (assigned.length > 0) {
+            showToast('Auto-Assigned', `Practice assigned to: ${names}`, 'success', 5000);
+        } else {
+            showToast('Error', 'Failed to auto-assign practice. Check console.', 'error');
+        }
+
+        const consoleContent = document.getElementById('console-content');
+        consoleContent.innerHTML = `
+            <div class="text-green-400 font-bold text-[9px] p-2 border border-green-900">
+                ✅ Auto-Assigned Practice
+                <div class="text-white font-normal mt-2">Assigned to: ${names}</div>
+                <div class="text-[7px] text-gray-400 mt-1">Topic: Python Basics (Easy)</div>
+            </div>
+        `;
+    }
+
+    function checkAssignedTests() {
+        const userStr = localStorage.getItem('learnflow_user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+        if (user.role !== 'student') return;
+
+        const assignedTestsStr = localStorage.getItem('learnflow_assigned_tests');
+        if (!assignedTestsStr) return;
+
+        const tests = JSON.parse(assignedTestsStr);
+        const myTests = tests.filter(t => t.studentId === user.studentId && !t.completed);
+
+        if (myTests.length > 0) {
+            setTimeout(() => {
+                const count = myTests.length;
+                showToast('New Assignments', `You have ${count} new assignment${count > 1 ? 's' : ''}!`, 'info', 5000);
+            }, 2000);
+        }
+    }
+
+    // Initialize auth form and chat
+    window.addEventListener('DOMContentLoaded', () => {
+        // Add enter key support to all input fields
+        ['authName', 'authEmail', 'authPassword'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        startHandshake();
+                    }
+                });
+            }
+        });
+
+        // Add enter key support to agent chat
+        const agentInput = document.getElementById('agent-input');
+        if (agentInput) {
+            agentInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendToAgent(agentInput.value);
+                }
+            });
+        }
+
+        // Set initial state (register mode)
+        toggleAuthMode(); // Call once to set to register mode
+
+        // Check for assigned tests on student login
+        checkAssignedTests();
+
+        // Load notifications on dashboard load
+        loadNotifications();
+    });
+
+    // ============ NOTIFICATION SYSTEM ============
+    let notificationsData = [];
+    let notificationsInitialized = false;
+    let seenNotificationIds = new Set();  // Track notification IDs we've already processed
+
+    async function loadNotifications() {
+        const userStr = localStorage.getItem('learnflow_user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+
+        // Use role-based ID selection
+        const notifyId = user.role === 'teacher' ? user.teacherId : user.studentId;
+
+        // CRITICAL DEBUG: Log exact user and notifyId being used
+        console.log('[Notifications] ====== FETCH DEBUG ======');
+        console.log('[Notifications] User role:', user.role);
+        console.log('[Notifications] User teacherId:', user.teacherId);
+        console.log('[Notifications] User studentId:', user.studentId);
+        console.log('[Notifications] Using notifyId:', notifyId);
+
+        if (!notifyId) {
+            console.log('[Notifications] ERROR: No notifyId found for user:', user);
+            return;
+        }
+
+        // Don't load notifications if not on dashboard
+        const dashboardPage = document.getElementById('dashboard');
+        if (!dashboardPage || !dashboardPage.classList.contains('active')) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/notifications/${notifyId}`);
+            const data = await res.json();
+
+            console.log('[Notifications] API Response - count:', data.notifications?.length, 'unread:', data.unreadCount);
+            if (data.notifications?.length > 0) {
+                console.log('[Notifications] First notification:', data.notifications[0]);
+            }
+
+            if (data.success) {
+                notificationsData = data.notifications;
+                updateNotificationBadge(data.unreadCount);
+
+                // FIRST LOAD: Just mark all existing notifications as "seen" - NO POPUPS
+                // This prevents all old notifications from showing as popups on login
+                if (!notificationsInitialized) {
+                    console.log(`[Notifications] First load - marking ${data.notifications.length} as seen (no popups)`);
+                    data.notifications.forEach(n => seenNotificationIds.add(n.id));
+                    notificationsInitialized = true;
+
+                    // Just show badge count, no popups
+                    if (data.unreadCount > 0) {
+                        console.log(`[Notifications] ${data.unreadCount} unread - check bell icon`);
+                    }
+                    return;
+                }
+
+                // SUBSEQUENT LOADS: Only show popups for TRULY NEW notifications
+                // (notifications that arrived AFTER we logged in)
+                const newNotifications = data.notifications.filter(n =>
+                    !n.read && !seenNotificationIds.has(n.id)
+                );
+
+                if (newNotifications.length > 0) {
+                    console.log(`[Notifications] 🔔 NEW notification arrived:`, newNotifications.map(n => n.title));
+
+                    // Mark as seen immediately
+                    newNotifications.forEach(n => seenNotificationIds.add(n.id));
+
+                    // Show popup for each NEW notification - INSTANT like Facebook
+                    newNotifications.forEach((n, i) => {
+                        setTimeout(() => {
+                            showToast('🔔 ' + n.title, n.message, 'success', 8000);
+                        }, i * 500);
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('Load notifications error:', err);
+        }
+    }
+
+    // ============ NOTIFICATION POLLING ============
+    let notificationPollInterval = null;
+
+    function startNotificationPolling() {
+        // Stop any existing polling
+        stopNotificationPolling();
+
+        // Poll every 3 seconds for near real-time notifications
+        notificationPollInterval = setInterval(async () => {
+            try {
+                await loadNotifications();
+
+                const userStr = localStorage.getItem('learnflow_user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    if (user.role === 'teacher') {
+                        // For teachers: only refresh stats (not full dashboard to avoid resetting view)
+                        await loadTeacherStats();
+                    } else {
+                        // For students: refresh assignments list to see new tasks
+                        await loadStudentAssignments();
+                    }
+                }
+            } catch (err) {
+                console.error('Polling error:', err);
+            }
+        }, 1000);  // 1 second for INSTANT notification delivery like Facebook
+
+        console.log('Notification polling started (3s interval)');
+    }
+
+    function stopNotificationPolling() {
+        if (notificationPollInterval) {
+            clearInterval(notificationPollInterval);
+            notificationPollInterval = null;
+            console.log('Notification polling stopped');
+        }
+    }
+
+    function updateNotificationBadge(count) {
+        const badge = document.getElementById('notification-badge');
+        if (badge) {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'flex' : 'none';
+        }
+    }
+
+    function toggleNotifications() {
+        const panel = document.getElementById('notification-panel');
+        if (panel) {
+            panel.classList.toggle('hidden');
+
+            // Show current user ID for debugging
+            const userStr = localStorage.getItem('learnflow_user');
+            const userIdDisplay = document.getElementById('notification-user-id');
+            if (userIdDisplay && userStr) {
+                const user = JSON.parse(userStr);
+                const notifyId = user.role === 'teacher' ? user.teacherId : user.studentId;
+                userIdDisplay.textContent = `📡 ${user.role.toUpperCase()}: ${notifyId}`;
+                userIdDisplay.style.color = user.role === 'teacher' ? '#00ff9f' : '#00d4ff';
+            }
+
+            renderNotifications();
+        }
+    }
+
+    function renderNotifications() {
+        const list = document.getElementById('notification-list');
+        if (!list) return;
+
+        if (notificationsData.length === 0) {
+            list.innerHTML = '<div class="p-4 text-xs text-gray-500">No notifications</div>';
+            return;
+        }
+
+        list.innerHTML = notificationsData.map(n => `
+            <div class="p-3 border-b border-gray-800 ${n.read ? 'opacity-60' : ''} hover:bg-teal-900/10 cursor-pointer" onclick="handleNotificationClick('${n.id}', '${n.type}', '${n.metadata || ''}')">
+                <div class="text-xs font-bold text-teal-400">${n.title}</div>
+                <div class="text-[10px] text-white mt-1">${n.message}</div>
+                <div class="text-[8px] text-gray-500 mt-1">${new Date(n.createdAt).toLocaleString()}</div>
+            </div>
+        `).join('');
+    }
+
+    async function handleNotificationClick(notificationId, type, metadata) {
+        // Mark as read
+        const userStr = localStorage.getItem('learnflow_user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+
+        try {
+            const notifyId = user.role === 'teacher' ? user.teacherId : user.studentId;
+            await fetch(`/api/notifications/${notifyId}/mark-read`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notificationId })
+            });
+
+            // If assignment notification, load assignments
+            if (type === 'assignment') {
+                loadStudentAssignments();
+            }
+
+            // Reload notifications
+            loadNotifications();
+        } catch (err) {
+            console.error('Mark notification read error:', err);
+        }
+    }
+
+    // ============ ASSIGNMENT SYSTEM ============
+    async function loadStudentAssignments() {
+        console.log('loadStudentAssignments called');
+        const userStr = localStorage.getItem('learnflow_user');
+        if (!userStr) {
+            console.log('No user found');
+            return;
+        }
+        const user = JSON.parse(userStr);
+        console.log('User:', user.role, user.studentId);
+        if (user.role !== 'student') return;
+
+        try {
+            console.log('Fetching assignments for:', user.studentId);
+            const res = await fetch(`/api/assignments/student/${user.studentId}`);
+            const data = await res.json();
+            console.log('Assignments response:', data);
+            if (data.success && data.assignments) {
+                displayStudentAssignments(data.assignments);
+            }
+        } catch (err) {
+            console.error('Load assignments error:', err);
+        }
+    }
+
+    // Store assignments globally for state management
+    let studentAssignments = [];
+    let activeAssignmentId = null;
+
+    function displayStudentAssignments(assignments) {
+        // Double-check role - teachers should NEVER see this panel
+        const userStr = localStorage.getItem('learnflow_user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            if (user.role === 'teacher') {
+                console.log('Skipping student assignments panel for teacher');
+                return;  // Don't show for teachers
+            }
+        }
+
+        studentAssignments = assignments; // Store for state management
+
+        // Find or create assignments panel
+        let panel = document.getElementById('student-assignments-panel');
+        if (!panel) {
+            const container = document.getElementById('studentAgentPanel');
+            if (container) {
+                container.insertAdjacentHTML('afterend', `
+                    <div id="student-assignments-panel" class="glass-card p-4">
+                        <h3 class="text-xs font-bold mb-4 tracking-widest border-b border-teal-900 pb-2">YOUR_ASSIGNMENTS</h3>
+                        <div id="assignments-list" class="space-y-2"></div>
+                        <div id="completed-assignments-section" class="mt-4 hidden">
+                            <h4 class="text-[10px] font-bold mb-2 tracking-widest text-gray-500 border-t border-gray-800 pt-2">COMPLETED</h4>
+                            <div id="completed-assignments-list" class="space-y-2"></div>
+                        </div>
+                    </div>
+                `);
+                panel = document.getElementById('student-assignments-panel');
+            }
+        }
+
+        const list = document.getElementById('assignments-list');
+        const completedSection = document.getElementById('completed-assignments-section');
+        const completedList = document.getElementById('completed-assignments-list');
+        if (!list) return;
+
+        const pending = assignments.filter(a => !a.completed);
+        const completed = assignments.filter(a => a.completed);
+
+        // Render pending assignments
+        if (pending.length === 0) {
+            list.innerHTML = '<div class="text-xs text-gray-500">No pending assignments</div>';
+        } else {
+            list.innerHTML = pending.map(a => `
+                <div id="assignment-${a.id}" class="assignment-item p-3 border cursor-pointer transition-all ${activeAssignmentId === a.id ? 'border-green-500 bg-green-900/20' : 'border-teal-900/50 bg-teal-900/10 hover:bg-teal-900/20'}" onclick="startAssignment('${a.id}', '${a.topic}', ${JSON.stringify(a.questions).replace(/"/g, '&quot;')}, '${a.level || 'easy'}')">
+                    <div class="flex justify-between items-center">
+                        <div class="text-xs font-bold text-teal-400">${a.topic.toUpperCase()}</div>
+                        ${activeAssignmentId === a.id ? '<span class="text-[8px] text-green-400">ACTIVE</span>' : ''}
+                    </div>
+                    <div class="text-[10px] text-white mt-1">3 fresh MCQs • ${a.level}</div>
+                    <div class="text-[8px] text-gray-500 mt-1">Click to generate new questions</div>
+                </div>
+            `).join('');
+        }
+
+        // Render completed assignments
+        if (completed.length > 0 && completedSection && completedList) {
+            completedSection.classList.remove('hidden');
+            completedList.innerHTML = completed.map(a => `
+                <div class="p-2 border border-gray-800 bg-gray-900/50 opacity-60">
+                    <div class="flex justify-between items-center">
+                        <div class="text-[10px] font-bold text-gray-400">${a.topic.toUpperCase()}</div>
+                        <span class="text-[8px] text-green-400">✓ ${a.score}%</span>
+                    </div>
+                </div>
+            `).join('');
+        } else if (completedSection) {
+            completedSection.classList.add('hidden');
+        }
+    }
+
+    let currentAssignment = null;
+
+    async function startAssignment(assignmentId, topic, originalQuestions, difficulty = 'easy') {
+        console.log('startAssignment called:', { assignmentId, topic, questionsCount: originalQuestions?.length, difficulty });
+
+        try {
+            // Set active assignment
+            activeAssignmentId = assignmentId;
+            displayStudentAssignments(studentAssignments);
+
+            // Show CENTER PANEL practice view (more space for questions)
+            const overviewView = document.getElementById('student-overview-view');
+            const practiceView = document.getElementById('student-practice-view');
+            const titleEl = document.getElementById('center-practice-topic');
+            const subtitleEl = document.getElementById('center-practice-subtitle');
+            const questionsContainer = document.getElementById('center-practice-questions');
+
+            if (overviewView) overviewView.classList.add('hidden');
+            if (practiceView) {
+                practiceView.classList.remove('hidden');
+                practiceView.style.display = 'flex';
+            }
+            if (titleEl) titleEl.textContent = `ASSIGNMENT: ${topic.toUpperCase()}`;
+            if (subtitleEl) subtitleEl.textContent = 'Answer all questions below. Select one option per question.';
+
+            // Show loading state
+            if (questionsContainer) {
+                questionsContainer.innerHTML = '<div class="text-teal-400 text-sm animate-pulse p-4">Generating fresh questions via AI...</div>';
+            }
+
+            // Generate NEW MCQs via concepts-agent
+            let questions = originalQuestions;
+            try {
+                showToast('Generating Questions', 'Creating fresh MCQs via AI...', 'info', 2000);
+
+                const response = await fetch(getAgentURL(API_CONFIG.CONCEPTS_PORT, '/api/v1/generate-mcqs'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic: topic,
+                        difficulty: difficulty,
+                        count: 3
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.questions && data.questions.length > 0) {
+                        questions = data.questions;
+                        showToast('Questions Ready', `${questions.length} fresh MCQs generated!`, 'success', 2000);
+                    }
+                }
+            } catch (err) {
+                console.error('MCQ generation error:', err);
+                showToast('Using Stored Questions', 'AI unavailable, using assignment questions', 'info', 2000);
+            }
+
+            // Store current assignment and session
+            currentAssignment = { id: assignmentId, topic, questions };
+            currentPracticeSession = { topicId: topic, topicName: topic, questions, answers: {}, assignmentId };
+
+            // Render questions in CENTER panel with better sizing
+            if (questionsContainer) {
+                questionsContainer.innerHTML = '';
+                questions.forEach((mcq, index) => {
+                    const questionDiv = document.createElement('div');
+                    questionDiv.className = 'p-4 bg-gray-900/50 border border-teal-900/30 rounded';
+                    let optionsHTML = '';
+                    mcq.options.forEach((option, optionIndex) => {
+                        optionsHTML += `
+                            <label class="flex items-start gap-3 mb-2 p-2 cursor-pointer hover:bg-teal-900/20 rounded transition">
+                                <input type="radio" name="center-question-${index}" value="${optionIndex}" class="mt-1 text-teal-500">
+                                <span class="text-sm text-white">${String.fromCharCode(65 + optionIndex)}. ${option}</span>
+                            </label>
+                        `;
+                    });
+                    questionDiv.innerHTML = `
+                        <div class="text-teal-400 font-bold text-sm mb-3">Question ${index + 1}:</div>
+                        <div class="text-white text-sm mb-4 leading-relaxed">${mcq.question}</div>
+                        <div class="ml-2">${optionsHTML}</div>
+                    `;
+                    questionsContainer.appendChild(questionDiv);
+                });
+            }
+        } catch (err) {
+            console.error('startAssignment error:', err);
+            showToast('Error', 'Failed to load assignment: ' + err.message, 'error');
+        }
+    }
+
+    // Close center practice view
+    function closeCenterPractice() {
+        const overviewView = document.getElementById('student-overview-view');
+        const practiceView = document.getElementById('student-practice-view');
+        if (overviewView) overviewView.classList.remove('hidden');
+        if (practiceView) {
+            practiceView.classList.add('hidden');
+            practiceView.style.display = 'none';
+        }
+        activeAssignmentId = null;
+        currentPracticeSession = null;
+    }
+
+    // Submit answers from center panel
+    async function submitCenterAnswers() {
+        if (!currentPracticeSession) {
+            showToast('Error', 'No active practice session', 'error');
+            return;
+        }
+
+        const questions = currentPracticeSession.questions;
+        let correctCount = 0;
+        const totalQuestions = questions.length;
+
+        // Collect and grade answers
+        questions.forEach((mcq, index) => {
+            const selectedRadio = document.querySelector(`input[name="center-question-${index}"]:checked`);
+            if (selectedRadio) {
+                const selectedIndex = parseInt(selectedRadio.value);
+                if (selectedIndex === mcq.correctIndex) {
+                    correctCount++;
+                }
+            }
+        });
+
+        const score = Math.round((correctCount / totalQuestions) * 100);
+
+        // Update mastery via API
+        try {
+            const userStr = localStorage.getItem('learnflow_user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, '/progress/update'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        student_id: user.studentId,
+                        topic: currentPracticeSession.topicId,
+                        score: score,
+                        correct_count: correctCount,
+                        total_questions: totalQuestions
+                    })
+                });
+            }
+        } catch (err) {
+            console.error('Mastery update error:', err);
+        }
+
+        // Mark assignment complete and NOTIFY TEACHER INSTANTLY
+        if (currentPracticeSession.assignmentId) {
+            try {
+                const userStr = localStorage.getItem('learnflow_user');
+                const user = userStr ? JSON.parse(userStr) : {};
+
+                console.log('[TASK COMPLETE] Notifying teacher of completion, score:', score);
+
+                await fetch(`/api/assignments/${currentPracticeSession.assignmentId}/complete`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        score,
+                        studentName: user.name || 'Student'
+                    })
+                });
+
+                console.log('[TASK COMPLETE] Teacher notification sent!');
+            } catch (err) {
+                console.error('Assignment completion error:', err);
+            }
+        }
+
+        // Show results
+        showToast(
+            'Practice Complete!',
+            `Score: ${correctCount}/${totalQuestions} (${score}%) - Your mastery has been updated!`,
+            score >= 70 ? 'success' : 'info',
+            5000
+        );
+
+        // Close practice view and refresh
+        closeCenterPractice();
+        loadStudentAssignments();
+    }
+
+    window.closeCenterPractice = closeCenterPractice;
+    window.submitCenterAnswers = submitCenterAnswers;
+
+    // Override assignPracticeToSelected to use API
+    window.assignPracticeToSelected = async function() {
+        console.log('assignPracticeToSelected called');
+        if (!generatedTest) {
+            showToast('Error', 'Please generate a practice test first', 'error');
+            return;
+        }
+
+        const userStr = localStorage.getItem('learnflow_user');
+        if (!userStr) {
+            showToast('Error', 'Not logged in', 'error');
+            return;
+        }
+        const teacher = JSON.parse(userStr);
+        console.log('Teacher:', teacher);
+
+        const checkboxes = document.querySelectorAll('.assign-checkbox:checked');
+        if (checkboxes.length === 0) {
+            showToast('Error', 'Please select at least one student', 'error');
+            return;
+        }
+
+        const topic = document.getElementById('practice-topic').value;
+        const difficulty = document.getElementById('practice-difficulty').value;
+        let successCount = 0;
+        const assignedNames = [];
+
+        for (const cb of checkboxes) {
+            try {
+                console.log('Assigning to student:', cb.value, cb.dataset.name);
+                const res = await fetch('/api/assignments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        teacherId: teacher.teacherId || teacher.id,
+                        studentId: cb.value,
+                        studentName: cb.dataset.name,
+                        topic,
+                        level: difficulty,
+                        questions: generatedTest.questions
+                    })
+                });
+                const data = await res.json();
+                console.log('Assignment response:', data);
+                if (data.success) {
+                    successCount++;
+                    assignedNames.push(cb.dataset.name);
+                }
+            } catch (err) {
+                console.error('Assign error:', err);
+            }
+        }
+
+        showToast('Practice Assigned', `Assigned to ${successCount} student(s): ${assignedNames.join(', ')}`, 'success', 5000);
+        loadNotifications();
+    };
+
+    // Override submitAnswers to handle assignment completion
+    const originalSubmitAnswers = window.submitAnswers;
+    window.submitAnswers = async function() {
+        if (!currentPracticeSession) {
+            showToast('Error', 'No active practice session', 'error');
+            return;
+        }
+
+        const userStr = localStorage.getItem('learnflow_user');
+        const user = userStr ? JSON.parse(userStr) : { studentId: 'demo-student-001' };
+
+        let correctCount = 0;
+        const totalQuestions = currentPracticeSession.questions.length;
+
+        for (let i = 0; i < totalQuestions; i++) {
+            const selected = document.querySelector(`input[name="question-${i}"]:checked`);
+            if (selected && parseInt(selected.value) === currentPracticeSession.questions[i].correct) {
+                correctCount++;
+            }
+        }
+
+        const score = Math.round((correctCount / totalQuestions) * 100);
+        const passed = correctCount >= (totalQuestions / 2);
+        const topicName = currentPracticeSession.topicName || currentPracticeSession.topicId;
+        const wasAssignment = !!currentPracticeSession.assignmentId;
+
+        // If this is an assignment, complete it via API (creates teacher notification)
+        if (currentPracticeSession.assignmentId) {
+            try {
+                await fetch(`/api/assignments/${currentPracticeSession.assignmentId}/complete`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        score,
+                        studentName: user.name
+                    })
+                });
+            } catch (err) {
+                console.error('Complete assignment error:', err);
+            }
+        }
+
+        // Show results as toast (NOT browser alert)
+        showToast(
+            passed ? 'Practice Complete!' : 'Keep Practicing!',
+            `Score: ${correctCount}/${totalQuestions} (${score}%) - ${topicName.toUpperCase()}`,
+            passed ? 'success' : 'info',
+            6000
+        );
+
+        // Always update mastery with actual score
+        try {
+            await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/api/v1/mastery/${user.studentId}`), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    student_id: user.studentId,
+                    topic: currentPracticeSession.topicId,
+                    interaction_type: 'success',
+                    success: true,
+                    score: score  // Direct score: 100% topic = 20% global
+                })
+            });
+
+            // Refresh mastery display
+            setTimeout(() => loadStudentMastery(user.studentId), 500);
+        } catch (err) {
+            console.error('Update mastery error:', err);
+        }
+
+        // Go back to topics
+        showTopicsList();
+
+        // Clear active assignment state and reload assignments
+        activeAssignmentId = null;
+        if (wasAssignment) {
+            loadStudentAssignments();
+        }
+
+        currentPracticeSession = null;
+        currentAssignment = null;
+    };
+
+    // Logout function
+    function logout() {
+        localStorage.removeItem('learnflow_user');
+        localStorage.removeItem('learnflow_assigned_tests');
+        notificationsInitialized = false;
+        seenNotificationIds.clear();  // Reset seen notifications
+        notificationsData = [];  // Clear notification data
+        stopNotificationPolling();  // Stop polling
+        document.getElementById('dashboard-header')?.classList.add('hidden');
+        showPage('auth');
+        showToast('Logged Out', 'You have been logged out successfully', 'info');
+    }
+
+    // Clear all session data (for debugging)
+    function clearSession() {
+        localStorage.clear();
+        notificationsInitialized = false;
+        seenNotificationIds.clear();
+        notificationsData = [];
+        stopNotificationPolling();
+        isRegisterMode = true;
+        document.getElementById('nameField').style.display = 'block';
+        document.getElementById('toggleAuthMode').textContent = 'EXISTING USER? RETURN_TO_LOGIN';
+        document.getElementById('authModeTitle').textContent = 'REGISTRATION';
+        document.getElementById('authButton').textContent = 'REGISTER_IDENTITY';
+        document.getElementById('authError').classList.add('hidden');
+        document.getElementById('authEmail').value = '';
+        document.getElementById('authPassword').value = '';
+        document.getElementById('authName').value = '';
+        showToast('Session Cleared', 'All data cleared. Please register fresh.', 'info');
+    }
+
+    // Update user role badge in header
+    function updateHeaderBadge() {
+        const userStr = localStorage.getItem('learnflow_user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            const badge = document.getElementById('user-role-badge');
+            if (badge) {
+                badge.textContent = user.role?.toUpperCase() || 'USER';
+                badge.className = user.role === 'teacher'
+                    ? 'text-[10px] px-2 py-1 bg-amber-600/50 rounded text-white'
+                    : 'text-[10px] px-2 py-1 bg-teal-600/50 rounded text-white';
+            }
+        }
+    }
+
+    // Validate stored user on page load
+    async function validateStoredUser() {
+        const userStr = localStorage.getItem('learnflow_user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                // Try to verify user exists by making a simple API call
+                const response = await fetch(`/api/notifications/${user.studentId || user.teacherId}`);
+                if (!response.ok) {
+                    // User might not exist anymore, clear storage
+                    console.log('Stored user invalid, clearing session');
+                    localStorage.removeItem('learnflow_user');
+                }
+            } catch (e) {
+                console.log('Error validating user, clearing session');
+                localStorage.removeItem('learnflow_user');
+            }
+        }
+    }
+
+    // Show header when on dashboard
+    window.addEventListener('DOMContentLoaded', () => {
+        // Validate stored user first
+        validateStoredUser();
+        // Update header badge when page loads
+        updateHeaderBadge();
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // GLOBAL EXPORTS - Make onclick handler functions globally accessible
+    // ═══════════════════════════════════════════════════════════════
+    window.togglePasswordVisibility = togglePasswordVisibility;
+    window.toggleAuthMode = toggleAuthMode;
+    window.startHandshake = startHandshake;
+    window.toggleNotifications = toggleNotifications;
+    window.logout = logout;
+    window.clearSession = clearSession;
+    window.refreshTeacherData = refreshTeacherData;
+    window.testAllAgents = testAllAgents;
+    window.showTopicsList = showTopicsList;
+    window.teacherGeneratePractice = teacherGeneratePractice;
+    window.autoAssignPractice = autoAssignPractice;
+    window.handleNotificationClick = handleNotificationClick;
+    window.startAssignment = startAssignment;
+    window.sendEncouragement = sendEncouragement;
 </script>
 </body>
 </html>
