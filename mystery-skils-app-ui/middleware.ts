@@ -10,9 +10,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Redirect root to Flash auth page
+  // Redirect root to Flash UI page
   if (pathname === "/") {
-    return NextResponse.redirect(new URL("/mystery-skills-auth.html", request.url))
+    return NextResponse.redirect(new URL("/mystery-skills-flash.html", request.url))
   }
 
   return NextResponse.next()
