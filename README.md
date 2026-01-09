@@ -1,94 +1,182 @@
-# LearnFlow - AI-Powered Learning Platform
+<div align="center">
 
-**Transform the way you learn programming with AI-powered personalized education**
+# MYSTERY SKILLS
+
+### *The Future of AI-Powered Learning*
+
+[![Live Demo](https://img.shields.io/badge/LIVE_DEMO-Click_Here-00ffcc?style=for-the-badge&logo=netlify)](https://mystery-skills.netlify.app)
+[![Backend API](https://img.shields.io/badge/API-Online-39ff14?style=for-the-badge&logo=fastapi)](https://reusable-intelligence.onrender.com/health)
+[![Python](https://img.shields.io/badge/Python-3.11+-blue?style=for-the-badge&logo=python)](https://python.org)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+
+<img src="https://img.shields.io/badge/AI_Agents-6-ff3131?style=flat-square" />
+<img src="https://img.shields.io/badge/Coding_Challenges-22+-ffaa00?style=flat-square" />
+<img src="https://img.shields.io/badge/Real--Time-Notifications-00f0ff?style=flat-square" />
 
 ---
 
-## What is LearnFlow?
+**An immersive cyberpunk-themed learning platform where AI meets education.**
 
-LearnFlow is a modern **AI-powered learning platform** designed for programming education. It provides a unique experience where **teachers can assign tasks** and **students can practice coding** with real-time AI assistance.
+*Teachers assign. Students learn. AI assists. Everyone wins.*
 
-### Live Demo
-> **URL**: _Coming Soon_
+[Live Demo](https://mystery-skills.netlify.app) | [API Health](https://reusable-intelligence.onrender.com/health) | [Report Bug](https://github.com/AlishbaFatima12/reusable_intelligence/issues)
+
+</div>
 
 ---
 
-## Key Features
+## What Makes Mystery Skills Special?
 
-### For Students
+```
++------------------------------------------------------------------+
+|                                                                  |
+|   "Not just another learning platform.                           |
+|    It's an AI-powered command center for mastering code."        |
+|                                                                  |
++------------------------------------------------------------------+
+```
+
+| For Students | For Teachers |
+|:------------:|:------------:|
+| Practice with AI-generated quizzes | Monitor all students in real-time |
+| Code directly in browser | Assign MCQs & coding challenges |
+| Get instant AI code reviews | Send encouragement notes |
+| Earn XP, badges & streaks | Track completion & scores |
+| 22+ coding challenges | Auto-generate fresh questions |
+
+---
+
+## Live Demo
+
+### Try It Now - No Installation Required!
+
+| Platform | URL | Status |
+|----------|-----|--------|
+| **Frontend** | [mystery-skills.netlify.app](https://mystery-skills.netlify.app) | ![Netlify](https://img.shields.io/badge/Live-00ffcc) |
+| **Backend API** | [reusable-intelligence.onrender.com](https://reusable-intelligence.onrender.com/health) | ![Render](https://img.shields.io/badge/Live-39ff14) |
+
+### Quick Test:
+1. Visit the [Live Demo](https://mystery-skills.netlify.app)
+2. **Register as Teacher** - Create assignments
+3. **Register as Student** (in incognito) - Complete assignments
+4. Watch real-time notifications flow between dashboards!
+
+---
+
+## Core Features
+
+### Student Dashboard
 
 | Feature | Description |
 |---------|-------------|
-| **Practice Topics** | Interactive MCQ quizzes on Python, Data Structures, Algorithms, and more |
-| **Code Lab** | Write and run Python code directly in the browser |
-| **22+ Coding Challenges** | From beginner to advanced - Print Hello World to Fibonacci |
-| **Custom Problem Generator** | Type any topic and generate a coding challenge instantly |
-| **AI Code Review** | Get instant feedback on your code from AI |
-| **Real-time Notifications** | Instant popups when teachers assign tasks |
-| **Progress Tracking** | XP points, achievements, and learning streaks |
-| **Gamification** | Confetti celebrations, badges, and level progression |
+| **Practice Topics** | 8 categories: Python, Data Structures, Algorithms, OOP, and more |
+| **Code Lab** | Write & run Python code directly in browser - no setup needed |
+| **AI Code Review** | Submit code and get instant AI feedback |
+| **22+ Challenges** | From "Print Hello World" to "Fibonacci Sequence" |
+| **Custom Problems** | Type any topic - AI generates a challenge instantly |
+| **Real-Time Alerts** | Instant popups when teacher assigns work |
+| **Gamification** | XP points, day streaks, achievements, confetti celebrations |
 
-### For Teachers
+### Teacher Dashboard
 
 | Feature | Description |
 |---------|-------------|
-| **Student Dashboard** | View all students and their progress at a glance |
-| **Assign MCQ Tests** | Create and assign practice tests on any topic |
-| **Assign Coding Challenges** | Send coding tasks to students with one click |
-| **Send Notes & Reminders** | Encourage students or send deadline reminders |
-| **View Completions** | Track which students completed assignments |
-| **Auto-Generate Questions** | AI generates fresh questions every time |
+| **Student Overview** | See all students, their progress, and scores |
+| **MCQ Generator** | AI creates fresh questions every time |
+| **Assign Tasks** | Send MCQs or coding challenges with one click |
+| **Send Notes** | Encourage high performers, remind slackers |
+| **Track Progress** | View who completed what and when |
+| **Struggle Detection** | AI identifies students who need help |
 
 ---
 
-## Screenshot Preview
+## The Tech Behind The Magic
+
+### 6 AI Agents Working Together
 
 ```
-+------------------------------------------+
-|  LEARNFLOW                    [Teacher]  |
-+------------------------------------------+
-|                                          |
-|  STUDENTS          CENTER PANEL          |
-|  +--------+   +---------------------+    |
-|  | Alishba|   |  PRACTICE TOPICS    |    |
-|  | Ali    |   |  [Python] [Data]    |    |
-|  | Sara   |   |  [Algo]  [OOP]      |    |
-|  +--------+   +---------------------+    |
-|                                          |
-|  TEACHER ACTIONS                         |
-|  +------------------+                    |
-|  | ASSIGN MCQ TEST  |                    |
-|  | ASSIGN CODE TASK |                    |
-|  +------------------+                    |
-+------------------------------------------+
+                    +------------------+
+                    |   TRIAGE AGENT   |  <-- Routes your question
+                    |     (Port 8001)  |
+                    +--------+---------+
+                             |
+         +-------------------+-------------------+
+         |         |         |         |         |
+    +----+----+ +--+---+ +---+---+ +---+--+ +----+----+
+    |CONCEPTS | |DEBUG | |REVIEW | |EXER- | |PROGRESS |
+    | AGENT   | |AGENT | | AGENT | |CISE  | | TRACKER |
+    | (8002)  | |(8004)| | (8003)| |(8005)| |  (8006) |
+    +---------+ +------+ +-------+ +------+ +---------+
 ```
+
+| Agent | What It Does |
+|-------|-------------|
+| **Triage** | Understands your question & routes to the right agent |
+| **Concepts** | Explains programming topics + generates MCQs |
+| **Code Review** | Analyzes your code and suggests improvements |
+| **Debug** | Helps find and fix errors in your code |
+| **Exercise** | Generates fresh coding challenges |
+| **Progress** | Tracks mastery, XP, and learning patterns |
+
+### Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | Next.js 15, TypeScript, Tailwind CSS, Three.js |
+| **Backend** | FastAPI, Python 3.11+, Uvicorn |
+| **Database** | PostgreSQL (Neon), Prisma ORM |
+| **AI** | OpenAI GPT-4o-mini |
+| **Deployment** | Netlify (Frontend), Render (Backend) |
 
 ---
 
-## Technology Stack
+## Coding Challenges
 
-### Frontend
-- **Next.js 15** - React framework with App Router
-- **TypeScript** - Type-safe development
-- **Tailwind CSS** - Modern styling with glassmorphism
-- **In-browser Python** - Run Python code without backend
+### 22+ Challenges Across 4 Difficulty Levels
 
-### Backend (6 AI Agents)
-| Agent | Port | Purpose |
-|-------|------|---------|
-| Triage Agent | 8001 | Route queries to correct agent |
-| Concepts Agent | 8002 | Explain programming concepts + Generate MCQs |
-| Code Review Agent | 8003 | Review student code with AI feedback |
-| Debug Agent | 8004 | Help debug code errors |
-| Exercise Generator | 8005 | Generate coding exercises |
-| Progress Tracker | 8006 | Track student mastery and progress |
+<details>
+<summary><b>Beginner (Click to expand)</b></summary>
 
-### Database
-- **PostgreSQL** (via Neon) - Store users, assignments, notifications
-- **Prisma ORM** - Type-safe database access
+- Print Hello World
+- Add Two Numbers
+- Find String Length
+- Access List Item
+- Loop Through List
+- Check Number (if/else)
 
-### AI
-- **Claude API** (Anthropic) - Powers all AI features
+</details>
+
+<details>
+<summary><b>Easy</b></summary>
+
+- Reverse a String
+- Sum of List
+- Find Maximum
+- Sort a List
+
+</details>
+
+<details>
+<summary><b>Medium</b></summary>
+
+- Count Vowels
+- Filter Even Numbers
+- Calculate Factorial
+- Check Palindrome
+- FizzBuzz
+- List Comprehension
+
+</details>
+
+<details>
+<summary><b>Hard</b></summary>
+
+- Word Frequency Counter
+- Check Prime Number
+- Fibonacci Sequence
+- Create a Class
+
+</details>
 
 ---
 
@@ -97,216 +185,141 @@ LearnFlow is a modern **AI-powered learning platform** designed for programming 
 ### Prerequisites
 - Node.js 18+
 - Python 3.11+
-- PostgreSQL database (or use Neon free tier)
+- PostgreSQL (or free [Neon](https://neon.tech) account)
 
-### 1. Clone Repository
+### 1. Clone & Install
+
 ```bash
 git clone https://github.com/AlishbaFatima12/reusable_intelligence.git
 cd reusable_intelligence
-```
 
-### 2. Setup Frontend
-```bash
+# Frontend
 cd mystery-skils-app-ui
 npm install
-cp .env.example .env
-# Edit .env with your DATABASE_URL and ANTHROPIC_API_KEY
+```
+
+### 2. Environment Setup
+
+Create `.env` in `mystery-skils-app-ui/`:
+```env
+DATABASE_URL="postgresql://user:pass@host:5432/db"
+BETTER_AUTH_SECRET="your-secret-key"
+```
+
+Create `.env` in root:
+```env
+OPENAI_API_KEY="sk-your-key"
+```
+
+### 3. Database Setup
+
+```bash
+cd mystery-skils-app-ui
 npx prisma db push
+```
+
+### 4. Run Everything
+
+```bash
+# Terminal 1: Frontend
+cd mystery-skils-app-ui
 npm run dev
+
+# Terminal 2: Backend (all agents)
+cd backend
+pip install -r requirements-deploy.txt
+python server.py
 ```
 
-### 3. Setup Backend Agents
-```bash
-cd ..
-python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Mac/Linux
-pip install -r backend/requirements.txt
-```
+### 5. Open App
 
-### 4. Start All Agents
-```bash
-# Windows
-start-agents.bat
-
-# Or manually start each agent:
-python -m uvicorn backend.agents.triage.main:app --port 8001
-python -m uvicorn backend.agents.concepts.main:app --port 8002
-# ... etc
-```
-
-### 5. Access the App
-Open http://localhost:4000/mystery-skills-flash.html
+Visit: **http://localhost:4000**
 
 ---
 
-## User Guide
-
-### Student Flow
-1. **Register** as a student with email/password
-2. Click **PRACTICE TOPICS** to take MCQ quizzes
-3. Click **CODE LAB** to practice coding challenges
-4. Use **RUN CODE** to execute your Python code
-5. Use **REVIEW** to get AI feedback on your code
-6. Check **notifications** for teacher assignments
-7. Complete assignments to earn **XP and achievements**
-
-### Teacher Flow
-1. **Register** as a teacher with email/password
-2. View all registered **students** in left panel
-3. Click a student to see their **progress and assignments**
-4. **Generate MCQ Test**: Select topic → Generate → Assign to students
-5. **Assign Coding Task**: Select students → Select challenge → Assign
-6. Send **appreciation notes** to high performers
-7. Send **reminders** for pending assignments
-
----
-
-## Coding Challenges Available
-
-### Beginner
-- Print Hello World
-- Add Two Numbers
-- Find String Length
-- Access List Item
-- Loop Through List
-- Check Number (if/else)
-
-### Easy
-- Reverse a String
-- Sum of List
-- Find Maximum
-- Sort a List
-
-### Medium
-- Count Vowels
-- Filter Even Numbers
-- Calculate Factorial
-- Check Palindrome
-- FizzBuzz
-- List Comprehension
-
-### Hard
-- Word Frequency Counter
-- Check Prime Number
-- Fibonacci Sequence
-- Create a Class
-
----
-
-## API Endpoints
+## API Reference
 
 ### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/students` - Get all students (teacher only)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register new user |
+| POST | `/api/auth/login` | Login user |
+| GET | `/api/auth/students` | Get all students |
 
 ### Assignments
-- `POST /api/assignments` - Create assignment
-- `GET /api/assignments/student/:id` - Get student assignments
-- `PUT /api/assignments/:id/complete` - Mark complete
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/assignments` | Create assignment |
+| GET | `/api/assignments/student/:id` | Get student's assignments |
+| PUT | `/api/assignments/:id/complete` | Mark as complete |
 
-### Notifications
-- `GET /api/notifications/:userId` - Get user notifications
-- `POST /api/notifications` - Create notification
-- `PUT /api/notifications/:id/mark-read` - Mark as read
-
-### AI Agents
-- `POST :8002/api/v1/generate-mcqs` - Generate MCQ questions
-- `POST :8002/api/v1/explain` - Explain a concept
-- `POST :8003/api/v1/review` - Review code
-- `GET :8006/api/v1/mastery/:studentId` - Get student mastery
-
----
-
-## Environment Variables
-
-```env
-# Database
-DATABASE_URL="postgresql://user:pass@host:5432/db"
-
-# AI
-ANTHROPIC_API_KEY="sk-ant-..."
-
-# Optional
-CLAUDE_MODEL="claude-sonnet-3-5-20241022"
-```
+### AI Agents (Production)
+| Endpoint | Description |
+|----------|-------------|
+| `POST /api/v1/triage/analyze` | Analyze & route query |
+| `POST /api/v1/concepts/explain` | Explain a concept |
+| `POST /api/v1/concepts/generate-mcqs` | Generate MCQ questions |
+| `POST /api/v1/code-review/review` | Review code |
+| `POST /api/v1/debug/diagnose` | Debug code errors |
+| `POST /api/v1/exercise/generate` | Generate exercises |
+| `GET /api/v1/progress/mastery/:id` | Get student mastery |
 
 ---
 
-## Deployment
+## Screenshots
 
-### Frontend (Vercel - Recommended)
-1. Push to GitHub
-2. Connect repo to Vercel
-3. Set environment variables
-4. Deploy automatically
+<div align="center">
 
-### Backend (Railway/Render)
-1. Deploy each agent as separate service
-2. Set ANTHROPIC_API_KEY
-3. Configure ports 8001-8006
+### Student Dashboard
+*Practice topics, complete challenges, earn XP*
 
----
+### Teacher Dashboard
+*Monitor students, assign tasks, track progress*
 
-## Project Structure
+### Code Lab
+*Write, run, and review Python code in browser*
 
-```
-reusable_intelligence/
-├── mystery-skils-app-ui/     # Next.js frontend
-│   ├── app/                  # App router pages
-│   │   ├── api/             # API routes
-│   │   ├── auth/            # Auth pages
-│   │   ├── student/         # Student dashboard
-│   │   └── teacher/         # Teacher dashboard
-│   ├── public/
-│   │   └── mystery-skills-flash.html  # Main UI
-│   └── prisma/
-│       └── schema.prisma    # Database schema
-├── backend/                  # Python microservices
-│   └── agents/
-│       ├── triage/          # Query routing
-│       ├── concepts/        # MCQ generation
-│       ├── code_review/     # Code review
-│       ├── debug/           # Debugging help
-│       ├── exercise/        # Exercise generation
-│       └── progress/        # Progress tracking
-└── README.md
-```
+</div>
 
 ---
 
 ## Contributing
 
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+```bash
+# Fork the repo, then:
+git checkout -b feature/your-feature
+git commit -m "Add your feature"
+git push origin feature/your-feature
+# Open a Pull Request
+```
+
+---
+
+## Team
+
+| Role | Name |
+|------|------|
+| **Developer** | [@AlishbaFatima12](https://github.com/AlishbaFatima12) |
+| **AI Assistant** | Claude (Anthropic) |
 
 ---
 
 ## License
 
-MIT License - feel free to use for your own learning projects!
+MIT License - Free to use, modify, and distribute.
 
 ---
 
-## Credits
+<div align="center">
 
-- **Team**: AlishbaFatima12
-- **Hackathon**: Reusable Intelligence & Cloud-Native Mastery
-- **AI**: Powered by Claude (Anthropic)
+### Built for the Future of Learning
 
----
+[![Star this repo](https://img.shields.io/github/stars/AlishbaFatima12/reusable_intelligence?style=social)](https://github.com/AlishbaFatima12/reusable_intelligence)
 
-## Support
-
-Having issues?
-- Open a GitHub issue
-- Check the browser console for errors
-- Ensure all agents are running (ports 8001-8006)
+**[Try Live Demo](https://mystery-skills.netlify.app)** | **[View API](https://reusable-intelligence.onrender.com/health)** | **[Report Issues](https://github.com/AlishbaFatima12/reusable_intelligence/issues)**
 
 ---
 
-**Built with AI, for AI-powered learning**
+*"Where AI meets education, and learning becomes an adventure."*
+
+</div>
