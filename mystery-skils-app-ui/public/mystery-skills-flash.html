@@ -807,6 +807,10 @@
         return `${API_CONFIG.BASE_URL}:${port}${path}`;
     }
 
+    // CRITICAL: Global session user - declared early to be available in all functions
+    // This caches the logged-in user for THIS browser tab to prevent cross-tab pollution
+    let currentSessionUser = null;
+
     // ═══════════════════════════════════════════════════════════════
     // TOAST NOTIFICATION SYSTEM (replaces browser alerts)
     // ═══════════════════════════════════════════════════════════════
@@ -857,12 +861,20 @@
             startAgentLogStream();
             updateHeaderBadge();
             loadNotifications();
-            // Only load student assignments for students (not teachers)
-            const userStr = localStorage.getItem('learnflow_user');
-            if (userStr) {
-                const user = JSON.parse(userStr);
+
+            // CRITICAL: Use cached session user - NOT localStorage (prevents cross-tab pollution)
+            const user = currentSessionUser;
+            if (user) {
+                console.log(`[Dashboard] Initializing for ${user.role}`);
                 if (user.role === 'student') {
                     loadStudentAssignments();
+                } else if (user.role === 'teacher') {
+                    // For teachers: ensure student panel is removed
+                    const studentPanel = document.getElementById('student-assignments-panel');
+                    if (studentPanel) {
+                        console.log('[Dashboard] Removing student panel for teacher');
+                        studentPanel.remove();
+                    }
                 }
             }
             startNotificationPolling();  // Start auto-refresh for notifications
@@ -895,14 +907,17 @@
     // Fetch Mastery Data from Progress Agent (role-aware)
     async function fetchMasteryData() {
         try {
-            // Get current user from localStorage
-            const userStr = localStorage.getItem('learnflow_user');
-            if (!userStr) {
-                document.getElementById('console-output').innerHTML = '<div class="text-yellow-400">No user logged in</div>';
-                return;
+            // CRITICAL: Use cached session user - NOT localStorage
+            if (!currentSessionUser) {
+                const userStr = localStorage.getItem('learnflow_user');
+                if (!userStr) {
+                    document.getElementById('console-output').innerHTML = '<div class="text-yellow-400">No user logged in</div>';
+                    return;
+                }
+                currentSessionUser = JSON.parse(userStr);
             }
 
-            const user = JSON.parse(userStr);
+            const user = currentSessionUser;
 
             // STUDENT VIEW: Fetch only their own data
             if (user.role === 'student') {
@@ -3969,7 +3984,7 @@
     let notificationsData = [];
     let notificationsInitialized = false;
     let seenNotificationIds = new Set();  // Track notification IDs we've already processed
-    let currentSessionUser = null;  // CRITICAL: Cache the logged-in user for THIS browser tab
+    // NOTE: currentSessionUser is declared at top of script (line ~812)
 
     async function loadNotifications() {
         // CRITICAL: Use cached session user, NOT localStorage
@@ -4086,13 +4101,16 @@
             try {
                 await loadNotifications();
 
-                const userStr = localStorage.getItem('learnflow_user');
-                if (userStr) {
-                    const user = JSON.parse(userStr);
+                // CRITICAL: Use cached session user - NOT localStorage
+                const user = currentSessionUser;
+                if (user) {
                     if (user.role === 'teacher') {
                         // For teachers: only refresh stats (not full dashboard to avoid resetting view)
                         await loadTeacherStats();
-                    } else {
+                        // Also ensure no student panel exists
+                        const studentPanel = document.getElementById('student-assignments-panel');
+                        if (studentPanel) studentPanel.remove();
+                    } else if (user.role === 'student') {
                         // For students: refresh assignments list to see new tasks
                         await loadStudentAssignments();
                     }
