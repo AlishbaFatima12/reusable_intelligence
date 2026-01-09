@@ -788,11 +788,12 @@
     // CONFIGURATION - EDIT THIS FOR DEPLOYMENT
     // ═══════════════════════════════════════════════════════════════
     const API_CONFIG = {
-        // For local development: use localhost
-        // For production: replace with your deployed backend URL
-        BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost'
-            : 'https://your-backend-domain.com', // CHANGE THIS FOR PRODUCTION
+        // For local development: use localhost with ports
+        // For production: use Render backend (all agents on one service)
+        IS_LOCAL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
+
+        LOCAL_URL: 'http://localhost',
+        PROD_URL: 'https://reusable-intelligence.onrender.com',
 
         TRIAGE_PORT: '8001',
         CONCEPTS_PORT: '8002',
@@ -802,9 +803,21 @@
         PROGRESS_PORT: '8006'
     };
 
-    // Helper to build agent URLs
+    // Helper to build agent URLs - handles both local (ports) and production (paths)
     function getAgentURL(port, path = '') {
-        return `${API_CONFIG.BASE_URL}:${port}${path}`;
+        if (API_CONFIG.IS_LOCAL) {
+            return `${API_CONFIG.LOCAL_URL}:${port}${path}`;
+        }
+        // Production: map port to API path
+        const portToPath = {
+            '8001': '/api/v1/triage',
+            '8002': '/api/v1/concepts',
+            '8003': '/api/v1/code-review',
+            '8004': '/api/v1/debug',
+            '8005': '/api/v1/exercise',
+            '8006': '/api/v1/progress'
+        };
+        return `${API_CONFIG.PROD_URL}${portToPath[port] || ''}${path}`;
     }
 
     // CRITICAL: Global session user - declared early to be available in all functions
