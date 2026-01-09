@@ -47,7 +47,7 @@ export default function AuthPage() {
         const studentId = role === "student" ? `student-${Date.now()}` : undefined
         const teacherId = role === "teacher" ? `teacher-${Date.now()}` : undefined
 
-        const result = await signUp.email({
+        const result = await (signUp.email as any)({
           email: formData.email,
           password: formData.password,
           name: formData.name,
