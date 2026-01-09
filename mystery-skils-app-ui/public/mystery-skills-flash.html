@@ -1853,8 +1853,12 @@
             }
 
             if (response.ok && data.success) {
-                // Store user info
+                // Store user info in localStorage for persistence
                 localStorage.setItem('learnflow_user', JSON.stringify(data.user));
+
+                // CRITICAL: Set session user for THIS tab - prevents cross-tab pollution
+                currentSessionUser = data.user;
+                console.log('[Session] User set for this tab:', currentSessionUser.role, currentSessionUser.email);
 
                 // CRITICAL: Clear ALL notification state for new login
                 // This prevents mixing notifications from different users/roles
@@ -3965,11 +3969,18 @@
     let notificationsData = [];
     let notificationsInitialized = false;
     let seenNotificationIds = new Set();  // Track notification IDs we've already processed
+    let currentSessionUser = null;  // CRITICAL: Cache the logged-in user for THIS browser tab
 
     async function loadNotifications() {
-        const userStr = localStorage.getItem('learnflow_user');
-        if (!userStr) return;
-        const user = JSON.parse(userStr);
+        // CRITICAL: Use cached session user, NOT localStorage
+        // This prevents cross-tab pollution when different users login in different tabs
+        if (!currentSessionUser) {
+            const userStr = localStorage.getItem('learnflow_user');
+            if (!userStr) return;
+            currentSessionUser = JSON.parse(userStr);
+            console.log('[Session] Cached user for this tab:', currentSessionUser.role, currentSessionUser.email);
+        }
+        const user = currentSessionUser;
 
         // Use role-based ID selection
         const notifyId = user.role === 'teacher' ? user.teacherId : user.studentId;
@@ -4176,14 +4187,22 @@
     // ============ ASSIGNMENT SYSTEM ============
     async function loadStudentAssignments() {
         console.log('loadStudentAssignments called');
-        const userStr = localStorage.getItem('learnflow_user');
-        if (!userStr) {
-            console.log('No user found');
+        // CRITICAL: Use cached session user to prevent cross-tab pollution
+        if (!currentSessionUser) {
+            const userStr = localStorage.getItem('learnflow_user');
+            if (!userStr) {
+                console.log('No user found');
+                return;
+            }
+            currentSessionUser = JSON.parse(userStr);
+        }
+        const user = currentSessionUser;
+        console.log('User:', user.role, user.studentId);
+        // STRICT: Only students can load assignments
+        if (user.role !== 'student') {
+            console.log('[BLOCKED] Teacher cannot load student assignments panel');
             return;
         }
-        const user = JSON.parse(userStr);
-        console.log('User:', user.role, user.studentId);
-        if (user.role !== 'student') return;
 
         try {
             console.log('Fetching assignments for:', user.studentId);
@@ -4203,14 +4222,13 @@
     let activeAssignmentId = null;
 
     function displayStudentAssignments(assignments) {
-        // Double-check role - teachers should NEVER see this panel
-        const userStr = localStorage.getItem('learnflow_user');
-        if (userStr) {
-            const user = JSON.parse(userStr);
-            if (user.role === 'teacher') {
-                console.log('Skipping student assignments panel for teacher');
-                return;  // Don't show for teachers
-            }
+        // CRITICAL: Use cached session user - teachers should NEVER see this panel
+        if (currentSessionUser && currentSessionUser.role === 'teacher') {
+            console.log('[BLOCKED] Skipping student assignments panel for teacher');
+            // Also remove if it somehow exists
+            const existingPanel = document.getElementById('student-assignments-panel');
+            if (existingPanel) existingPanel.remove();
+            return;
         }
 
         studentAssignments = assignments; // Store for state management
@@ -4653,10 +4671,15 @@
     function logout() {
         localStorage.removeItem('learnflow_user');
         localStorage.removeItem('learnflow_assigned_tests');
+        // CRITICAL: Clear session user to prevent stale data
+        currentSessionUser = null;
         notificationsInitialized = false;
         seenNotificationIds.clear();  // Reset seen notifications
         notificationsData = [];  // Clear notification data
         stopNotificationPolling();  // Stop polling
+        // Remove student assignments panel if exists
+        const assignPanel = document.getElementById('student-assignments-panel');
+        if (assignPanel) assignPanel.remove();
         document.getElementById('dashboard-header')?.classList.add('hidden');
         showPage('auth');
         showToast('Logged Out', 'You have been logged out successfully', 'info');
@@ -4665,6 +4688,7 @@
     // Clear all session data (for debugging)
     function clearSession() {
         localStorage.clear();
+        currentSessionUser = null;  // Clear session user
         notificationsInitialized = false;
         seenNotificationIds.clear();
         notificationsData = [];
