@@ -5,9 +5,10 @@ const prisma = new PrismaClient()
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params
     const body = await request.json()
     const { notificationId } = body
 
