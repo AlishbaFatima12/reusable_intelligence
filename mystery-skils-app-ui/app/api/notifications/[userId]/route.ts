@@ -19,7 +19,7 @@ export async function GET(
     console.log(`[Notifications API] isTeacher=${isTeacher}, isStudent=${isStudent}`)
     console.log(`[Notifications API] Filtering by types:`, isTeacher ? ['completion', 'confirmation', 'registration'] : isStudent ? ['assignment', 'reminder', 'appreciation', 'encouragement', 'achievement'] : 'UNKNOWN ROLE')
 
-    let notifications
+    let notifications: any[] = []
 
     if (isTeacher) {
       // TEACHER: Only show notifications specifically for teachers
@@ -71,7 +71,7 @@ export async function GET(
       notifications = []
     }
 
-    const unreadCount = notifications.filter((n: any) => !n.read).length
+    const unreadCount = notifications.filter(n => !n.read).length
 
     return NextResponse.json({
       success: true,
