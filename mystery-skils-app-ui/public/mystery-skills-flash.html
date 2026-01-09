@@ -954,9 +954,18 @@
                 const teacherConsole = document.getElementById('teacherConsole');
                 const teacherCenterPanel = document.getElementById('teacherCenterPanel');
 
-                if (studentAgentPanel) studentAgentPanel.classList.add('hidden');
-                if (studentChatPanel) studentChatPanel.classList.add('hidden');
-                if (studentCenterPanel) studentCenterPanel.classList.add('hidden');
+                if (studentAgentPanel) {
+                    studentAgentPanel.classList.add('hidden');
+                    studentAgentPanel.style.display = 'none';
+                }
+                if (studentChatPanel) {
+                    studentChatPanel.classList.add('hidden');
+                    studentChatPanel.style.display = 'none';
+                }
+                if (studentCenterPanel) {
+                    studentCenterPanel.classList.add('hidden');
+                    studentCenterPanel.style.display = 'none';
+                }
                 if (studentConsole) {
                     studentConsole.classList.add('hidden');
                     studentConsole.style.display = 'none';
