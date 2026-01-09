@@ -201,9 +201,16 @@ Make exercises practical, engaging, and appropriate for {difficulty} level stude
                 test_cases = []
                 if "test_cases" in ex_data:
                     for tc in ex_data["test_cases"]:
+                        # Convert input/output to string if they're lists or other types
+                        tc_input = tc.get("input", "")
+                        tc_output = tc.get("expected_output", "")
+                        if isinstance(tc_input, list):
+                            tc_input = str(tc_input)
+                        if isinstance(tc_output, list):
+                            tc_output = str(tc_output)
                         test_cases.append(TestCase(
-                            input=tc.get("input", ""),
-                            expected_output=tc.get("expected_output", ""),
+                            input=str(tc_input) if tc_input else "",
+                            expected_output=str(tc_output) if tc_output else "",
                             explanation=tc.get("explanation")
                         ))
 

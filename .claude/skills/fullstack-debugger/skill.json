@@ -1,0 +1,26 @@
+{
+  "name": "fullstack-debugger",
+  "version": "1.0.0",
+  "description": "Comprehensive debugger for Next.js/React frontend and FastAPI backend issues in the LearnFlow platform",
+  "invocation": {
+    "type": "command",
+    "command": "/debug",
+    "args": [
+      {
+        "name": "component",
+        "description": "Component to debug: frontend, backend, or both",
+        "required": false,
+        "default": "both"
+      },
+      {
+        "name": "error",
+        "description": "Error message or symptom",
+        "required": false
+      }
+    ]
+  },
+  "agent": {
+    "model": "haiku",
+    "prompt_file": "prompt.md"
+  }
+}

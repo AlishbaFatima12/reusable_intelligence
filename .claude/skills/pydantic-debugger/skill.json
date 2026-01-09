@@ -1,0 +1,20 @@
+{
+  "name": "pydantic-debugger",
+  "version": "1.0.0",
+  "description": "Debug Pydantic validation errors by finding model mismatches",
+  "invocation": {
+    "type": "command",
+    "command": "/debug-pydantic",
+    "args": [
+      {
+        "name": "error_message",
+        "description": "The Pydantic validation error message",
+        "required": true
+      }
+    ]
+  },
+  "agent": {
+    "model": "haiku",
+    "prompt_file": "prompt.md"
+  }
+}

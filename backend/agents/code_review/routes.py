@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize dependencies
 claude_client = ClaudeClient(
+    api_key=config.anthropic_api_key,  # ✅ FIX: Pass API key from config
     model=config.claude_model,
     max_tokens=config.claude_max_tokens,
     rate_limit=config.claude_rate_limit,
@@ -63,8 +64,7 @@ async def review_code(request: CodeReviewRequest):
         review_data = await reviewer.review_code(
             code=request.code,
             language=request.language,
-            context=request.context,
-            review_depth=config.review_depth
+            context=request.context
         )
 
         # Track Claude API metrics

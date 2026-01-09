@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Button Test</title>
+</head>
+<body>
+    <h1>Testing Button</h1>
+    <button onclick="testClick()">Click Me</button>
+    <div id="result"></div>
+    
+    <script>
+        console.log('Script loaded!');
+        function testClick() {
+            console.log('Button clicked!');
+            alert('Button works!');
+            document.getElementById('result').textContent = 'SUCCESS!';
+        }
+    </script>
+</body>
+</html>

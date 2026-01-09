@@ -3,26 +3,24 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model user {
   id            String    @id
   email         String    @unique
   name          String
+  password      String    @default("")
   emailVerified Boolean
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
-
-  // LearnFlow custom fields
   role          String    @default("student")
   studentId     String?   @unique
   teacherId     String?   @unique
-
-  sessions      session[]
   accounts      account[]
+  sessions      session[]
 }
 
 model session {
@@ -31,21 +29,19 @@ model session {
   ipAddress String?
   userAgent String?
   userId    String
-
   user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model account {
-  id            String    @id
-  accountId     String
-  providerId    String
-  userId        String
-  accessToken   String?
-  refreshToken  String?
-  idToken       String?
-  expiresAt     DateTime?
-
-  user          user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String    @id
+  accountId    String
+  providerId   String
+  userId       String
+  accessToken  String?
+  refreshToken String?
+  idToken      String?
+  expiresAt    DateTime?
+  user         user      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model verification {
@@ -53,4 +49,29 @@ model verification {
   identifier String
   value      String
   expiresAt  DateTime
+}
+
+model Assignment {
+  id          String    @id @default(uuid())
+  teacherId   String
+  studentId   String
+  studentName String
+  topic       String
+  level       String
+  questions   String
+  completed   Boolean   @default(false)
+  score       Int?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  metadata  String?
 }

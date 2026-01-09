@@ -16,15 +16,13 @@ logger = logging.getLogger(__name__)
 class ProgressTracker:
     """Tracks student learning milestones and topic mastery"""
 
-    # Python curriculum topics (from spec.md)
+    # Python curriculum topics (matches frontend - 5 topics for 20% each)
     CURRICULUM_TOPICS = [
+        "python-basics",
         "variables-and-data-types",
         "control-flow",
         "functions",
-        "data-structures",
-        "object-oriented-programming",
-        "file-io-and-exceptions",
-        "modules-and-packages"
+        "data-structures"
     ]
 
     # Mastery thresholds
@@ -116,6 +114,58 @@ class ProgressTracker:
 
         return student_state
 
+    def set_topic_mastery_direct(
+        self,
+        student_state: StudentProgressState,
+        topic: str,
+        score: float
+    ) -> StudentProgressState:
+        """
+        Set topic mastery directly to a specific score (0-100).
+        Used when student completes a practice and we know exact score.
+        """
+        topic_normalized = self._normalize_topic(topic)
+
+        # Find or create topic mastery
+        topic_mastery = None
+        for tm in student_state.progress.topic_mastery:
+            if tm.topic_name == topic_normalized:
+                topic_mastery = tm
+                break
+
+        if topic_mastery is None:
+            topic_mastery = TopicMastery(
+                topic_name=topic_normalized,
+                mastery_percentage=0.0,
+                exercises_completed=0,
+                last_practiced=None
+            )
+            student_state.progress.topic_mastery.append(topic_mastery)
+
+        # Set mastery directly to score (clamped 0-100)
+        topic_mastery.mastery_percentage = max(0.0, min(100.0, score))
+        topic_mastery.exercises_completed += 1
+
+        # Update struggling topics
+        if topic_mastery.mastery_percentage / 100.0 < self.STRUGGLING_THRESHOLD:
+            if topic_normalized not in student_state.struggling_topics:
+                student_state.struggling_topics.append(topic_normalized)
+        else:
+            if topic_normalized in student_state.struggling_topics:
+                student_state.struggling_topics.remove(topic_normalized)
+
+        # Recalculate overall mastery
+        student_state.progress.overall_mastery = self._calculate_overall_mastery(
+            student_state.progress.topic_mastery
+        )
+
+        logger.info(
+            f"Set direct mastery: student={student_state.student_id}, topic={topic_normalized}, "
+            f"score={score}%, overall={student_state.progress.overall_mastery:.2%}"
+        )
+
+        return student_state
+
     def get_next_recommended_topic(self, student_state: StudentProgressState) -> Optional[str]:
         """
         Recommend next topic to study based on current progress
@@ -197,7 +247,8 @@ class ProgressTracker:
 
     def _calculate_overall_mastery(self, topic_mastery_list: List[TopicMastery]) -> float:
         """
-        Calculate overall mastery as average of topic masteries
+        Calculate overall mastery where each topic contributes equally
+        With 5 curriculum topics, each contributes 20% to overall
 
         Args:
             topic_mastery_list: List of topic mastery objects
@@ -208,9 +259,13 @@ class ProgressTracker:
         if not topic_mastery_list:
             return 0.0
 
-        # Convert mastery_percentage (0-100) to 0-1 scale and average
-        total_mastery = sum(tm.mastery_percentage / 100.0 for tm in topic_mastery_list)
-        return total_mastery / len(topic_mastery_list)
+        # Number of curriculum topics
+        num_topics = len(self.CURRICULUM_TOPICS)
+
+        # Formula: overall = sum(all topic percentages) / (num_topics * 100)
+        # Example with 5 topics: topic1=100%, rest=0% → 100/500 = 0.20 = 20%
+        total_percentage = sum(tm.mastery_percentage for tm in topic_mastery_list)
+        return total_percentage / (num_topics * 100.0)
 
     def _normalize_topic(self, topic: str) -> str:
         """

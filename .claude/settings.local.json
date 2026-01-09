@@ -4,7 +4,10 @@
       "Bash(for i in 1 2 3 4 5 6 7)",
       "Bash(do wc -l ui-$i/index.css)",
       "Bash(done)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(venvScriptsactivate)",
+      "Bash(python -m uvicorn:*)",
+      "Bash(curl:*)"
     ]
   }
 }

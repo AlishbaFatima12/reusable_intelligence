@@ -1,0 +1,14 @@
+{
+  "name": "flash-ui-integrator",
+  "version": "1.0.0",
+  "description": "Specialized agent for Flash UI implementation, LearnFlow backend integration, and frontend-backend connectivity debugging",
+  "trigger": "auto",
+  "priority": 100,
+  "tags": ["frontend", "ui", "integration", "debugging", "flash-ui", "learnflow"],
+  "metadata": {
+    "author": "Claude Code",
+    "created": "2026-01-05",
+    "scope": "mystery-skills-flash-ui",
+    "purpose": "Handle Flash UI implementation with LearnFlow backend, reduce token usage by specializing in frontend-backend connectivity"
+  }
+}

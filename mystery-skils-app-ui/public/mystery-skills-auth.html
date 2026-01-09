@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEARNFLOW | Identity Verification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --obsidian: #010101;
+            --neon-teal: #00ffcc;
+            --neon-green: #39ff14;
+            --neon-red: #ff3131;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--obsidian);
+            color: var(--neon-teal);
+            font-family: 'JetBrains Mono', monospace;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .glass-card {
+            background: rgba(1, 1, 1, 0.75);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(0, 255, 204, 0.1);
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0.3;
+        }
+
+        .glitch-text {
+            text-shadow: 2px 0 var(--neon-red), -2px 0 #00f0ff;
+            animation: glitch 2s infinite;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 var(--neon-red), -2px 0 #00f0ff; }
+            50% { text-shadow: -2px 0 var(--neon-red), 2px 0 #00f0ff; }
+            100% { text-shadow: 2px 0 var(--neon-red), -2px 0 #00f0ff; }
+        }
+
+        input {
+            cursor: text !important;
+        }
+
+        button {
+            cursor: pointer !important;
+        }
+
+        .terminal-scroll {
+            max-height: 200px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--neon-teal) var(--obsidian);
+        }
+
+        .terminal-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .terminal-scroll::-webkit-scrollbar-track {
+            background: var(--obsidian);
+        }
+
+        .terminal-scroll::-webkit-scrollbar-thumb {
+            background: var(--neon-teal);
+        }
+
+        .error-text {
+            color: var(--neon-red);
+            font-size: 11px;
+            margin-top: 8px;
+        }
+
+        .success-text {
+            color: var(--neon-green);
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Scanlines overlay -->
+    <div class="scanlines"></div>
+
+    <!-- Main auth container -->
+    <div class="glass-card p-12 w-full max-w-2xl mx-4" style="position: relative; z-index: 200;">
+        <!-- Header with role toggle -->
+        <div class="flex justify-between items-center mb-10">
+            <h2 class="text-2xl font-bold tracking-widest text-white uppercase glitch-text">
+                <span id="authTitle">Identity Check</span>
+            </h2>
+            <div class="flex items-center gap-4">
+                <span class="text-[10px] opacity-50">STUDENT</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="roleToggle" class="sr-only peer" onchange="toggleMode()">
+                    <div class="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+                </label>
+                <span class="text-[10px] opacity-50">TEACHER</span>
+            </div>
+        </div>
+
+        <!-- Login Form (default) -->
+        <div id="loginForm" class="space-y-6">
+            <div class="border-b border-teal-900 focus-within:border-teal-400 transition">
+                <label class="block text-[10px] mb-1 opacity-50">EMAIL_ADDRESS</label>
+                <input
+                    type="email"
+                    id="loginEmail"
+                    placeholder="user@learnflow.sys"
+                    class="w-full bg-transparent border-none outline-none text-teal-400 font-mono py-2"
+                >
+            </div>
+
+            <div class="border-b border-teal-900 focus-within:border-teal-400 transition">
+                <label class="block text-[10px] mb-1 opacity-50">ACCESS_KEY</label>
+                <input
+                    type="password"
+                    id="loginPassword"
+                    placeholder="••••••••••••"
+                    class="w-full bg-transparent border-none outline-none text-teal-400 font-mono py-2"
+                >
+            </div>
+
+            <div id="loginError" class="error-text hidden"></div>
+
+            <div id="handshakeLogs" class="terminal-scroll p-4 bg-black/40 border border-teal-950 rounded hidden space-y-1">
+                <!-- Log entries injected here -->
+            </div>
+
+            <button
+                type="button"
+                id="loginButton"
+                style="width: 100%; padding: 16px; border: 2px solid #00ffcc; background: #00ffcc; color: black; font-size: 14px; font-weight: bold; cursor: pointer; letter-spacing: 3px;"
+                onclick="handleLogin()"
+            >
+                VERIFY IDENTITY
+            </button>
+
+            <div class="text-center">
+                <button
+                    onclick="showSignup()"
+                    class="text-xs opacity-50 hover:opacity-100 transition"
+                >
+                    NEW USER? INITIATE_REGISTRATION
+                </button>
+            </div>
+        </div>
+
+        <!-- Signup Form (hidden by default) -->
+        <div id="signupForm" class="space-y-6 hidden">
+            <div class="border-b border-teal-900 focus-within:border-teal-400 transition">
+                <label class="block text-[10px] mb-1 opacity-50">USER_NAME</label>
+                <input
+                    type="text"
+                    id="signupName"
+                    placeholder="John Smith"
+                    class="w-full bg-transparent border-none outline-none text-teal-400 font-mono py-2"
+                >
+            </div>
+
+            <div class="border-b border-teal-900 focus-within:border-teal-400 transition">
+                <label class="block text-[10px] mb-1 opacity-50">EMAIL_ADDRESS</label>
+                <input
+                    type="email"
+                    id="signupEmail"
+                    placeholder="user@learnflow.sys"
+                    class="w-full bg-transparent border-none outline-none text-teal-400 font-mono py-2"
+                >
+            </div>
+
+            <div class="border-b border-teal-900 focus-within:border-teal-400 transition">
+                <label class="block text-[10px] mb-1 opacity-50">ACCESS_KEY</label>
+                <input
+                    type="password"
+                    id="signupPassword"
+                    placeholder="Minimum 8 characters"
+                    class="w-full bg-transparent border-none outline-none text-teal-400 font-mono py-2"
+                >
+            </div>
+
+            <div id="signupError" class="error-text hidden"></div>
+
+            <button
+                onclick="handleSignup()"
+                class="w-full py-4 border border-green-500 hover:bg-green-500/10 transition text-sm tracking-[0.5em] font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                id="signupButton"
+            >
+                REGISTER_IDENTITY
+            </button>
+
+            <div class="text-center">
+                <button
+                    onclick="showLogin()"
+                    class="text-xs opacity-50 hover:opacity-100 transition"
+                >
+                    EXISTING USER? RETURN_TO_LOGIN
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 pt-6 border-t border-teal-950 text-center">
+            <div class="text-[10px] opacity-30">
+                LEARNFLOW SYSTEM v1.0 | SECURE_AUTH_PROTOCOL | SSL_ENCRYPTED
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'student'; // student or teacher
+
+        function toggleMode() {
+            const isTeacher = document.getElementById('roleToggle').checked;
+            currentMode = isTeacher ? 'teacher' : 'student';
+            document.getElementById('authTitle').textContent =
+                isTeacher ? 'Instructor Access' : 'Identity Check';
+        }
+
+        function showSignup() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('signupForm').classList.remove('hidden');
+            clearErrors();
+        }
+
+        function showLogin() {
+            document.getElementById('signupForm').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+            clearErrors();
+        }
+
+        function clearErrors() {
+            document.getElementById('loginError').classList.add('hidden');
+            document.getElementById('signupError').classList.add('hidden');
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            const button = document.getElementById('loginButton');
+
+            // Validation
+            if (!email || !password) {
+                errorDiv.textContent = '[ERROR] All fields required';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = 'AUTHENTICATING...';
+            errorDiv.classList.add('hidden');
+
+            try {
+                // Call custom auth API (must include role)
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, role: currentMode })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.user) {
+                    // Store user in localStorage
+                    localStorage.setItem('learnflow_user', JSON.stringify(data.user));
+                    // Authentication successful
+                    await startHandshake(data.user);
+                } else {
+                    // Authentication failed
+                    errorDiv.textContent = '[ERROR] ' + (data.error || 'Invalid credentials');
+                    errorDiv.classList.remove('hidden');
+                    button.disabled = false;
+                    button.textContent = 'ESTABLISH_CONNECTION';
+                }
+            } catch (error) {
+                errorDiv.textContent = '[ERROR] Connection failed: ' + error.message;
+                errorDiv.classList.remove('hidden');
+                button.disabled = false;
+                button.textContent = 'ESTABLISH_CONNECTION';
+            }
+        }
+
+        async function handleSignup() {
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const errorDiv = document.getElementById('signupError');
+            const button = document.getElementById('signupButton');
+
+            // Validation
+            if (!name || !email || !password) {
+                errorDiv.textContent = '[ERROR] All fields required';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (password.length < 8) {
+                errorDiv.textContent = '[ERROR] Password must be at least 8 characters';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = 'REGISTERING...';
+            errorDiv.classList.add('hidden');
+
+            try {
+                // Generate IDs
+                const studentId = currentMode === 'student' ? `student-${Date.now()}` : null;
+                const teacherId = currentMode === 'teacher' ? `teacher-${Date.now()}` : null;
+
+                // Call custom auth API
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        email,
+                        password,
+                        role: currentMode,
+                        studentId,
+                        teacherId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.user) {
+                    // Store user in localStorage
+                    localStorage.setItem('learnflow_user', JSON.stringify(data.user));
+                    // Registration successful
+                    await startHandshake(data.user);
+                } else {
+                    // Registration failed
+                    errorDiv.textContent = '[ERROR] ' + (data.error || 'Registration failed');
+                    errorDiv.classList.remove('hidden');
+                    button.disabled = false;
+                    button.textContent = 'REGISTER_IDENTITY';
+                }
+            } catch (error) {
+                errorDiv.textContent = '[ERROR] Connection failed: ' + error.message;
+                errorDiv.classList.remove('hidden');
+                button.disabled = false;
+                button.textContent = 'REGISTER_IDENTITY';
+            }
+        }
+
+        async function startHandshake(user) {
+            const logs = document.getElementById('handshakeLogs');
+            logs.classList.remove('hidden');
+            logs.innerHTML = '';
+
+            const role = user.role?.toUpperCase() || 'STUDENT';
+            const lines = [
+                "[SUCCESS] Connecting to LearnFlow Backend...",
+                "[SUCCESS] Triage Agent: HEALTHY (port 8001)",
+                "[SUCCESS] Concepts Agent: HEALTHY (port 8002)",
+                "[SUCCESS] Progress Tracker: HEALTHY (port 8006)",
+                `[SUCCESS] Identity Verified: ${role}_NODE_${user.id.substring(0, 8)}`,
+                `[SUCCESS] Session Token: ${generateFakeToken()}`,
+                "Handshake Complete. Loading HUD..."
+            ];
+
+            for (let i = 0; i < lines.length; i++) {
+                await new Promise(resolve => setTimeout(resolve, 400));
+                const div = document.createElement('div');
+                div.className = 'success-text';
+                div.textContent = lines[i];
+                logs.appendChild(div);
+                logs.scrollTop = logs.scrollHeight;
+            }
+
+            // Redirect to dashboard (same page for both roles)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            window.location.href = '/mystery-skills-flash.html';
+        }
+
+        function generateFakeToken() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let token = '';
+            for (let i = 0; i < 16; i++) {
+                token += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return token;
+        }
+
+        // Enter key support
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('input').forEach(input => {
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        const isSignup = !document.getElementById('signupForm').classList.contains('hidden');
+                        if (isSignup) {
+                            handleSignup();
+                        } else {
+                            handleLogin();
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

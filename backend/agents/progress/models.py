@@ -15,6 +15,7 @@ class MasteryRequest(BaseModel):
     topic: str = Field(..., description="Topic name")
     interaction_type: str = Field(..., description="Type of interaction: query, success, error, hint_request")
     success: bool = Field(default=True, description="Was the interaction successful?")
+    score: Optional[float] = Field(None, description="Direct score percentage (0-100) to set for topic mastery")
 
 
 class MasteryResponse(BaseModel):
