@@ -14,3 +14,4 @@ httpx
 # Utilities
 python-dotenv
 prometheus-client
+python-json-logger
