@@ -1856,6 +1856,13 @@
                 // Store user info
                 localStorage.setItem('learnflow_user', JSON.stringify(data.user));
 
+                // CRITICAL: Clear ALL notification state for new login
+                // This prevents mixing notifications from different users/roles
+                notificationsData = [];
+                notificationsInitialized = false;
+                seenNotificationIds.clear();
+                stopNotificationPolling();
+
                 // Show handshake animation
                 const logs = document.getElementById('handshakeLogs');
                 logs.classList.remove('hidden');
@@ -3995,31 +4002,41 @@
             }
 
             if (data.success) {
-                notificationsData = data.notifications;
-                updateNotificationBadge(data.unreadCount);
+                // CRITICAL: Client-side role filtering as additional safeguard
+                // This ensures wrong role notifications NEVER display even if API returns them
+                const allowedTypes = user.role === 'teacher'
+                    ? ['completion', 'confirmation', 'registration']
+                    : ['assignment', 'reminder', 'appreciation', 'encouragement', 'achievement'];
+
+                const filteredNotifications = data.notifications.filter(n => allowedTypes.includes(n.type));
+                console.log(`[Notifications] Role=${user.role}, Filtered ${data.notifications.length} -> ${filteredNotifications.length}`);
+
+                notificationsData = filteredNotifications;
+                const filteredUnread = filteredNotifications.filter(n => !n.read).length;
+                updateNotificationBadge(filteredUnread);
 
                 // FIRST LOAD: Just mark all existing notifications as "seen" - NO POPUPS
                 // This prevents all old notifications from showing as popups on login
                 if (!notificationsInitialized) {
-                    console.log(`[Notifications] First load - marking ${data.notifications.length} as seen (no popups)`);
-                    data.notifications.forEach(n => seenNotificationIds.add(n.id));
+                    console.log(`[Notifications] First load - marking ${filteredNotifications.length} ${user.role} notifications as seen (no popups)`);
+                    filteredNotifications.forEach(n => seenNotificationIds.add(n.id));
                     notificationsInitialized = true;
 
                     // Just show badge count, no popups
-                    if (data.unreadCount > 0) {
-                        console.log(`[Notifications] ${data.unreadCount} unread - check bell icon`);
+                    if (filteredUnread > 0) {
+                        console.log(`[Notifications] ${filteredUnread} unread - check bell icon`);
                     }
                     return;
                 }
 
                 // SUBSEQUENT LOADS: Only show popups for TRULY NEW notifications
-                // (notifications that arrived AFTER we logged in)
-                const newNotifications = data.notifications.filter(n =>
+                // (notifications that arrived AFTER we logged in AND match our role)
+                const newNotifications = filteredNotifications.filter(n =>
                     !n.read && !seenNotificationIds.has(n.id)
                 );
 
                 if (newNotifications.length > 0) {
-                    console.log(`[Notifications] 🔔 NEW notification arrived:`, newNotifications.map(n => n.title));
+                    console.log(`[Notifications] 🔔 NEW ${user.role} notification arrived:`, newNotifications.map(n => ({ type: n.type, title: n.title })));
 
                     // Mark as seen immediately
                     newNotifications.forEach(n => seenNotificationIds.add(n.id));
@@ -4027,9 +4044,18 @@
                     // Show popup for each NEW notification - INSTANT like Facebook
                     newNotifications.forEach((n, i) => {
                         setTimeout(() => {
-                            showToast('🔔 ' + n.title, n.message, 'success', 8000);
+                            // Different toast styles for different notification types
+                            const isAssignment = n.type === 'assignment';
+                            const isEncouragement = n.type === 'encouragement' || n.type === 'appreciation';
+                            const toastType = isAssignment ? 'info' : isEncouragement ? 'success' : 'success';
+                            showToast('🔔 ' + n.title, n.message, toastType, 8000);
                         }, i * 500);
                     });
+
+                    // For students: also refresh assignments list to show new tasks immediately
+                    if (user.role === 'student') {
+                        loadStudentAssignments();
+                    }
                 }
             }
         } catch (err) {
