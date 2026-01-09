@@ -4126,11 +4126,10 @@
         if (panel) {
             panel.classList.toggle('hidden');
 
-            // Show current user ID for debugging
-            const userStr = localStorage.getItem('learnflow_user');
+            // Show current user ID for debugging - use cached session user
+            const user = currentSessionUser;
             const userIdDisplay = document.getElementById('notification-user-id');
-            if (userIdDisplay && userStr) {
-                const user = JSON.parse(userStr);
+            if (userIdDisplay && user) {
                 const notifyId = user.role === 'teacher' ? user.teacherId : user.studentId;
                 userIdDisplay.textContent = `📡 ${user.role.toUpperCase()}: ${notifyId}`;
                 userIdDisplay.style.color = user.role === 'teacher' ? '#00ff9f' : '#00d4ff';
@@ -4144,12 +4143,26 @@
         const list = document.getElementById('notification-list');
         if (!list) return;
 
-        if (notificationsData.length === 0) {
+        // CRITICAL: Final safeguard - filter by role before rendering
+        const user = currentSessionUser;
+        if (!user) {
+            list.innerHTML = '<div class="p-4 text-xs text-gray-500">Not logged in</div>';
+            return;
+        }
+
+        const allowedTypes = user.role === 'teacher'
+            ? ['completion', 'confirmation', 'registration']
+            : ['assignment', 'reminder', 'appreciation', 'encouragement', 'achievement'];
+
+        const roleFilteredData = notificationsData.filter(n => allowedTypes.includes(n.type));
+        console.log(`[RenderNotifs] Role=${user.role}, showing ${roleFilteredData.length}/${notificationsData.length} notifications`);
+
+        if (roleFilteredData.length === 0) {
             list.innerHTML = '<div class="p-4 text-xs text-gray-500">No notifications</div>';
             return;
         }
 
-        list.innerHTML = notificationsData.map(n => `
+        list.innerHTML = roleFilteredData.map(n => `
             <div class="p-3 border-b border-gray-800 ${n.read ? 'opacity-60' : ''} hover:bg-teal-900/10 cursor-pointer" onclick="handleNotificationClick('${n.id}', '${n.type}', '${n.metadata || ''}')">
                 <div class="text-xs font-bold text-teal-400">${n.title}</div>
                 <div class="text-[10px] text-white mt-1">${n.message}</div>
@@ -4159,10 +4172,9 @@
     }
 
     async function handleNotificationClick(notificationId, type, metadata) {
-        // Mark as read
-        const userStr = localStorage.getItem('learnflow_user');
-        if (!userStr) return;
-        const user = JSON.parse(userStr);
+        // Mark as read - use cached session user
+        const user = currentSessionUser;
+        if (!user) return;
 
         try {
             const notifyId = user.role === 'teacher' ? user.teacherId : user.studentId;
