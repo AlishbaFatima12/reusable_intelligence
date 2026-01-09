@@ -453,6 +453,55 @@
                 </div>
             </div>
 
+            <!-- Code Lab View: Write & Test Python Code -->
+            <div id="student-codelab-view" class="absolute inset-0 p-4 hidden flex-col bg-black/95">
+                <div class="flex justify-between items-center mb-3 border-b border-purple-900 pb-3">
+                    <div>
+                        <div class="text-purple-400 font-bold text-lg tracking-widest">CODE_LAB</div>
+                        <div class="text-xs text-gray-400 mt-1">Write Python code and get AI feedback</div>
+                    </div>
+                    <button onclick="closeCodeLab()" class="text-xs bg-gray-800 px-4 py-2 text-gray-400 hover:bg-red-900 hover:text-white transition rounded">CLOSE</button>
+                </div>
+
+                <!-- Code Editor -->
+                <div class="flex-1 flex flex-col gap-3 overflow-hidden">
+                    <div class="flex-1 flex flex-col bg-gray-900 rounded-lg border border-purple-900/50 overflow-hidden">
+                        <div class="flex items-center justify-between px-3 py-2 bg-gray-800 border-b border-purple-900/30">
+                            <div class="flex items-center gap-2">
+                                <span class="text-purple-400 text-xs">📄</span>
+                                <span class="text-xs text-gray-400">solution.py</span>
+                            </div>
+                            <select id="code-language" class="bg-gray-700 text-white text-xs px-2 py-1 rounded border border-gray-600">
+                                <option value="python">Python</option>
+                            </select>
+                        </div>
+                        <textarea id="code-editor" class="flex-1 bg-gray-900 text-green-400 font-mono text-sm p-4 resize-none focus:outline-none" placeholder="# Write your Python code here...
+def solution(n):
+    # Your code here
+    pass
+
+# Test your solution
+print(solution(5))"></textarea>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-3">
+                        <button onclick="submitCodeForReview()" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-bold py-3 px-4 rounded-lg hover:from-blue-500 hover:to-blue-700 transition flex items-center justify-center gap-2">
+                            <span>🔍</span> CODE REVIEW
+                        </button>
+                        <button onclick="submitCodeForDebug()" class="flex-1 bg-gradient-to-r from-orange-600 to-orange-800 text-white font-bold py-3 px-4 rounded-lg hover:from-orange-500 hover:to-orange-700 transition flex items-center justify-center gap-2">
+                            <span>🐛</span> DEBUG HELP
+                        </button>
+                    </div>
+
+                    <!-- Feedback Panel -->
+                    <div id="code-feedback-panel" class="bg-gray-900/80 rounded-lg border border-purple-900/30 p-4 max-h-48 overflow-y-auto hidden">
+                        <div class="text-purple-400 font-bold text-xs mb-2 tracking-widest">AI_FEEDBACK</div>
+                        <div id="code-feedback-content" class="text-sm text-gray-300"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Active Practice View: Questions Display -->
             <div id="student-practice-view" class="absolute inset-0 p-4 hidden flex-col bg-black/90">
                 <div class="flex justify-between items-center mb-4 border-b border-teal-900 pb-3">
@@ -585,13 +634,20 @@
                     <div class="text-white">print(<span class="text-green-400">f"Mastery: {r.json()}"</span>)</div>
                 </div>
             </div>
-            <!-- STUDENT VIEW: Practice Topics Button - Opens in Center Panel -->
-            <div id="studentConsole" class="flex items-center justify-center">
-                <button onclick="openPracticeTopicsInCenter()" class="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white font-bold py-4 px-8 rounded-lg shadow-lg shadow-teal-900/50 transition transform hover:scale-105 flex items-center gap-3">
-                    <span class="text-2xl">📚</span>
+            <!-- STUDENT VIEW: Practice Topics & Code Lab Buttons -->
+            <div id="studentConsole" class="flex flex-col items-center justify-center gap-3 p-2">
+                <button onclick="openPracticeTopicsInCenter()" class="w-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg shadow-teal-900/50 transition transform hover:scale-105 flex items-center gap-3">
+                    <span class="text-xl">📚</span>
                     <div class="text-left">
-                        <div class="text-sm font-bold tracking-wider">PRACTICE TOPICS</div>
-                        <div class="text-[10px] opacity-80">Click to browse & practice</div>
+                        <div class="text-xs font-bold tracking-wider">PRACTICE TOPICS</div>
+                        <div class="text-[9px] opacity-80">MCQ questions</div>
+                    </div>
+                </button>
+                <button onclick="openCodeLabInCenter()" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg shadow-purple-900/50 transition transform hover:scale-105 flex items-center gap-3">
+                    <span class="text-xl">💻</span>
+                    <div class="text-left">
+                        <div class="text-xs font-bold tracking-wider">CODE LAB</div>
+                        <div class="text-[9px] opacity-80">Write Python code</div>
                     </div>
                 </button>
             </div>
@@ -2107,6 +2163,165 @@
         }
     }
 
+    // ============ CODE LAB FUNCTIONS ============
+
+    // Open Code Lab in center panel
+    function openCodeLabInCenter() {
+        const overviewView = document.getElementById('student-overview-view');
+        const topicsView = document.getElementById('student-topics-view');
+        const practiceView = document.getElementById('student-practice-view');
+        const codelabView = document.getElementById('student-codelab-view');
+
+        // Hide all other views
+        if (overviewView) overviewView.classList.add('hidden');
+        if (topicsView) {
+            topicsView.classList.add('hidden');
+            topicsView.style.display = 'none';
+        }
+        if (practiceView) {
+            practiceView.classList.add('hidden');
+            practiceView.style.display = 'none';
+        }
+
+        // Show Code Lab
+        if (codelabView) {
+            codelabView.classList.remove('hidden');
+            codelabView.style.display = 'flex';
+        }
+
+        // Clear previous feedback
+        const feedbackPanel = document.getElementById('code-feedback-panel');
+        if (feedbackPanel) feedbackPanel.classList.add('hidden');
+    }
+
+    // Close Code Lab and return to overview
+    function closeCodeLab() {
+        const overviewView = document.getElementById('student-overview-view');
+        const codelabView = document.getElementById('student-codelab-view');
+
+        if (codelabView) {
+            codelabView.classList.add('hidden');
+            codelabView.style.display = 'none';
+        }
+        if (overviewView) {
+            overviewView.classList.remove('hidden');
+        }
+    }
+
+    // Submit code to Code Review Agent (port 8003)
+    async function submitCodeForReview() {
+        const codeEditor = document.getElementById('code-editor');
+        const feedbackPanel = document.getElementById('code-feedback-panel');
+        const feedbackContent = document.getElementById('code-feedback-content');
+
+        if (!codeEditor || !codeEditor.value.trim()) {
+            showToast('Error', 'Please write some code first', 'error');
+            return;
+        }
+
+        const code = codeEditor.value;
+
+        // Show loading
+        feedbackPanel.classList.remove('hidden');
+        feedbackContent.innerHTML = '<div class="text-blue-400 animate-pulse">🔍 Analyzing your code...</div>';
+
+        try {
+            const response = await fetch(getAgentURL(API_CONFIG.CODE_REVIEW_PORT || '8003', '/api/v1/review'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query_id: `review-${Date.now()}`,
+                    code: code,
+                    language: 'python',
+                    context: 'Student learning exercise'
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.review || data.feedback) {
+                const feedback = data.review || data.feedback;
+                feedbackContent.innerHTML = `
+                    <div class="mb-3">
+                        <span class="text-blue-400 font-bold">🔍 CODE REVIEW</span>
+                    </div>
+                    <div class="text-gray-300 whitespace-pre-wrap">${feedback}</div>
+                    ${data.suggestions ? `
+                        <div class="mt-3 pt-3 border-t border-gray-700">
+                            <span class="text-yellow-400 font-bold">💡 Suggestions:</span>
+                            <div class="text-gray-300 mt-1">${Array.isArray(data.suggestions) ? data.suggestions.join('<br>') : data.suggestions}</div>
+                        </div>
+                    ` : ''}
+                `;
+                showToast('Review Complete', 'Check the feedback panel below', 'success');
+            } else {
+                feedbackContent.innerHTML = '<div class="text-yellow-400">No specific feedback. Your code looks good!</div>';
+            }
+        } catch (err) {
+            console.error('Code review error:', err);
+            feedbackContent.innerHTML = `<div class="text-red-400">❌ Failed to connect to Code Review agent. Make sure it's running on port 8003.</div>`;
+            showToast('Error', 'Code Review agent not available', 'error');
+        }
+    }
+
+    // Submit code to Debug Agent (port 8004)
+    async function submitCodeForDebug() {
+        const codeEditor = document.getElementById('code-editor');
+        const feedbackPanel = document.getElementById('code-feedback-panel');
+        const feedbackContent = document.getElementById('code-feedback-content');
+
+        if (!codeEditor || !codeEditor.value.trim()) {
+            showToast('Error', 'Please write some code first', 'error');
+            return;
+        }
+
+        const code = codeEditor.value;
+
+        // Show loading
+        feedbackPanel.classList.remove('hidden');
+        feedbackContent.innerHTML = '<div class="text-orange-400 animate-pulse">🐛 Analyzing for bugs...</div>';
+
+        try {
+            const response = await fetch(getAgentURL(API_CONFIG.DEBUG_PORT || '8004', '/api/v1/diagnose'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query_id: `debug-${Date.now()}`,
+                    code: code,
+                    error_message: '',
+                    language: 'python',
+                    context: 'Student seeking debugging help'
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.diagnosis || data.solution || data.feedback) {
+                feedbackContent.innerHTML = `
+                    <div class="mb-3">
+                        <span class="text-orange-400 font-bold">🐛 DEBUG ANALYSIS</span>
+                    </div>
+                    ${data.diagnosis ? `<div class="text-gray-300 mb-2"><strong>Diagnosis:</strong> ${data.diagnosis}</div>` : ''}
+                    ${data.solution ? `<div class="text-green-400 mb-2"><strong>Solution:</strong> ${data.solution}</div>` : ''}
+                    ${data.feedback ? `<div class="text-gray-300">${data.feedback}</div>` : ''}
+                    ${data.fixed_code ? `
+                        <div class="mt-3 pt-3 border-t border-gray-700">
+                            <span class="text-green-400 font-bold">✅ Suggested Fix:</span>
+                            <pre class="bg-gray-800 p-2 rounded mt-2 text-xs overflow-x-auto"><code>${data.fixed_code}</code></pre>
+                        </div>
+                    ` : ''}
+                `;
+                showToast('Debug Complete', 'Check the feedback panel below', 'success');
+            } else {
+                feedbackContent.innerHTML = '<div class="text-green-400">✅ No obvious bugs detected. Your code looks correct!</div>';
+            }
+        } catch (err) {
+            console.error('Debug error:', err);
+            feedbackContent.innerHTML = `<div class="text-red-400">❌ Failed to connect to Debug agent. Make sure it's running on port 8004.</div>`;
+            showToast('Error', 'Debug agent not available', 'error');
+        }
+    }
+
     // Load topics into center panel grid
     function loadTopicsInCenter() {
         const topicsList = document.getElementById('center-topics-list');
@@ -3223,6 +3438,10 @@
     window.showTopicsList = showTopicsList;
     window.openPracticeTopicsInCenter = openPracticeTopicsInCenter;
     window.closeTopicsView = closeTopicsView;
+    window.openCodeLabInCenter = openCodeLabInCenter;
+    window.closeCodeLab = closeCodeLab;
+    window.submitCodeForReview = submitCodeForReview;
+    window.submitCodeForDebug = submitCodeForDebug;
     window.loadTopicsInCenter = loadTopicsInCenter;
     window.teacherGeneratePractice = teacherGeneratePractice;
     window.autoAssignPractice = autoAssignPractice;
