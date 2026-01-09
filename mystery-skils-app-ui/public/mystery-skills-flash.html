@@ -2242,8 +2242,8 @@
                 // Accept both 'healthy' and 'ok' status
                 if (response.ok && (data.status === 'healthy' || data.status === 'ok')) {
                     msg.className = 'text-green-400 text-xs';
-                    msg.textContent = `✓ ${agent.name}: ONLINE`;
-                    console.log(`✓ ${agent.name}: ONLINE`);
+                    msg.textContent = `✓ ${agent.name}: Running successfully`;
+                    console.log(`✓ ${agent.name}: Running successfully`);
                 } else {
                     msg.className = 'text-yellow-400 text-xs';
                     msg.textContent = `⚠ ${agent.name}: UNHEALTHY - ${JSON.stringify(data)}`;
