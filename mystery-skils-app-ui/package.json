@@ -4,11 +4,13 @@
   "description": "Mystery Skills - 3D Learning Mastery Platform with Live Agent Monitoring",
   "scripts": {
     "dev": "next dev -p 4000",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "@react-three/drei": "^9.100.0",
     "@react-three/fiber": "^8.15.0",
     "bcryptjs": "^3.0.3",
@@ -21,7 +23,6 @@
     "three": "^0.160.1"
   },
   "devDependencies": {
-    "@prisma/client": "^5.22.0",
     "@types/node": "^22.14.0",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.2",
