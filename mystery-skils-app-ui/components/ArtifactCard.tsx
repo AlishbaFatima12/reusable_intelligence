@@ -12,11 +12,11 @@ interface ArtifactCardProps {
     onClick: () => void;
 }
 
-const ArtifactCard = React.memo(({ 
-    artifact, 
-    isFocused, 
-    onClick 
-}: ArtifactCardProps) => {
+const ArtifactCard: React.FC<ArtifactCardProps> = React.memo(function ArtifactCard({
+    artifact,
+    isFocused,
+    onClick
+}) {
     const codeRef = useRef<HTMLPreElement>(null);
 
     // Auto-scroll logic for this specific card
