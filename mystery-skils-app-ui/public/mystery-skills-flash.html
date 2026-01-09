@@ -438,6 +438,21 @@
                 </div>
             </div>
 
+            <!-- Topics List View: Browse & Select Topics -->
+            <div id="student-topics-view" class="absolute inset-0 p-6 hidden flex-col bg-black/95">
+                <div class="flex justify-between items-center mb-4 border-b border-teal-900 pb-3">
+                    <div>
+                        <div class="text-teal-400 font-bold text-lg tracking-widest">PRACTICE_TOPICS</div>
+                        <div class="text-xs text-gray-400 mt-1">Select a topic to start practicing</div>
+                    </div>
+                    <button onclick="closeTopicsView()" class="text-xs bg-gray-800 px-4 py-2 text-gray-400 hover:bg-red-900 hover:text-white transition rounded">CLOSE</button>
+                </div>
+                <input type="text" id="center-topic-search" placeholder="Search topics..." class="bg-gray-900 border border-teal-900 text-white text-sm px-4 py-3 mb-4 rounded-lg w-full">
+                <div id="center-topics-list" class="flex-1 overflow-y-auto grid grid-cols-2 gap-3 pr-2">
+                    <div class="text-gray-400 text-sm col-span-2 text-center py-8">Loading topics...</div>
+                </div>
+            </div>
+
             <!-- Active Practice View: Questions Display -->
             <div id="student-practice-view" class="absolute inset-0 p-4 hidden flex-col bg-black/90">
                 <div class="flex justify-between items-center mb-4 border-b border-teal-900 pb-3">
@@ -570,27 +585,15 @@
                     <div class="text-white">print(<span class="text-green-400">f"Mastery: {r.json()}"</span>)</div>
                 </div>
             </div>
-            <!-- STUDENT VIEW: Practice Panel - BIGGER -->
-            <div id="studentConsole" class="w-2/5 bg-black/90 p-4 font-mono text-white overflow-y-auto border-2 border-teal-900 rounded flex flex-col">
-                <div class="flex justify-between items-center mb-3 border-b border-teal-900 pb-3">
-                    <div class="text-teal-400 text-sm font-bold tracking-wider">PRACTICE TOPICS</div>
-                    <button onclick="showTopicsList()" class="text-xs bg-teal-900 px-3 py-1.5 rounded hover:bg-teal-700 transition">REFRESH</button>
-                </div>
-
-                <!-- Topics List View (default) - BIGGER FONTS -->
-                <div id="topics-view" class="flex-1 flex flex-col">
-                    <input type="text" id="topic-search" placeholder="Search topics..." class="bg-gray-900 border border-teal-900 text-white text-sm px-3 py-2 mb-3 rounded">
-                    <div class="flex-1 overflow-y-auto space-y-2" id="topics-list">
-                        <div class="text-gray-400 text-sm">Loading topics...</div>
+            <!-- STUDENT VIEW: Practice Topics Button - Opens in Center Panel -->
+            <div id="studentConsole" class="flex items-center justify-center">
+                <button onclick="openPracticeTopicsInCenter()" class="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white font-bold py-4 px-8 rounded-lg shadow-lg shadow-teal-900/50 transition transform hover:scale-105 flex items-center gap-3">
+                    <span class="text-2xl">📚</span>
+                    <div class="text-left">
+                        <div class="text-sm font-bold tracking-wider">PRACTICE TOPICS</div>
+                        <div class="text-[10px] opacity-80">Click to browse & practice</div>
                     </div>
-                </div>
-
-                <!-- Practice Questions View (hidden - now shown in CENTER panel) -->
-                <div id="practice-view" class="flex-1 flex-col hidden">
-                    <div class="text-cyan-400 font-bold text-sm mb-2" id="practice-topic-title">PRACTICE: TOPIC</div>
-                    <div class="flex-1 overflow-y-auto" id="practice-questions"></div>
-                    <button onclick="submitAnswers()" class="w-full bg-green-500 text-black text-sm font-bold py-2 mt-2 hover:bg-white transition rounded">SUBMIT ANSWERS</button>
-                </div>
+                </button>
             </div>
 
             <!-- TEACHER VIEW: Console Output -->
@@ -2065,13 +2068,81 @@
     }
 
     function showTopicsList() {
-        const topicsView = document.getElementById('topics-view');
-        const practiceView = document.getElementById('practice-view');
-        if (topicsView && practiceView) {
-            topicsView.classList.remove('hidden');
-            topicsView.style.display = 'flex';
+        // Legacy function - now just calls openPracticeTopicsInCenter
+        openPracticeTopicsInCenter();
+    }
+
+    // Open practice topics in CENTER panel for better visibility
+    function openPracticeTopicsInCenter() {
+        const overviewView = document.getElementById('student-overview-view');
+        const topicsView = document.getElementById('student-topics-view');
+        const practiceView = document.getElementById('student-practice-view');
+
+        // Hide other views, show topics
+        if (overviewView) overviewView.classList.add('hidden');
+        if (practiceView) {
             practiceView.classList.add('hidden');
             practiceView.style.display = 'none';
+        }
+        if (topicsView) {
+            topicsView.classList.remove('hidden');
+            topicsView.style.display = 'flex';
+        }
+
+        // Load topics into center panel
+        loadTopicsInCenter();
+    }
+
+    // Close topics view and return to overview
+    function closeTopicsView() {
+        const overviewView = document.getElementById('student-overview-view');
+        const topicsView = document.getElementById('student-topics-view');
+
+        if (topicsView) {
+            topicsView.classList.add('hidden');
+            topicsView.style.display = 'none';
+        }
+        if (overviewView) {
+            overviewView.classList.remove('hidden');
+        }
+    }
+
+    // Load topics into center panel grid
+    function loadTopicsInCenter() {
+        const topicsList = document.getElementById('center-topics-list');
+        if (!topicsList) return;
+
+        const topics = [
+            {id: 'python-basics', name: 'Python Basics', icon: '🐍', color: 'from-blue-600 to-blue-800'},
+            {id: 'data-structures', name: 'Data Structures', icon: '📊', color: 'from-purple-600 to-purple-800'},
+            {id: 'algorithms', name: 'Algorithms', icon: '⚡', color: 'from-yellow-600 to-yellow-800'},
+            {id: 'oop-concepts', name: 'OOP Concepts', icon: '🎯', color: 'from-green-600 to-green-800'},
+            {id: 'web-development', name: 'Web Development', icon: '🌐', color: 'from-cyan-600 to-cyan-800'},
+            {id: 'database-sql', name: 'Database & SQL', icon: '🗄️', color: 'from-orange-600 to-orange-800'},
+            {id: 'git-version-control', name: 'Git & Version Control', icon: '📦', color: 'from-red-600 to-red-800'},
+            {id: 'api-rest', name: 'API & REST', icon: '🔗', color: 'from-pink-600 to-pink-800'}
+        ];
+
+        topicsList.innerHTML = topics.map(topic => `
+            <button onclick="startPractice('${topic.id}', '${topic.name}')"
+                    class="bg-gradient-to-br ${topic.color} p-4 rounded-lg hover:scale-105 transition transform text-left shadow-lg">
+                <div class="text-3xl mb-2">${topic.icon}</div>
+                <div class="text-white font-bold text-sm">${topic.name}</div>
+                <div class="text-white/60 text-xs mt-1">5 questions</div>
+            </button>
+        `).join('');
+
+        // Setup search
+        const searchInput = document.getElementById('center-topic-search');
+        if (searchInput) {
+            searchInput.oninput = function() {
+                const query = this.value.toLowerCase();
+                const buttons = topicsList.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    const name = btn.querySelector('.font-bold').textContent.toLowerCase();
+                    btn.style.display = name.includes(query) ? 'block' : 'none';
+                });
+            };
         }
     }
 
@@ -2082,7 +2153,14 @@
 
         // Use CENTER PANEL for practice (more space)
         const overviewView = document.getElementById('student-overview-view');
+        const topicsView = document.getElementById('student-topics-view');
         const practiceView = document.getElementById('student-practice-view');
+
+        // Hide topics view first
+        if (topicsView) {
+            topicsView.classList.add('hidden');
+            topicsView.style.display = 'none';
+        }
         const titleEl = document.getElementById('center-practice-topic');
         const subtitleEl = document.getElementById('center-practice-subtitle');
         const questionsContainer = document.getElementById('center-practice-questions');
@@ -3143,6 +3221,9 @@
     window.refreshTeacherData = refreshTeacherData;
     window.testAllAgents = testAllAgents;
     window.showTopicsList = showTopicsList;
+    window.openPracticeTopicsInCenter = openPracticeTopicsInCenter;
+    window.closeTopicsView = closeTopicsView;
+    window.loadTopicsInCenter = loadTopicsInCenter;
     window.teacherGeneratePractice = teacherGeneratePractice;
     window.autoAssignPractice = autoAssignPractice;
     window.handleNotificationClick = handleNotificationClick;
