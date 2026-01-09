@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
-    provider: "sqlite",
+    provider: "postgresql",
   }),
   emailAndPassword: {
     enabled: true,
@@ -36,7 +36,8 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost:4000",
     "http://localhost:3000",
-  ],
+    process.env.NEXT_PUBLIC_APP_URL || "",
+  ].filter(Boolean),
 })
 
 export type Session = typeof auth.$Infer.Session

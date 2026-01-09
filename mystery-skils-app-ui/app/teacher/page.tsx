@@ -27,13 +27,13 @@ export default function TeacherDashboard() {
   useEffect(() => {
     if (!isPending && !session) {
       router.push("/auth")
-    } else if (session?.user?.role !== "teacher") {
+    } else if ((session?.user as any)?.role !== "teacher") {
       router.push("/student") // Redirect non-teachers
     }
   }, [session, isPending, router])
 
   useEffect(() => {
-    if (session?.user?.role === "teacher") {
+    if ((session?.user as any)?.role === "teacher") {
       checkBackendStatus()
       fetchAllStudents()
     }
@@ -117,9 +117,9 @@ export default function TeacherDashboard() {
             <div className="text-sm opacity-70">
               INSTRUCTOR: {session.user?.email?.toUpperCase()}
             </div>
-            {session.user?.teacherId && (
+            {(session.user as any)?.teacherId && (
               <div className="text-xs opacity-50">
-                ID: {session.user.teacherId}
+                ID: {(session.user as any).teacherId}
               </div>
             )}
           </div>

@@ -53,7 +53,8 @@ export default function StudentDashboard() {
 
   const fetchMasteryData = async () => {
     try {
-      const studentId = session?.user?.studentId || "demo-student-001"
+      const user = session?.user as any
+      const studentId = user?.studentId || "demo-student-001"
       const response = await fetch(`http://localhost:8006/api/v1/mastery/${studentId}`)
       const data = await response.json()
       setMasteryData(data)
@@ -97,9 +98,9 @@ export default function StudentDashboard() {
             <div className="text-sm opacity-70">
               USER: {session.user?.email?.toUpperCase()}
             </div>
-            {session.user?.studentId && (
+            {(session.user as any)?.studentId && (
               <div className="text-xs opacity-50">
-                ID: {session.user.studentId}
+                ID: {(session.user as any).studentId}
               </div>
             )}
           </div>
