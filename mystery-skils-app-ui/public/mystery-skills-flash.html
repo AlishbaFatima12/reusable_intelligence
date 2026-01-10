@@ -2774,6 +2774,30 @@
                 // Update progress stats
                 updateStudentProgress('correct');
 
+                // CRITICAL: Update mastery in backend when coding challenge is solved
+                try {
+                    const userStr = localStorage.getItem('learnflow_user');
+                    const user = userStr ? JSON.parse(userStr) : { studentId: 'demo-student-001' };
+                    const challengeTopic = currentChallenge.category || 'python-basics';
+
+                    console.log(`[MASTERY UPDATE] Coding challenge solved! Topic: ${challengeTopic}, Score: 100%`);
+
+                    await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${user.studentId}`), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            student_id: user.studentId,
+                            topic: challengeTopic,
+                            interaction_type: 'success',
+                            success: true,
+                            score: 100  // Coding challenge solved = 100%
+                        })
+                    });
+                    console.log(`[MASTERY] Updated successfully for topic: ${challengeTopic}`);
+                } catch (masteryErr) {
+                    console.error('[MASTERY] Failed to update:', masteryErr);
+                }
+
                 // Show celebration effect
                 showCelebration();
 
