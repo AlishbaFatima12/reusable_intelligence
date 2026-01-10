@@ -835,6 +835,178 @@
     let currentSessionUser = null;
 
     // ═══════════════════════════════════════════════════════════════
+    // MASTERY TRACKING SYSTEM (localStorage-based for persistence)
+    // 5 Topics, each worth 20% max contribution to overall mastery
+    // ═══════════════════════════════════════════════════════════════
+    const CURRICULUM_TOPICS = [
+        'python-basics',
+        'variables-and-data-types',
+        'control-flow',
+        'functions',
+        'data-structures'
+    ];
+
+    // Get mastery data from localStorage for current user
+    function getLocalMastery(studentId) {
+        const key = `mastery_${studentId}`;
+        const stored = localStorage.getItem(key);
+        if (stored) {
+            return JSON.parse(stored);
+        }
+        // Initialize with 0% for all topics
+        const initial = {};
+        CURRICULUM_TOPICS.forEach(t => initial[t] = 0);
+        return initial;
+    }
+
+    // Save mastery data to localStorage
+    function saveLocalMastery(studentId, masteryData) {
+        const key = `mastery_${studentId}`;
+        localStorage.setItem(key, JSON.stringify(masteryData));
+        console.log(`[MASTERY LOCAL] Saved for ${studentId}:`, masteryData);
+    }
+
+    // Update topic mastery score (REPLACES old score, doesn't add)
+    function updateTopicMastery(studentId, topicId, score) {
+        const mastery = getLocalMastery(studentId);
+
+        // Normalize topic ID to match curriculum
+        const normalizedTopic = normalizeTopicId(topicId);
+
+        // Update the topic score (0-100)
+        mastery[normalizedTopic] = Math.max(0, Math.min(100, score));
+
+        // Save to localStorage
+        saveLocalMastery(studentId, mastery);
+
+        // Calculate and display overall
+        const overall = calculateOverallMastery(mastery);
+        console.log(`[MASTERY] Topic ${normalizedTopic}: ${score}% → Overall: ${overall}%`);
+
+        // Update display immediately
+        updateMasteryDisplay(mastery, overall);
+
+        return { topicMastery: mastery, overall };
+    }
+
+    // Normalize topic ID to match curriculum
+    function normalizeTopicId(topicId) {
+        const topicLower = topicId.toLowerCase().replace(/ /g, '-');
+
+        // Direct matches
+        if (CURRICULUM_TOPICS.includes(topicLower)) {
+            return topicLower;
+        }
+
+        // Map variations to curriculum topics
+        const mappings = {
+            'python-basics': 'python-basics',
+            'strings': 'variables-and-data-types',
+            'variables': 'variables-and-data-types',
+            'loops': 'control-flow',
+            'conditions': 'control-flow',
+            'if-else': 'control-flow',
+            'functions': 'functions',
+            'lists': 'data-structures',
+            'dictionaries': 'data-structures',
+            'oop': 'data-structures',
+            'custom': 'python-basics'
+        };
+
+        for (const [key, val] of Object.entries(mappings)) {
+            if (topicLower.includes(key)) {
+                return val;
+            }
+        }
+
+        return 'python-basics'; // Default
+    }
+
+    // Calculate overall mastery: sum of all topic %ages / 5 topics
+    function calculateOverallMastery(masteryData) {
+        let total = 0;
+        CURRICULUM_TOPICS.forEach(topic => {
+            total += (masteryData[topic] || 0);
+        });
+        // Each topic contributes up to 20% (100% / 5 topics)
+        return Math.round(total / 5);
+    }
+
+    // Update mastery display in center panel
+    function updateMasteryDisplay(topicMastery, overall) {
+        // Update global mastery percentage
+        const globalEl = document.getElementById('global-mastery');
+        if (globalEl) {
+            globalEl.textContent = overall + '%';
+            console.log(`[DISPLAY] Global mastery updated to ${overall}%`);
+        }
+
+        // Update mastery bars
+        const barsContainer = document.getElementById('mastery-bars');
+        if (barsContainer) {
+            barsContainer.innerHTML = '';
+            CURRICULUM_TOPICS.slice(0, 4).forEach(topic => {
+                const percent = topicMastery[topic] || 0;
+                const color = percent >= 70 ? '#39ff14' : percent >= 40 ? '#ffaa00' : '#ff3131';
+                const bar = document.createElement('div');
+                bar.className = 'h-1 w-8';
+                bar.style.backgroundColor = color;
+                barsContainer.appendChild(bar);
+            });
+        }
+
+        // Update sidebar topic list if visible
+        updateTopicsList(topicMastery);
+    }
+
+    // Update topics list in sidebar
+    function updateTopicsList(topicMastery) {
+        const topicsList = document.getElementById('topics-list');
+        if (!topicsList) return;
+
+        const topicSequence = [
+            { id: 'python-basics', name: 'Python Basics', level: 1 },
+            { id: 'variables-and-data-types', name: 'Variables & Data Types', level: 2 },
+            { id: 'control-flow', name: 'Control Flow', level: 3 },
+            { id: 'functions', name: 'Functions', level: 4 },
+            { id: 'data-structures', name: 'Data Structures', level: 5 }
+        ];
+
+        topicsList.innerHTML = '';
+        topicSequence.forEach(topic => {
+            const percent = Math.round(topicMastery[topic.id] || 0);
+            const color = percent >= 70 ? '#39ff14' : percent >= 40 ? '#ffaa00' : '#ff3131';
+            const status = percent >= 70 ? '✓' : percent >= 40 ? '⚠' : '○';
+
+            const topicDiv = document.createElement('div');
+            topicDiv.className = 'mb-3 p-2 border border-teal-900/50 hover:bg-teal-900/20 cursor-pointer transition';
+            topicDiv.onclick = () => startPractice(topic.id, topic.name);
+            topicDiv.innerHTML = `
+                <div class="flex items-center justify-between mb-1">
+                    <div class="flex items-center gap-2">
+                        <span style="color: ${color}">${status}</span>
+                        <span class="text-white text-[9px]">Level ${topic.level}</span>
+                    </div>
+                    <span style="color: ${color}" class="font-bold text-[10px]">${percent}%</span>
+                </div>
+                <div class="text-teal-400 text-[9px] font-bold mb-1">${topic.name}</div>
+                <div class="w-full bg-gray-800 h-1">
+                    <div style="width: ${percent}%; background-color: ${color}" class="h-1 transition-all"></div>
+                </div>
+            `;
+            topicsList.appendChild(topicDiv);
+        });
+    }
+
+    // Load mastery on page load for current user
+    function loadMasteryForUser(studentId) {
+        const mastery = getLocalMastery(studentId);
+        const overall = calculateOverallMastery(mastery);
+        updateMasteryDisplay(mastery, overall);
+        console.log(`[MASTERY LOAD] Loaded for ${studentId}: overall=${overall}%`, mastery);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // TOAST NOTIFICATION SYSTEM (replaces browser alerts)
     // ═══════════════════════════════════════════════════════════════
     function showToast(title, message, type = 'info', duration = 4000) {
@@ -1044,100 +1216,36 @@
 
     // Display mastery data for a single student
     async function displayStudentMastery(studentId, user) {
-        // Note: getAgentURL already adds /api/v1/progress, so just use /mastery/{id}
-        const response = await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${studentId}`));
-        const data = await response.json();
-        console.log(`[MASTERY FETCH] Student ${studentId}:`, data);
+        // ★ LOAD FROM LOCALSTORAGE FIRST (source of truth for this student)
+        const localMastery = getLocalMastery(studentId);
+        const localOverall = calculateOverallMastery(localMastery);
 
-        // Update global mastery (CAP AT 100%)
-        const overall = Math.min(100, Math.round(data.overall_mastery * 100));
-        document.getElementById('global-mastery').textContent = overall + '%';
+        console.log(`[MASTERY DISPLAY] Local data for ${studentId}: overall=${localOverall}%`, localMastery);
 
-        // Update mastery bars
-        const barsContainer = document.getElementById('mastery-bars');
-        barsContainer.innerHTML = '';
+        // Immediately update display from localStorage
+        updateMasteryDisplay(localMastery, localOverall);
 
-        if (data.topic_mastery && data.topic_mastery.length > 0) {
-            data.topic_mastery.slice(0, 4).forEach(topic => {
-                const percent = topic.mastery_percentage;
-                const color = percent >= 70 ? '#39ff14' : percent >= 40 ? '#ffaa00' : '#ff3131';
-                const bar = document.createElement('div');
-                bar.className = 'h-1 w-8';
-                bar.style.backgroundColor = color;
-                barsContainer.appendChild(bar);
-            });
-        }
+        // Also try to sync with backend (in background, doesn't block display)
+        try {
+            const response = await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${studentId}`));
+            const data = await response.json();
+            console.log(`[MASTERY BACKEND] Data for ${studentId}:`, data);
 
-        // Populate topics list for student (clickable topics in sequence)
-        const topicsList = document.getElementById('topics-list');
-        if (!topicsList) return;
-
-        topicsList.innerHTML = '';
-
-        // Define topic sequence (learning path)
-        const topicSequence = [
-            { id: 'python-basics', name: 'Python Basics', level: 1 },
-            { id: 'variables-and-data-types', name: 'Variables & Data Types', level: 2 },
-            { id: 'control-flow', name: 'Control Flow (if/else, loops)', level: 3 },
-            { id: 'functions', name: 'Functions', level: 4 },
-            { id: 'data-structures', name: 'Data Structures (lists, dicts)', level: 5 }
-        ];
-
-        if (data.topic_mastery && data.topic_mastery.length > 0) {
-            // Create a map of actual mastery data
-            const masteryMap = {};
-            data.topic_mastery.forEach(topic => {
-                masteryMap[topic.topic_name] = topic.mastery_percentage;
-            });
-
-            topicSequence.forEach(topic => {
-                // Backend returns mastery_percentage as 0-100, no need to multiply
-                const percent = Math.min(100, Math.round(masteryMap[topic.id] || 0));
-                const color = percent >= 70 ? '#39ff14' : percent >= 40 ? '#ffaa00' : '#ff3131';
-                const status = percent >= 70 ? '✓' : percent >= 40 ? '⚠' : '○';
-
-                const topicDiv = document.createElement('div');
-                topicDiv.className = 'mb-3 p-2 border border-teal-900/50 hover:bg-teal-900/20 cursor-pointer transition';
-                topicDiv.onclick = () => startPractice(topic.id, topic.name);
-                topicDiv.innerHTML = `
-                    <div class="flex items-center justify-between mb-1">
-                        <div class="flex items-center gap-2">
-                            <span style="color: ${color}">${status}</span>
-                            <span class="text-white text-[9px]">Level ${topic.level}</span>
-                        </div>
-                        <span style="color: ${color}" class="font-bold text-[10px]">${percent}%</span>
-                    </div>
-                    <div class="text-teal-400 text-[9px] font-bold mb-1">${topic.name}</div>
-                    <div class="w-full bg-gray-800 h-1">
-                        <div style="width: ${percent}%; background-color: ${color}" class="h-1"></div>
-                    </div>
-                    <div class="text-[7px] text-gray-500 mt-1">Click to practice →</div>
-                `;
-                topicsList.appendChild(topicDiv);
-            });
-        } else {
-            topicsList.innerHTML = `<div class="text-yellow-400 text-[8px]">No mastery data yet. Start by clicking a topic!</div>`;
-            // Show default topics even without data
-            topicSequence.forEach(topic => {
-                const topicDiv = document.createElement('div');
-                topicDiv.className = 'mb-3 p-2 border border-teal-900/50 hover:bg-teal-900/20 cursor-pointer transition';
-                topicDiv.onclick = () => startPractice(topic.id, topic.name);
-                topicDiv.innerHTML = `
-                    <div class="flex items-center justify-between mb-1">
-                        <div class="flex items-center gap-2">
-                            <span class="text-gray-500">○</span>
-                            <span class="text-white text-[9px]">Level ${topic.level}</span>
-                        </div>
-                        <span class="text-gray-500 font-bold text-[10px]">0%</span>
-                    </div>
-                    <div class="text-teal-400 text-[9px] font-bold mb-1">${topic.name}</div>
-                    <div class="w-full bg-gray-800 h-1">
-                        <div style="width: 0%; background-color: #gray" class="h-1"></div>
-                    </div>
-                    <div class="text-[7px] text-gray-500 mt-1">Click to start learning →</div>
-                `;
-                topicsList.appendChild(topicDiv);
-            });
+            // If backend has data, merge it with local (local takes priority for freshness)
+            if (data.topic_mastery && data.topic_mastery.length > 0) {
+                data.topic_mastery.forEach(topic => {
+                    const normalizedName = topic.topic_name;
+                    // Only update if backend has higher score (never reduce local scores)
+                    if ((localMastery[normalizedName] || 0) < topic.mastery_percentage) {
+                        localMastery[normalizedName] = topic.mastery_percentage;
+                    }
+                });
+                saveLocalMastery(studentId, localMastery);
+                const mergedOverall = calculateOverallMastery(localMastery);
+                updateMasteryDisplay(localMastery, mergedOverall);
+            }
+        } catch (err) {
+            console.warn('[MASTERY BACKEND] Could not sync:', err.message);
         }
     }
 
@@ -2775,43 +2883,30 @@
                 // Update progress stats
                 updateStudentProgress('correct');
 
-                // CRITICAL: Update mastery in backend when coding challenge is solved
-                try {
-                    const userStr = localStorage.getItem('learnflow_user');
-                    const user = userStr ? JSON.parse(userStr) : { studentId: 'demo-student-001' };
+                // CRITICAL: Update mastery when coding challenge is solved
+                const userStr = localStorage.getItem('learnflow_user');
+                const user = userStr ? JSON.parse(userStr) : { studentId: 'demo-student-001' };
+                const rawCategory = currentChallenge.category || 'Python Basics';
 
-                    // Map challenge category to curriculum topic (5 topics)
-                    const categoryToTopic = {
-                        'Python Basics': 'python-basics',
-                        'Strings': 'variables-and-data-types',
-                        'Variables': 'variables-and-data-types',
-                        'Loops': 'control-flow',
-                        'Conditions': 'control-flow',
-                        'Functions': 'functions',
-                        'Lists': 'data-structures',
-                        'Dictionaries': 'data-structures',
-                        'OOP': 'data-structures'  // Advanced topics contribute to data structures
-                    };
-                    const rawCategory = currentChallenge.category || 'Python Basics';
-                    const challengeTopic = categoryToTopic[rawCategory] || 'python-basics';
+                console.log(`[CODING COMPLETE] Category: ${rawCategory}, updating mastery with 100%`);
 
-                    console.log(`[MASTERY UPDATE] Coding challenge solved! Category: ${rawCategory} → Topic: ${challengeTopic}, Score: 100%`);
+                // ★ UPDATE LOCAL MASTERY (normalizeTopicId handles category mapping)
+                const result = updateTopicMastery(user.studentId, rawCategory, 100);
+                console.log(`[MASTERY RESULT] Coding → Overall: ${result.overall}%`, result.topicMastery);
 
-                    await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${user.studentId}`), {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            student_id: user.studentId,
-                            topic: challengeTopic,
-                            interaction_type: 'success',
-                            success: true,
-                            score: 100  // Coding challenge solved = 100%
-                        })
-                    });
-                    console.log(`[MASTERY] Updated successfully for topic: ${challengeTopic}`);
-                } catch (masteryErr) {
-                    console.error('[MASTERY] Failed to update:', masteryErr);
-                }
+                // Also sync with backend (fire and forget)
+                const challengeTopic = normalizeTopicId(rawCategory);
+                fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${user.studentId}`), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        student_id: user.studentId,
+                        topic: challengeTopic,
+                        interaction_type: 'success',
+                        success: true,
+                        score: 100
+                    })
+                }).catch(err => console.warn('[BACKEND SYNC] Failed:', err));
 
                 // Show celebration effect
                 showCelebration();
@@ -2819,8 +2914,6 @@
                 // Mark coding assignment as complete if from an assignment
                 if (activeAssignmentId) {
                     try {
-                        const userStr = localStorage.getItem('learnflow_user');
-                        const user = userStr ? JSON.parse(userStr) : {};
                         await fetch(`/api/assignments/${activeAssignmentId}/complete`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
@@ -2833,9 +2926,6 @@
                         console.error('Assignment completion error:', err);
                     }
                 }
-
-                // CRITICAL: Refresh mastery display immediately
-                fetchMasteryData();
             } else if (currentChallenge) {
                 consoleOutput.innerHTML = `>>> ${output}\n\n<span class="text-red-400">❌ Not quite right...</span>\n<span class="text-yellow-400">Expected: ${currentChallenge.expected}</span>\n<span class="text-gray-400">Keep trying! You've got this! 💪</span>`;
                 showToast('Try Again', 'Check your code and try again!', 'info');
@@ -3630,30 +3720,40 @@
         }
 
         const score = Math.round((correctCount / totalQuestions) * 100);
-        const passed = correctCount >= (totalQuestions / 2);
+        const topicId = currentPracticeSession.topicId;
 
+        console.log(`[SUBMIT] Topic: ${topicId}, Score: ${correctCount}/${totalQuestions} = ${score}%`);
+
+        // ★ UPDATE LOCAL MASTERY (this is the source of truth now)
+        const result = updateTopicMastery(user.studentId, topicId, score);
+        console.log(`[MASTERY RESULT] Overall: ${result.overall}%`, result.topicMastery);
+
+        // Also sync with backend (fire and forget)
         try {
-            // Send score directly to backend
-            await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${user.studentId}`), {
+            fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${user.studentId}`), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     student_id: user.studentId,
-                    topic: currentPracticeSession.topicId,
+                    topic: topicId,
                     interaction_type: 'success',
                     success: true,
                     score: score
                 })
-            });
-
-            showToast('Practice Complete!', `Score: ${correctCount}/${totalQuestions} (${score}%) - Your mastery has been updated!`, 'success', 5000);
-
-            // Close center practice view and show overview
-            closeCenterPractice();
-            await fetchMasteryData();
-        } catch (error) {
-            showToast('Error', 'Failed to update mastery: ' + error.message, 'error');
+            }).catch(err => console.warn('[BACKEND SYNC] Failed:', err));
+        } catch (e) {
+            console.warn('[BACKEND SYNC] Error:', e);
         }
+
+        showToast('Practice Complete!', `Score: ${correctCount}/${totalQuestions} (${score}%) → Overall: ${result.overall}%`, 'success', 5000);
+
+        // Show celebration if passed
+        if (score >= 50) {
+            showCelebration();
+        }
+
+        // Close center practice view and show overview
+        closeCenterPractice();
     }
 
     async function teacherGeneratePractice() {
