@@ -1091,7 +1091,8 @@
             });
 
             topicSequence.forEach(topic => {
-                const percent = Math.min(100, Math.round((masteryMap[topic.id] || 0) * 100));
+                // Backend returns mastery_percentage as 0-100, no need to multiply
+                const percent = Math.min(100, Math.round(masteryMap[topic.id] || 0));
                 const color = percent >= 70 ? '#39ff14' : percent >= 40 ? '#ffaa00' : '#ff3131';
                 const status = percent >= 70 ? '✓' : percent >= 40 ? '⚠' : '○';
 
@@ -2778,9 +2779,23 @@
                 try {
                     const userStr = localStorage.getItem('learnflow_user');
                     const user = userStr ? JSON.parse(userStr) : { studentId: 'demo-student-001' };
-                    const challengeTopic = currentChallenge.category || 'python-basics';
 
-                    console.log(`[MASTERY UPDATE] Coding challenge solved! Topic: ${challengeTopic}, Score: 100%`);
+                    // Map challenge category to curriculum topic (5 topics)
+                    const categoryToTopic = {
+                        'Python Basics': 'python-basics',
+                        'Strings': 'variables-and-data-types',
+                        'Variables': 'variables-and-data-types',
+                        'Loops': 'control-flow',
+                        'Conditions': 'control-flow',
+                        'Functions': 'functions',
+                        'Lists': 'data-structures',
+                        'Dictionaries': 'data-structures',
+                        'OOP': 'data-structures'  // Advanced topics contribute to data structures
+                    };
+                    const rawCategory = currentChallenge.category || 'Python Basics';
+                    const challengeTopic = categoryToTopic[rawCategory] || 'python-basics';
+
+                    console.log(`[MASTERY UPDATE] Coding challenge solved! Category: ${rawCategory} → Topic: ${challengeTopic}, Score: 100%`);
 
                     await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${user.studentId}`), {
                         method: 'POST',
@@ -3502,23 +3517,24 @@
         const topicsList = document.getElementById('center-topics-list');
         if (!topicsList) return;
 
+        // MUST match backend curriculum topics (5 topics, each worth 20% max mastery)
         const topics = [
-            {id: 'python-basics', name: 'Python Basics', icon: '🐍', color: 'from-blue-600 to-blue-800'},
-            {id: 'data-structures', name: 'Data Structures', icon: '📊', color: 'from-purple-600 to-purple-800'},
-            {id: 'algorithms', name: 'Algorithms', icon: '⚡', color: 'from-yellow-600 to-yellow-800'},
-            {id: 'oop-concepts', name: 'OOP Concepts', icon: '🎯', color: 'from-green-600 to-green-800'},
-            {id: 'web-development', name: 'Web Development', icon: '🌐', color: 'from-cyan-600 to-cyan-800'},
-            {id: 'database-sql', name: 'Database & SQL', icon: '🗄️', color: 'from-orange-600 to-orange-800'},
-            {id: 'git-version-control', name: 'Git & Version Control', icon: '📦', color: 'from-red-600 to-red-800'},
-            {id: 'api-rest', name: 'API & REST', icon: '🔗', color: 'from-pink-600 to-pink-800'}
+            {id: 'python-basics', name: 'Python Basics', icon: '🐍', color: 'from-blue-600 to-blue-800', level: 1},
+            {id: 'variables-and-data-types', name: 'Variables & Data Types', icon: '📊', color: 'from-purple-600 to-purple-800', level: 2},
+            {id: 'control-flow', name: 'Control Flow (if/else/loops)', icon: '🔄', color: 'from-yellow-600 to-yellow-800', level: 3},
+            {id: 'functions', name: 'Functions', icon: '⚡', color: 'from-green-600 to-green-800', level: 4},
+            {id: 'data-structures', name: 'Data Structures (Lists/Dicts)', icon: '🗄️', color: 'from-cyan-600 to-cyan-800', level: 5}
         ];
 
         topicsList.innerHTML = topics.map(topic => `
             <button onclick="startPractice('${topic.id}', '${topic.name}')"
                     class="bg-gradient-to-br ${topic.color} p-4 rounded-lg hover:scale-105 transition transform text-left shadow-lg">
-                <div class="text-3xl mb-2">${topic.icon}</div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-3xl">${topic.icon}</span>
+                    <span class="text-white/80 text-xs font-bold bg-black/30 px-2 py-1 rounded">LVL ${topic.level}</span>
+                </div>
                 <div class="text-white font-bold text-sm">${topic.name}</div>
-                <div class="text-white/60 text-xs mt-1">3 questions</div>
+                <div class="text-white/60 text-xs mt-1">3 MCQs → +20% mastery</div>
             </button>
         `).join('');
 
