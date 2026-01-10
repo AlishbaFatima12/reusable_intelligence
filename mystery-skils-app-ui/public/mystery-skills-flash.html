@@ -4536,11 +4536,15 @@
             const selectedRadio = document.querySelector(`input[name="center-question-${index}"]:checked`);
             if (selectedRadio) {
                 const selectedIndex = parseInt(selectedRadio.value);
-                if (selectedIndex === mcq.correctIndex) {
+                // MCQ object uses .correct (not .correctIndex)
+                const correctAnswer = mcq.correct !== undefined ? mcq.correct : mcq.correctIndex;
+                console.log(`[GRADING] Q${index}: selected=${selectedIndex}, correct=${correctAnswer}`);
+                if (selectedIndex === correctAnswer) {
                     correctCount++;
                 }
             }
         });
+        console.log(`[SCORE] ${correctCount}/${totalQuestions} correct`);
 
         const score = Math.round((correctCount / totalQuestions) * 100);
 
