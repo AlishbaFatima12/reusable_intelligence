@@ -2735,7 +2735,7 @@
     }
 
     // Simple Python code evaluator (simulated for demo)
-    function runPythonCode() {
+    async function runPythonCode() {
         const codeEditor = document.getElementById('code-editor');
         const consoleOutput = document.getElementById('code-console-output');
 
@@ -2774,6 +2774,27 @@
 
                 // Show celebration effect
                 showCelebration();
+
+                // Mark coding assignment as complete if from an assignment
+                if (activeAssignmentId) {
+                    try {
+                        const userStr = localStorage.getItem('learnflow_user');
+                        const user = userStr ? JSON.parse(userStr) : {};
+                        await fetch(`/api/assignments/${activeAssignmentId}/complete`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ score: 100, studentName: user.name || 'Student' })
+                        });
+                        console.log('[CODING COMPLETE] Assignment marked complete, notifying teacher');
+                        activeAssignmentId = null;
+                        loadStudentAssignments();
+                    } catch (err) {
+                        console.error('Assignment completion error:', err);
+                    }
+                }
+
+                // CRITICAL: Refresh mastery display immediately
+                fetchMasteryData();
             } else if (currentChallenge) {
                 consoleOutput.innerHTML = `>>> ${output}\n\n<span class="text-red-400">❌ Not quite right...</span>\n<span class="text-yellow-400">Expected: ${currentChallenge.expected}</span>\n<span class="text-gray-400">Keep trying! You've got this! 💪</span>`;
                 showToast('Try Again', 'Check your code and try again!', 'info');
@@ -4576,6 +4597,9 @@
         // Close practice view and refresh
         closeCenterPractice();
         loadStudentAssignments();
+
+        // CRITICAL: Refresh mastery display immediately after completion
+        await fetchMasteryData();
     }
 
     window.closeCenterPractice = closeCenterPractice;
