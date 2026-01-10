@@ -820,7 +820,7 @@
             '8001': '/api/v1/triage',
             '8002': '/api/v1/concepts',
             '8003': '/api/v1/code-review',
-            '8004': '/api/v1/debug',
+            '8004': '/diagnose',
             '8005': '/api/v1/exercise',
             '8006': '/api/v1/progress'
         };
@@ -1044,8 +1044,10 @@
 
     // Display mastery data for a single student
     async function displayStudentMastery(studentId, user) {
-        const response = await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/api/v1/mastery/${studentId}`));
+        // Note: getAgentURL already adds /api/v1/progress, so just use /mastery/{id}
+        const response = await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${studentId}`));
         const data = await response.json();
+        console.log(`[MASTERY FETCH] Student ${studentId}:`, data);
 
         // Update global mastery (CAP AT 100%)
         const overall = Math.min(100, Math.round(data.overall_mastery * 100));
@@ -1182,7 +1184,7 @@
 
         // Fetch mastery for all students in parallel
         const masteryPromises = students.map(student =>
-            fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/api/v1/mastery/${student.studentId}`))
+            fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${student.studentId}`))
                 .then(res => res.json())
                 .catch(() => ({ overall_mastery: 0, topic_mastery: [] }))
         );
@@ -1649,7 +1651,7 @@
 
         try {
             // Generate new questions via exercise agent (port 8005)
-            const exerciseResponse = await fetch(getAgentURL(API_CONFIG.EXERCISE_PORT, '/api/v1/generate'), {
+            const exerciseResponse = await fetch(getAgentURL(API_CONFIG.EXERCISE_PORT, '/generate'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1685,7 +1687,7 @@
                     showToast('Test Regenerated! 🔄', `New ${topic} practice sent to ${studentName}. They will be notified!`, 'success');
 
                     // Refresh the student view
-                    const masteryResponse = await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/api/v1/mastery/${studentId}`));
+                    const masteryResponse = await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${studentId}`));
                     const masteryData = await masteryResponse.json();
                     loadSelectedStudentData(studentId, studentName, masteryData);
                 } else {
@@ -2092,7 +2094,7 @@
 
         try {
             // Call Triage Agent to analyze and route
-            const triageResponse = await fetch(getAgentURL(API_CONFIG.TRIAGE_PORT, '/api/v1/analyze'), {
+            const triageResponse = await fetch(getAgentURL(API_CONFIG.TRIAGE_PORT, '/analyze'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -2122,16 +2124,16 @@
             let agentName = '';
 
             if (targetAgent === 'concepts' || targetAgent === 'concepts-agent') {
-                agentUrl = getAgentURL(API_CONFIG.CONCEPTS_PORT, '/api/v1/explain');
+                agentUrl = getAgentURL(API_CONFIG.CONCEPTS_PORT, '/explain');
                 agentName = 'Concepts Agent';
             } else if (targetAgent === 'exercise' || targetAgent === 'exercise-agent') {
-                agentUrl = getAgentURL(API_CONFIG.EXERCISE_PORT, '/api/v1/generate');
+                agentUrl = getAgentURL(API_CONFIG.EXERCISE_PORT, '/generate');
                 agentName = 'Exercise Agent';
             } else if (targetAgent === 'code_review' || targetAgent === 'code-review-agent') {
-                agentUrl = getAgentURL(API_CONFIG.CODE_REVIEW_PORT, '/api/v1/review');
+                agentUrl = getAgentURL(API_CONFIG.CODE_REVIEW_PORT, '/review');
                 agentName = 'Code Review Agent';
             } else if (targetAgent === 'debug' || targetAgent === 'debug-agent') {
-                agentUrl = getAgentURL(API_CONFIG.DEBUG_PORT, '/api/v1/debug');
+                agentUrl = getAgentURL(API_CONFIG.DEBUG_PORT, '/diagnose');
                 agentName = 'Debug Agent';
             }
 
@@ -2175,7 +2177,7 @@
                         logsContainer.scrollTop = logsContainer.scrollHeight;
 
                         // Update mastery after interaction
-                        await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/api/v1/mastery/${user.studentId || 'demo-student-001'}`), {
+                        await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${user.studentId || 'demo-student-001'}`), {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -3279,7 +3281,7 @@
         feedbackContent.innerHTML = '<div class="text-blue-400 animate-pulse">🔍 Analyzing your code...</div>';
 
         try {
-            const response = await fetch(getAgentURL(API_CONFIG.CODE_REVIEW_PORT || '8003', '/api/v1/review'), {
+            const response = await fetch(getAgentURL(API_CONFIG.CODE_REVIEW_PORT || '8003', '/review'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -3340,7 +3342,7 @@
         const localAnalysis = analyzeCodeForDebugging(code);
 
         try {
-            const response = await fetch(getAgentURL(API_CONFIG.DEBUG_PORT || '8004', '/api/v1/diagnose'), {
+            const response = await fetch(getAgentURL(API_CONFIG.DEBUG_PORT || '8004', '/diagnose'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -3592,7 +3594,7 @@
 
         try {
             // Send score directly to backend
-            await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/api/v1/mastery/${user.studentId}`), {
+            await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${user.studentId}`), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -3804,7 +3806,7 @@
         const strugglingStudents = [];
         for (const student of studentsData.students) {
             try {
-                const masteryResponse = await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/api/v1/mastery/${student.studentId}`));
+                const masteryResponse = await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${student.studentId}`));
                 const masteryData = await masteryResponse.json();
                 if (masteryData.overall_mastery < 0.4) {
                     strugglingStudents.push(student);
@@ -4450,7 +4452,7 @@
             try {
                 showToast('Generating Questions', 'Creating fresh MCQs via AI...', 'info', 2000);
 
-                const response = await fetch(getAgentURL(API_CONFIG.CONCEPTS_PORT, '/api/v1/generate-mcqs'), {
+                const response = await fetch(getAgentURL(API_CONFIG.CONCEPTS_PORT, '/generate-mcqs'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -4547,17 +4549,20 @@
             const userStr = localStorage.getItem('learnflow_user');
             if (userStr) {
                 const user = JSON.parse(userStr);
-                await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, '/progress/update'), {
+                const studentId = user.studentId || 'demo-student-001';
+
+                // Call the correct endpoint: /mastery/{student_id}
+                await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${studentId}`), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        student_id: user.studentId,
-                        topic: currentPracticeSession.topicId,
-                        score: score,
-                        correct_count: correctCount,
-                        total_questions: totalQuestions
+                        topic: currentPracticeSession.topicId || 'python-basics',
+                        score: score / 100,  // API expects 0-1 range
+                        questions_answered: totalQuestions,
+                        correct_answers: correctCount
                     })
                 });
+                console.log(`[MASTERY] Updated: ${score}% on ${currentPracticeSession.topicId}`);
             }
         } catch (err) {
             console.error('Mastery update error:', err);
@@ -4714,7 +4719,7 @@
 
         // Always update mastery with actual score
         try {
-            await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/api/v1/mastery/${user.studentId}`), {
+            await fetch(getAgentURL(API_CONFIG.PROGRESS_PORT, `/mastery/${user.studentId}`), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
